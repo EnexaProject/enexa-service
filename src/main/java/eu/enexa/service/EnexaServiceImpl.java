@@ -22,7 +22,6 @@ public class EnexaServiceImpl implements EnexaService {
     @Override
     public Model getMetadataEndpoint(String experimentIri) {
         // TODO Auto-generated method stub
-        metadataManager.get
         return null;
     }
 
