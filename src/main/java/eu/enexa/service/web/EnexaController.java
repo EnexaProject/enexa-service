@@ -73,6 +73,7 @@ public class EnexaController {
          * does not exist or cannot be found. · HTTP 500: o An error occurs while
          * communicating with the Kubernetes service.
          */
+
         Model model = null; // Get RDF model from service as result of operation
         String content = null; // serialize the model as JSON-LD
         return new ResponseEntity<String>(content, HttpStatus.OK);

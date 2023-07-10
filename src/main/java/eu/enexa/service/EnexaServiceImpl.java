@@ -4,12 +4,14 @@ import java.util.Map;
 
 import org.apache.jena.rdf.model.Model;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
+@Service
 public class EnexaServiceImpl implements EnexaService {
-    
+
     @Autowired
     private ContainerManager containerManager;
-    
+
     @Autowired
     private MetadataManager metadataManager;
 

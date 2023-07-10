@@ -17,12 +17,18 @@ import io.kubernetes.client.openapi.models.V1PodList;
 import io.kubernetes.client.openapi.models.V1PodSpec;
 import io.kubernetes.client.util.Config;
 import io.kubernetes.client.util.generic.GenericKubernetesApi;
+import org.springframework.stereotype.Component;
 
+@Component
 public class ContainerManagerImpl implements ContainerManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ContainerManagerImpl.class);
 
     private ApiClient client;
+
+    protected ContainerManagerImpl() throws IOException {
+        create();
+    }
 
     protected ContainerManagerImpl(ApiClient client) {
         this.client = client;
@@ -63,7 +69,7 @@ public class ContainerManagerImpl implements ContainerManager {
         Configuration.setDefaultApiClient(client);
         return new ContainerManagerImpl(client);
     }
-    
+
     public static void main(String[] args) throws IOException {
         ContainerManagerImpl manager = ContainerManagerImpl.create();
         System.out.println(manager.startContainer("busybox"));
