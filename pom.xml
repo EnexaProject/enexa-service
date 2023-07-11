@@ -61,6 +61,12 @@
             <artifactId>client-java-admission-review</artifactId>
             <version>${kubernetes-client.version}</version>
         </dependency>
+        <!-- RDFHelper -->
+        <dependency>
+            <groupId>org.dice-research</groupId>
+            <artifactId>rdf-tools.rdf</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
         <!-- ~~~~~~~~~~~~~~~~~~~ Logging ~~~~~~~~~~~~~~~~~~~~~~ -->
         <!-- slf4j: Logging API -->
         <dependency>
@@ -86,6 +92,13 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- helper for testing -->
+        <dependency>
+            <groupId>org.dice-research</groupId>
+            <artifactId>rdf-tools.test</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>test</scope>
+        </dependency>
 
         <!-- ~~~~~~~~~~~~~~~~~~~ End Testing ~~~~~~~~~~~~~~~~~~~~~~ -->
     </dependencies>
@@ -106,6 +119,11 @@
                     <source>${java.version}</source>
                     <target>${java.version}</target>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.1.2</version>
             </plugin>
         </plugins>
     </build>
