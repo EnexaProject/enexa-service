@@ -1,6 +1,6 @@
 package eu.enexa.service;
 
-import org.springframework.stereotype.Component;
+import org.apache.jena.rdf.model.Model;
 
 public interface MetadataManager {
 
@@ -14,4 +14,18 @@ public interface MetadataManager {
      */
     public String[] getMetadataEndpointInfo(String experimentIri);
 
+    /**
+     * Returns a random IRI that can be used within the metadata graph to name
+     * resources.
+     * 
+     * @return a random IRI that is not yet present in the metadata graph.
+     */
+    public String generateResourceIRI();
+    
+    /**
+     * Adds the given triples to the metadata graph.
+     * 
+     * @param model the triples that should be added to the metadata graph
+     */
+    public void addMetaData(Model model);
 }
