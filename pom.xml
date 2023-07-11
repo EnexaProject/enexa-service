@@ -19,6 +19,20 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <repositories>
+        <!-- AKSW repository for rdf-tool libs -->
+        <repository>
+            <id>maven.aksw.internal</id>
+            <name>University Leipzig, AKSW Maven2 Repository</name>
+            <url>https://maven.aksw.org/repository/internal</url>
+        </repository>
+        <repository>
+            <id>maven.aksw.snapshots</id>
+            <name>University Leipzig, AKSW Maven2 Repository</name>
+            <url>https://maven.aksw.org/repository/snapshots</url>
+        </repository>
+    </repositories>
+
     <dependencies>
         <!-- Spring Boot -->
         <dependency>
