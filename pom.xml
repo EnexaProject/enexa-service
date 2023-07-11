@@ -81,6 +81,18 @@
             <artifactId>rdf-tools.rdf</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
+        <!-- Query Utils -->
+        <dependency>
+            <groupId>org.dice-research</groupId>
+            <artifactId>rdf-tools.sparql</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <!-- SPARQL API library -->
+        <dependency>
+            <groupId>org.aksw.jenax</groupId>
+            <artifactId>jenax-rx-dataaccess</artifactId>
+            <version>4.8.0-2</version>
+        </dependency>
         <!-- ~~~~~~~~~~~~~~~~~~~ Logging ~~~~~~~~~~~~~~~~~~~~~~ -->
         <!-- slf4j: Logging API -->
         <dependency>
