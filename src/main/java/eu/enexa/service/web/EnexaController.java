@@ -1,14 +1,11 @@
 package eu.enexa.service.web;
 
+import eu.enexa.model.StartContainerModel;
 import org.apache.jena.rdf.model.Model;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import eu.enexa.service.EnexaService;
 
@@ -67,16 +64,16 @@ public class EnexaController {
     }
 
     @PostMapping("start-container")
-    public ResponseEntity<String> startContainer() {
+    public ResponseEntity<String> startContainer(@RequestBody StartContainerModel startContainerModel) {
         /*
          * Errors · HTTP 400: o Experiment IRI is not known / not available. o The image
          * does not exist or cannot be found. · HTTP 500: o An error occurs while
          * communicating with the Kubernetes service.
          */
 
-        Model model = null; // Get RDF model from service as result of operation
-        String content = null; // serialize the model as JSON-LD
-        return new ResponseEntity<String>(content, HttpStatus.OK);
+
+
+        return new ResponseEntity<String>(startContainerModel.toString(), HttpStatus.OK);
     }
 
     @PostMapping("start-experiment")
