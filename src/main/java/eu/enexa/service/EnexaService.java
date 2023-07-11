@@ -5,6 +5,8 @@ import java.util.Map;
 import org.apache.jena.rdf.model.Model;
 import org.springframework.stereotype.Service;
 
+import eu.enexa.model.StartContainerModel;
+
 public interface EnexaService {
 
     /**
@@ -45,14 +47,10 @@ public interface EnexaService {
      * couldn’t be started) to the experiment’s meta data. 5. Return the meta data
      * of the newly created container (including its DNS name)
      *
-     * @param experimentIri
-     * @param moduleIri
-     * @param moduleUrl
-     * @param parameters
+     * @param scModel data object that contains all necessary information to start the container
      * @return
      */
-    public Model startContainer(String experimentIri, String moduleIri, String moduleUrl,
-            Map<String, String> parameters);
+    public Model startContainer(StartContainerModel scModel);
 
     /**
      * 1. If the resource has a known protocol that does not start with the file
