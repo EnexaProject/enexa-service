@@ -22,18 +22,18 @@ public class StartContainerModelTest {
                 + " <http://dice-research.org/DICE-framework/parameters/knowledgeGraph> <http://example.org/experiment1/data/kg/dump.ttl> .";
         Model model = ModelFactory.createDefaultModel();
         model.read(new StringReader(requestString), "", "TURTLE");
-        
+
         // Parse the model
         StartContainerModel scModel = StartContainerModel.parse(model);
-        
+
         Assert.assertNotNull(scModel);
         Assert.assertEquals("http://example.org/experiment1", scModel.getExperiment());
         Assert.assertEquals("http://dice-research.org/DICE-framework/v1.0", scModel.getModuleIri());
         Assert.assertSame(model, scModel.getModel());
-        
+
         Assert.assertNull(scModel.getInstanceIri());
         Assert.assertNull(scModel.getModuleUrl());
-        
+
         // Set the instance IRI
         scModel.setInstanceIri("http://example.org/RandomIRI");
 
@@ -47,10 +47,10 @@ public class StartContainerModelTest {
                 + " <http://dice-research.org/DICE-framework/parameters/knowledgeGraph> <http://example.org/experiment1/data/kg/dump.ttl> .";
         Model expectedModel = ModelFactory.createDefaultModel();
         model.read(new StringReader(expectedString), "", "TURTLE");
-        
+
         ModelComparisonHelper.assertModelsEqual(expectedModel, model);
     }
-    
+
     public static void main(String[] args) {
         (new StartContainerModelTest()).parseAndReplaceTest();
     }

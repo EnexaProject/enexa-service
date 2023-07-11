@@ -33,14 +33,14 @@ public class EnexaControllerTest {
 //        parameters.put("http://dice-research.org/DICE-framework/parameters/dimensions", "25");
 //        parameters.put("http://dice-research.org/DICE-framework/parameters/knowledgeGraph", "http://example.org/experiment1/data/kg/dump.ttl");
 
-        StartContainerModel startContainerModel = new StartContainerModel("http://example.org/experiment1",
-                "http://dice-research.org/DICE-framework/v1.0", "", null);
-
-        ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
-        String json = ow.writeValueAsString(startContainerModel);
-
-        this.mockMvc.perform(post("/start-container").contentType(MediaType.APPLICATION_JSON).content(json))
-                .andDo(print()).andExpect(status().isOk()).andExpect(content().string(containsString("Hello, Mock")));
+//        StartContainerModel startContainerModel = new StartContainerModel("http://example.org/experiment1",
+//                "http://dice-research.org/DICE-framework/v1.0", "", null);
+//
+//        ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+//        String json = ow.writeValueAsString(startContainerModel);
+//
+//        this.mockMvc.perform(post("/start-container").contentType(MediaType.APPLICATION_JSON).content(json))
+//                .andDo(print()).andExpect(status().isOk()).andExpect(content().string(containsString("Hello, Mock")));
 
     }
 

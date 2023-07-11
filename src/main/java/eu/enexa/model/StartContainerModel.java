@@ -1,5 +1,7 @@
 package eu.enexa.model;
 
+import javax.annotation.Nullable;
+
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
@@ -14,22 +16,66 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import eu.enexa.vocab.ENEXA;
 import eu.enexa.vocab.HOBBIT;
 
+/**
+ * This class represents the request to start an ENEXA module.
+ * 
+ * @author TODO Farshad, please add yourself :D
+ * @author Michael R&ouml;der (michael.roeder@uni-paderborn.de)
+ *
+ */
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class StartContainerModel {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StartContainerModel.class);
 
+    /**
+     * The experiment IRI to which the module belongs.
+     */
     private String experiment;
+    /**
+     * The IRI of the module that should be instantiated.
+     */
     private String moduleIri;
+    /**
+     * The URL at which the module's meta data can be found. This can be
+     * {@code null}.
+     */
+    @Nullable
     private String moduleUrl;
+    /**
+     * <p>
+     * The RDF data that came with the request. It may include additional
+     * information about the parameters that are needed to run the module.
+     * </p>
+     * 
+     * <p>
+     * Note that this class take ownership of this model and may change it.
+     * </p>
+     */
     private Model model;
+    /**
+     * The {@link Resource} in the given RDF {@link #model} that represents the
+     * module instance that should be created.
+     */
     private Resource instance;
 
-    public StartContainerModel(String experiment, String moduleIri, String moduleUrl, Model model) {
+    /**
+     * Constructor.
+     * 
+     * @param experiment The experiment IRI to which the module belongs.
+     * @param moduleIri  The IRI of the module that should be instantiated.
+     * @param moduleUrl  The URL at which the module's meta data can be found (can
+     *                   be {@code null}).
+     * @param instance   The Resource in the given model that represents the module
+     *                   instance that should be created.
+     * @param model      The RDF data that came with the request
+     */
+    public StartContainerModel(String experiment, String moduleIri, String moduleUrl, Resource instance, Model model) {
         this.experiment = experiment;
         this.moduleIri = moduleIri;
         this.moduleUrl = moduleUrl;
         this.model = model;
+        this.instance = instance;
     }
 
     /**
@@ -134,6 +180,6 @@ public class StartContainerModel {
         Resource moduleUrlResource = RdfHelper.getObjectResource(model, instance, ENEXA.moduleURL);
 
         return new StartContainerModel(experimentResource.getURI(), moduleIri,
-                moduleUrlResource == null ? null : moduleUrlResource.getURI(), model);
+                moduleUrlResource == null ? null : moduleUrlResource.getURI(), instance, model);
     }
 }
