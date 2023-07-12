@@ -1,10 +1,14 @@
 package eu.enexa.model;
 
+import org.apache.jena.rdf.model.Model;
+
 public class ModuleModel {
 
     private String moduleIri;
     private String moduleUrl;
-    private String imageName;
+    private String image;
+    private Model model;
+    
     /**
      * @return the moduleIri
      */
@@ -30,17 +34,27 @@ public class ModuleModel {
         this.moduleUrl = moduleUrl;
     }
     /**
-     * @return the imageName
+     * @return the image
      */
-    public String getImageName() {
-        return imageName;
+    public String getImage() {
+        return image;
     }
     /**
-     * @param imageName the imageName to set
+     * @param image the image to set
      */
-    public void setImageName(String imageName) {
-        this.imageName = imageName;
+    public void setImage(String image) {
+        this.image = image;
     }
-    
-    
+    /**
+     * @return the model
+     */
+    public Model getModel() {
+        return model;
+    }
+    /**
+     * @param model the model to set
+     */
+    public void setModel(Model model) {
+        this.model = model;
+    }
 }

@@ -1,7 +1,5 @@
 package eu.enexa.service;
 
-import org.springframework.stereotype.Component;
-
 public interface ContainerManager {
 
     public String startContainer(String image);

@@ -11,8 +11,6 @@ import org.junit.Test;
 
 import eu.enexa.model.ModuleModel;
 
-import javax.lang.model.type.UnknownTypeException;
-
 public class FileBasedModuleManagerTest {
 
     @Test
@@ -31,14 +29,15 @@ public class FileBasedModuleManagerTest {
         Assert.assertEquals("http://dice-research.org/DICE-framework/v1.0", module.getModuleIri());
         Assert.assertNull(module.getModuleUrl());
         Assert.assertEquals("urn:container:docker:image:docker.io/dicegroup/dice-embeddings:0.1.3",
-                module.getImageName());
+                module.getImage());
     }
 
-    @Test(expected = UnknownTypeException.class)
+    @Test(expected = IOException.class)
     public void unknownFileShouldThrowException() throws URISyntaxException, IOException {
         File temp = File.createTempFile("module", ".frs");
         FileBasedModuleManager manager = new FileBasedModuleManager();
         manager.addFileOrDirectory(temp);
+        Assert.fail();
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -51,5 +50,6 @@ public class FileBasedModuleManagerTest {
 
         FileBasedModuleManager manager = new FileBasedModuleManager();
         manager.addFileOrDirectory(temp);
+        Assert.fail();
     }
 }

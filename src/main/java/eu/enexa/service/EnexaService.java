@@ -1,9 +1,6 @@
 package eu.enexa.service;
 
-import java.util.Map;
-
 import org.apache.jena.rdf.model.Model;
-import org.springframework.stereotype.Service;
 
 import eu.enexa.model.StartContainerModel;
 

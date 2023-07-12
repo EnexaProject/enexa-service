@@ -1,7 +1,5 @@
 package eu.enexa.service;
 
-import java.util.Map;
-
 import org.apache.jena.rdf.model.Model;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -56,7 +54,7 @@ public class EnexaServiceImpl implements EnexaService {
          * 3. Start the image a. with the ENEXA environmental variables b. as part of
          * the local network of the ENEXA service.
          */
-        String containerId = containerManager.startContainer(module.getImageName());
+        String containerId = containerManager.startContainer(module.getImage());
         /*
          * 4. Add start time (or error code in case it couldn’t be started) to the
          * experiment’s meta data.
