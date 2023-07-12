@@ -166,7 +166,7 @@ public class StartContainerModel {
         StmtIterator oldInstanceIRIIterator = model.listStatements(oldInstanceIRI,(Property) null, (RDFNode) null);
         List<Statement> toRemove = new ArrayList<>();
         while(oldInstanceIRIIterator.hasNext()){
-            // remove old one
+            // add old one ti list for removing
             Statement oldStatement = oldInstanceIRIIterator.next();
             Property predicate = oldStatement.getPredicate();
             RDFNode object = oldStatement.getObject();
@@ -177,6 +177,7 @@ public class StartContainerModel {
             model.add(newstatement);
         }
 
+        // remove the old statements
         for (Statement statement:toRemove) {
             statement.remove();
         }

@@ -93,6 +93,7 @@ public class HOBBIT {
     public static final Property hasProcessors = property("hasProcessors");
     public static final Property hasRAM = property("hasRAM");
     public static final Property hobbitPlatformVersion = property("hobbitPlatformVersion");
+    public static final Property image = property("image");
     public static final Property imageName = property("imageName");
     public static final Property implementsAPI = property("implementsAPI");
     public static final Property instanceOf = property("instanceOf");

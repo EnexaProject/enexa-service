@@ -50,6 +50,7 @@ public class ENEXA {
     }
 
     // Resources sorted alphabetically
+    public static final Resource Module = resource("Module");
 //    public static final Resource AnalysisAlgorithm = resource("AnalysisAlgorithm");
 //    public static final Resource AnalysisResult = resource("AnalysisResult");
 //    public static final Resource AnalysisResultset = resource("AnalysisResultset");

@@ -11,6 +11,8 @@ import org.junit.Test;
 
 import eu.enexa.model.ModuleModel;
 
+import javax.lang.model.type.UnknownTypeException;
+
 public class FileBasedModuleManagerTest {
 
     @Test
@@ -30,5 +32,24 @@ public class FileBasedModuleManagerTest {
         Assert.assertNull(module.getModuleUrl());
         Assert.assertEquals("urn:container:docker:image:docker.io/dicegroup/dice-embeddings:0.1.3",
                 module.getImageName());
+    }
+
+    @Test(expected = UnknownTypeException.class)
+    public void unknownFileShouldThrowException() throws URISyntaxException, IOException {
+        File temp = File.createTempFile("module", ".frs");
+        FileBasedModuleManager manager = new FileBasedModuleManager();
+        manager.addFileOrDirectory(temp);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void notCompletedFileShouldThrowException() throws URISyntaxException, IOException {
+        URL fileUrl = this.getClass().getClassLoader().getResource("eu/enexa/module/exampleModule1_notComplete.ttl");
+        File file = new File(fileUrl.toURI());
+
+        File temp = File.createTempFile("module", ".ttl");
+        FileUtils.copyFile(file, temp);
+
+        FileBasedModuleManager manager = new FileBasedModuleManager();
+        manager.addFileOrDirectory(temp);
     }
 }
