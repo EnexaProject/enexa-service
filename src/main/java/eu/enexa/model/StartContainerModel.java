@@ -1,12 +1,10 @@
 package eu.enexa.model;
 
+
 import javax.annotation.Nullable;
 
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.rdf.model.*;
+
 import org.dice_research.rdf.RdfHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +16,7 @@ import eu.enexa.vocab.HOBBIT;
 
 /**
  * This class represents the request to start an ENEXA module.
- * 
+ *
  * @author TODO Farshad, please add yourself :D
  * @author Michael R&ouml;der (michael.roeder@uni-paderborn.de)
  *
@@ -47,7 +45,7 @@ public class StartContainerModel {
      * The RDF data that came with the request. It may include additional
      * information about the parameters that are needed to run the module.
      * </p>
-     * 
+     *
      * <p>
      * Note that this class take ownership of this model and may change it.
      * </p>
@@ -61,7 +59,7 @@ public class StartContainerModel {
 
     /**
      * Constructor.
-     * 
+     *
      * @param experiment The experiment IRI to which the module belongs.
      * @param moduleIri  The IRI of the module that should be instantiated.
      * @param moduleUrl  The URL at which the module's meta data can be found (can
@@ -145,9 +143,34 @@ public class StartContainerModel {
      * @param instanceIri the instanceIri to set
      */
     public void setInstanceIri(String instanceIri) {
-        // TODO new resource
-        // TODO replace old one in the model with new one
-        // this.instance = instanceIri;
+        StmtIterator iterator = model.listStatements(null, HOBBIT.instanceOf, (RDFNode) null);
+        if (!iterator.hasNext()) {
+            throw new IllegalArgumentException("Couldn't find a module instance in the provided RDF model.");
+        }
+        Statement s = iterator.next();
+        // If there is more than one hobbit:instanceOf triple
+        if (iterator.hasNext()) {
+            LOGGER.warn("Found multiple module instanceOf definitions. They will be ignored. Model dump: "
+                + model.toString());
+        }
+        // Get the instance representation
+        Resource instance = s.getSubject();
+
+        // new resource
+        Resource updatedInstanceIri = ResourceFactory.createResource(instanceIri);
+        // get the old value
+
+        Resource oldOne = RdfHelper.getObjectResource(model, instance, ENEXA.instance);
+        // replace old one in the model with new one
+        if(oldOne!=null) {
+            Statement oldStatement = model.createStatement(instance, ENEXA.instance, oldOne);
+            oldStatement.remove();
+        }
+
+        Statement newstatement  = model.createStatement(instance, ENEXA.instance, updatedInstanceIri);
+        model.add(newstatement);
+
+        this.instance = updatedInstanceIri;
     }
 
     public static StartContainerModel parse(Model model) throws IllegalArgumentException {

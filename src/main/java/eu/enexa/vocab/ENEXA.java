@@ -72,6 +72,7 @@ public class ENEXA {
 
     // Properties sorted alphabetically
     public static final Property experiment = property("experiment");
+    public static final Property instance = property("instance");
     public static final Property moduleURL = property("moduleURL");
 
 }
