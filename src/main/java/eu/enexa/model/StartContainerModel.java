@@ -14,6 +14,9 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import eu.enexa.vocab.ENEXA;
 import eu.enexa.vocab.HOBBIT;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * This class represents the request to start an ENEXA module.
  *
@@ -154,21 +157,29 @@ public class StartContainerModel {
                 + model.toString());
         }
         // Get the instance representation
-        Resource instance = s.getSubject();
+        Resource oldInstanceIRI = s.getSubject();
 
         // new resource
         Resource updatedInstanceIri = ResourceFactory.createResource(instanceIri);
-        // get the old value
 
-        Resource oldOne = RdfHelper.getObjectResource(model, instance, ENEXA.instance);
-        // replace old one in the model with new one
-        if(oldOne!=null) {
-            Statement oldStatement = model.createStatement(instance, ENEXA.instance, oldOne);
-            oldStatement.remove();
+        // get all triples with oldInstanceIRI
+        StmtIterator oldInstanceIRIIterator = model.listStatements(oldInstanceIRI,(Property) null, (RDFNode) null);
+        List<Statement> toRemove = new ArrayList<>();
+        while(oldInstanceIRIIterator.hasNext()){
+            // remove old one
+            Statement oldStatement = oldInstanceIRIIterator.next();
+            Property predicate = oldStatement.getPredicate();
+            RDFNode object = oldStatement.getObject();
+            toRemove.add(oldStatement);
+
+            //add new one
+            Statement newstatement  = model.createStatement(updatedInstanceIri, predicate, object);
+            model.add(newstatement);
         }
 
-        Statement newstatement  = model.createStatement(instance, ENEXA.instance, updatedInstanceIri);
-        model.add(newstatement);
+        for (Statement statement:toRemove) {
+            statement.remove();
+        }
 
         this.instance = updatedInstanceIri;
     }

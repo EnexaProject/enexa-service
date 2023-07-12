@@ -54,12 +54,14 @@ public class StartContainerModelTest {
         ModelComparisonHelper.assertModelsEqual(expectedModel, model);
     }
 
+
+    // in this test , call the replaceIRI several times and it should work
     @Test
     public void setInstanceIriWorks(){
         String requestString = "@prefix hobbit: <http://w3id.org/hobbit/vocab#> . "
             + "@prefix enexa:  <http://w3id.org/dice-research/enexa/ontology#> ."
             + "@prefix xsd:    <http://www.w3.org/2000/10/XMLSchema#> ."
-            + " <http://example.org/RandomIRI> hobbit:instanceOf <http://dice-research.org/DICE-framework/v1.0> ;"
+            + " [] hobbit:instanceOf <http://dice-research.org/DICE-framework/v1.0> ;"
             + " enexa:experiment <http://example.org/experiment1> ; "
             + " <http://dice-research.org/DICE-framework/parameters/algorithm> <http://dice-research.org/DICE-framework/algorithms/ConEx> ;"
             + " <http://dice-research.org/DICE-framework/parameters/dimensions> \"25\"^^xsd:nonNegativeInteger ;"
@@ -73,23 +75,35 @@ public class StartContainerModelTest {
 
         StmtIterator iterator = model.listStatements(null, HOBBIT.instanceOf, (RDFNode) null);
         Statement s = iterator.next();
-        Resource subject = s.getSubject();
 
         Model tmpModel = scModel.getModel();
-        Resource actuallInstance = RdfHelper.getObjectResource(tmpModel,subject, ENEXA.instance);
-        Assert.assertNull(actuallInstance);
-        scModel.setInstanceIri("http://example.org/IRI1");
-        actuallInstance = RdfHelper.getObjectResource(tmpModel,subject, ENEXA.instance);
-        Assert.assertEquals(actuallInstance.getURI(),"http://example.org/IRI1");
 
-        scModel.setInstanceIri("http://example.org/IRI2");
-        actuallInstance = RdfHelper.getObjectResource(tmpModel,subject, ENEXA.instance);
-        Assert.assertEquals(actuallInstance.getURI(),"http://example.org/IRI2");
+        scModel.setInstanceIri("http://example.org/testIRI1");
+        Resource actuallInstance = RdfHelper.getSubjectResource(tmpModel,HOBBIT.instanceOf,ResourceFactory.createResource("http://dice-research.org/DICE-framework/v1.0"));
+        Assert.assertEquals(actuallInstance.getURI(),"http://example.org/testIRI1");
 
-        scModel.setInstanceIri("http://example.org/IRI3");
-        actuallInstance = RdfHelper.getObjectResource(tmpModel,subject, ENEXA.instance);
-        Assert.assertEquals(actuallInstance.getURI(),"http://example.org/IRI3");
+        scModel.setInstanceIri("http://example.org/zzz");
+        actuallInstance = RdfHelper.getSubjectResource(tmpModel,HOBBIT.instanceOf,ResourceFactory.createResource("http://dice-research.org/DICE-framework/v1.0"));
+        Assert.assertEquals(actuallInstance.getURI(),"http://example.org/zzz");
 
+        scModel.setInstanceIri("http://example.org/aaa");
+        actuallInstance = RdfHelper.getSubjectResource(tmpModel,HOBBIT.instanceOf,ResourceFactory.createResource("http://dice-research.org/DICE-framework/v1.0"));
+        Assert.assertEquals(actuallInstance.getURI(),"http://example.org/aaa");
+
+        String expectedString = "@prefix hobbit: <http://w3id.org/hobbit/vocab#> . "
+            + "@prefix enexa:  <http://w3id.org/dice-research/enexa/ontology#> ."
+            + "@prefix xsd:    <http://www.w3.org/2000/10/XMLSchema#> ."
+            + " <http://example.org/aaa> hobbit:instanceOf <http://dice-research.org/DICE-framework/v1.0> ;"
+            + " enexa:experiment <http://example.org/experiment1> ; "
+            + " <http://dice-research.org/DICE-framework/parameters/algorithm> <http://dice-research.org/DICE-framework/algorithms/ConEx> ;"
+            + " <http://dice-research.org/DICE-framework/parameters/dimensions> \"25\"^^xsd:nonNegativeInteger ;"
+            + " <http://dice-research.org/DICE-framework/parameters/knowledgeGraph> <http://example.org/experiment1/data/kg/dump.ttl> .";
+
+        Model expectedModel = ModelFactory.createDefaultModel();
+
+        expectedModel.read(new StringReader(expectedString), "", "TURTLE");
+
+        ModelComparisonHelper.assertModelsEqual(expectedModel, model);
     }
 
     public static void main(String[] args) {

@@ -19,6 +19,7 @@ package eu.enexa.vocab;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
+import org.springframework.stereotype.Component;
 
 /**
  * Representation of the Hobbit vocabulary as Java objects.
@@ -26,6 +27,7 @@ import org.apache.jena.rdf.model.ResourceFactory;
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
+@Component
 public class HOBBIT {
 
     protected static final String uri = "http://w3id.org/hobbit/vocab#";

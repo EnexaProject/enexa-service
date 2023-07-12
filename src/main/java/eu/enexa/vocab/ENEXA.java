@@ -19,6 +19,7 @@ package eu.enexa.vocab;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
+import org.springframework.stereotype.Component;
 
 /**
  * Representation of the ENEXA vocabulary as Java objects.
@@ -26,6 +27,7 @@ import org.apache.jena.rdf.model.ResourceFactory;
  * @author Michael R&ouml;der (roeder@informatik.uni-leipzig.de)
  *
  */
+@Component
 public class ENEXA {
 
     protected static final String uri = "http://w3id.org/dice-research/enexa/ontology#";
@@ -72,7 +74,6 @@ public class ENEXA {
 
     // Properties sorted alphabetically
     public static final Property experiment = property("experiment");
-    public static final Property instance = property("instance");
     public static final Property moduleURL = property("moduleURL");
 
 }
