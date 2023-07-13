@@ -46,6 +46,9 @@ public class SparqlBasedMetadataManager implements MetadataManager, AutoCloseabl
      */
     private UpdateExecutionFactory updateExecFactory = null;
 
+    public SparqlBasedMetadataManager() {
+    }
+
     public SparqlBasedMetadataManager(String sparqlEndpointUrl) {
         this(sparqlEndpointUrl, DEFAULT_META_DATA_GRAPH_IRI, DEFAULT_RESOURCE_NAMESPACE);
     }
