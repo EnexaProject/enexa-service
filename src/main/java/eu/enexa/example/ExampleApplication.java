@@ -7,11 +7,16 @@ import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 
+import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
+import org.aksw.jenax.arq.connection.core.QueryExecutionFactory;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QuerySolution;
+import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
@@ -40,6 +45,8 @@ public class ExampleApplication implements AutoCloseable {
     private String metaDataGraph;
     private String kgFileIri;
     private String kgFileLocation;
+    private String resultFileIri;
+    private String resultFileLocation;
 
     public ExampleApplication(String enexaURL, String sharedDirPath, String appPath) {
         super();
@@ -215,26 +222,21 @@ public class ExampleApplication implements AutoCloseable {
         }
     }
 
-    private void queryFilePath() {
-        Model requestModel = ModelFactory.createDefaultModel();
-        Resource instance = requestModel.createResource(instanceIRI);
-        requestModel.add(instance, RDF.type, ENEXA.ModuleInstance);
-        requestModel.add(instance, ENEXA.experiment, requestModel.createResource(experimentIRI));
-        // TODO Add resultIRI for the file
-
-        // Send the model
-        Model response = requestRDF(enexaURL + "/start-container", requestModel);
-
-        if (response == null) {
-            throw new Exception("Couldn't start a container.");
+    private void queryFilePath() throws Exception {
+        try (QueryExecutionFactory queryExecFactory = new QueryExecutionFactoryHttp(metaDataEndpoint, metaDataGraph)) {
+            QueryExecution qe = queryExecFactory.createQueryExecution("SELECT ?fileIri ?fileLocation WHERE {" + "<"
+                    + instanceIRI + "> ex:result ?fileIri . "// TODO Add
+                                                             // resultIRI for
+                                                             // the file
+                    + "?fileIri <http://w3id.org/dice-research/enexa/ontology#location> ?fileLocation . " + "}");
+            ResultSet rs = qe.execSelect();
+            if (rs.hasNext()) {
+                QuerySolution qs = rs.next();
+                resultFileIri = qs.getResource("fileIri").getURI();
+                resultFileLocation = qs.getLiteral("fileLocation").getString();
+            }
+            LOGGER.info("Result file {} located at {}.", resultFileIri, resultFileLocation);
         }
-        // Get the new IRI of the newly created module instance
-        Resource instanceResource = RdfHelper.getSubjectResource(response, RDF.type, ENEXA.ModuleInstance);
-        if (instanceResource == null) {
-            throw new Exception("Couldn't find module instance resource.");
-        }
-        instanceIRI = instanceResource.getURI();
-        LOGGER.info("module instance {} has been created.", instanceIRI);
     }
 
     @Override
