@@ -51,30 +51,14 @@ public class ENEXA {
 
     // Resources sorted alphabetically
     public static final Resource Module = resource("Module");
-//    public static final Resource AnalysisAlgorithm = resource("AnalysisAlgorithm");
-//    public static final Resource AnalysisResult = resource("AnalysisResult");
-//    public static final Resource AnalysisResultset = resource("AnalysisResultset");
-//    public static final Resource API = resource("API");
-//    public static final Resource AscendingOrder = resource("AscendingOrder");
-//    public static final Resource Benchmark = resource("Benchmark");
-//    public static final Resource Challenge = resource("Challenge");
-//    public static final Resource ChallengeTask = resource("ChallengeTask");
-//    public static final Resource ConfigurableParameter = resource("ConfigurableParameter");
-//    public static final Resource DescendingOrder = resource("DescendingOrder");
-//    public static final Resource Error = resource("Error");
-//    public static final Resource Experiment = resource("Experiment");
-//    public static final Resource FeatureParameter = resource("FeatureParameter");
-//    public static final Resource ForwardedParameter = resource("ForwardedParameter");
-//    public static final Resource Hardware = resource("Hardware");
-//    public static final Resource KPI = resource("KPI");
-//    public static final Resource KPISeq = resource("KPISeq");
-//    public static final Resource Parameter = resource("Parameter");
-//    public static final Resource PearsonAlgorithm = resource("PearsonAlgorithm");
-//    public static final Resource System = resource("System");
-//    public static final Resource SystemInstance = resource("SystemInstance");
+    public static final Resource ModuleInstance = resource("ModuleInstance");
 
     // Properties sorted alphabetically
+    public static final Property containerStatus = property("containerStatus");
     public static final Property experiment = property("experiment");
+    public static final Property location = property("location");
+    public static final Property metaDataEndpoint = property("metaDataEndpoint");
+    public static final Property metaDataGraph = property("metaDataGraph");
     public static final Property moduleURL = property("moduleURL");
 
 }

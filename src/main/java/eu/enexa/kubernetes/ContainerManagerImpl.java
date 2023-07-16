@@ -37,7 +37,7 @@ public class ContainerManagerImpl implements ContainerManager {
     @Override
     public String startContainer(String image) {
         V1Pod pod = new V1Pod().metadata(new V1ObjectMeta().name("foo").namespace("default")).spec(new V1PodSpec()
-                .restartPolicy("Never").containers(Arrays.asList(new V1Container().name("b").image(image))));
+                .restartPolicy("Never").containers(Arrays.asList(new V1Container().name("b").image(image).command(Arrays.asList("sleep", "100000")))));
 
         GenericKubernetesApi<V1Pod, V1PodList> podClient = new GenericKubernetesApi<>(V1Pod.class, V1PodList.class, "",
                 "v1", "pods", client);
