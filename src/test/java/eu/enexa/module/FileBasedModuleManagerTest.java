@@ -5,11 +5,15 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 
+import eu.enexa.service.BootApplication;
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
 import eu.enexa.model.ModuleModel;
+import org.junit.runner.RunWith;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
 
 public class FileBasedModuleManagerTest {
 

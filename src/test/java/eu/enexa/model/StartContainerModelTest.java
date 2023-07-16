@@ -2,6 +2,7 @@ package eu.enexa.model;
 
 import java.io.StringReader;
 
+import eu.enexa.service.BootApplication;
 import eu.enexa.vocab.ENEXA;
 import eu.enexa.vocab.HOBBIT;
 import org.apache.jena.rdf.model.*;
@@ -9,6 +10,9 @@ import org.dice_research.rdf.RdfHelper;
 import org.dice_research.rdf.test.ModelComparisonHelper;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
 
 public class StartContainerModelTest {
 

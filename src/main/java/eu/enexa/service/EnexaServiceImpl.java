@@ -3,9 +3,12 @@ package eu.enexa.service;
 import org.apache.jena.rdf.model.Model;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
+import java.security.MessageDigest;
 import eu.enexa.model.ModuleModel;
 import eu.enexa.model.StartContainerModel;
+
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 @Service
 public class EnexaServiceImpl implements EnexaService {
@@ -54,7 +57,7 @@ public class EnexaServiceImpl implements EnexaService {
          * 3. Start the image a. with the ENEXA environmental variables b. as part of
          * the local network of the ENEXA service.
          */
-        String containerId = containerManager.startContainer(module.getImage());
+        String containerId = containerManager.startContainer(module.getImage(),generatePodName(module.getModuleIri()));
         /*
          * 4. Add start time (or error code in case it couldn’t be started) to the
          * experiment’s meta data.
@@ -67,6 +70,13 @@ public class EnexaServiceImpl implements EnexaService {
          */
         // TODO merge scModel and previously created metadata
         return null;
+    }
+
+     public String generatePodName(String moduleIri) {
+        /*MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+        messageDigest.update(moduleIri.getBytes());
+        String stringHash = new String(messageDigest.digest());*/
+        return "enexa-"+Integer.toString(moduleIri.hashCode());
     }
 
     @Override

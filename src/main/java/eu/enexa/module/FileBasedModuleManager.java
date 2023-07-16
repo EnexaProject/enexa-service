@@ -20,7 +20,9 @@ import eu.enexa.model.ModuleModel;
 import eu.enexa.service.ModuleManager;
 import eu.enexa.vocab.ENEXA;
 import eu.enexa.vocab.HOBBIT;
+import org.springframework.stereotype.Component;
 
+@Component
 public class FileBasedModuleManager implements ModuleManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileBasedModuleManager.class);
 

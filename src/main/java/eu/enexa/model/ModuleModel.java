@@ -8,7 +8,7 @@ public class ModuleModel {
     private String moduleUrl;
     private String image;
     private Model model;
-    
+
     /**
      * @return the moduleIri
      */
