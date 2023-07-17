@@ -112,8 +112,10 @@ public class EnexaController {
         /*
          * Errors · HTTP 400: o Experiment IRI is not known / not available. · HTTP 500:
          * o There is no such SPARQL endpoint available.
+         *
          */
-        Model model = null; // Get RDF model from service as result of operation
+
+        Model model = enexa.startExperiment(); // Get RDF model from service as result of operation
         String content = null; // serialize the model as JSON-LD
         return new ResponseEntity<String>(content, HttpStatus.OK);
     }
