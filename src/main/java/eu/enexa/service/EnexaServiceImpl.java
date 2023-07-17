@@ -7,6 +7,8 @@ import java.util.List;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
+import org.dice_research.rdf.ModelHelper;
+import org.dice_research.rdf.RdfHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -105,8 +107,19 @@ public class EnexaServiceImpl implements EnexaService {
     }
 
     @Override
+    public Model addResource(Model requestModel) {
+        Resource requestResIri = RdfHelper.getSubjectResource(requestModel, ENEXA.experiment, null);
+        String newIri = metadataManager.generateResourceIRI();
+        Resource newResource = requestModel.createResource(newIri);
+        ModelHelper.replaceResource(requestModel, requestResIri, newResource);
+        metadataManager.addMetaData(requestModel);
+        return requestModel;
+    }
+
+    @Override
     public Model addResource(String experimentIri, String resource, String targetDir) {
         // TODO Auto-generated method stub
+
         return null;
     }
 

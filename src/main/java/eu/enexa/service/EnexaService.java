@@ -50,6 +50,14 @@ public interface EnexaService {
     public Model startContainer(StartContainerModel scModel);
 
     /**
+     * Alternative method to add a resource based on already existing meta data.
+     *
+     * @param requestModel
+     * @return Meta data of the newly added file
+     */
+    public Model addResource(Model requestModel);
+
+    /**
      * 1. If the resource has a known protocol that does not start with the file
      * protocol, the service should try to fetch the data. 2. Generate file name 3.
      * Add file to the shared directory 4. Add and return the file’s meta data
