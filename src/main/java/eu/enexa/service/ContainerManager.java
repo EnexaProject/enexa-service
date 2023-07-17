@@ -7,7 +7,7 @@ public interface ContainerManager {
 
     public String startContainer(String image, String podName, List<AbstractMap.SimpleEntry<String,String>> variables);
 
-    public String stopContainer(String containerId);
+    public String stopContainer(String podName);
 
-    public String getContainerStatus(String containerId);
+    public String getContainerStatus(String podName);
 }

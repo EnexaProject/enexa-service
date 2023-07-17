@@ -86,6 +86,7 @@ public class EnexaServiceImpl implements EnexaService {
 
         /*
          * 3. Start the image a. with the ENEXA environmental variables b. as part of
+<<<<<<< HEAD
          * the local network of the ENEXA service.
          * * experiment’s meta data.
          * ENEXA_EXPERIMENT_IRI StartContainerModel.experiment
@@ -95,16 +96,29 @@ public class EnexaServiceImpl implements EnexaService {
            ENEXA_SHARED_DIRECTORY  /enexa/ HARDCODED we should tell the container manager this is default mounting
            ENEXA_WRITEABLE_DIRECTORY  // for demo is same
            ENEXA_SERVICE_URL is it the Host (ourself) url  http://
+=======
+         * the local network of the ENEXA service. * experiment’s meta data.
+         * ENEXA_EXPERIMENT_IRI StartContainerModel.experiment ENEXA_META_DATA_ENDPOINT
+         * metadataManager.getMetadataEndpointInfo() ENEXA_META_DATA_GRAPH //
+         * ENEXA_MODULE_IRI instanceIri ENEXA_SHARED_DIRECTORY /enexa/ HARDCODED we
+         * should tell the container manager this is default mounting
+         * ENEXA_WRITEABLE_DIRECTORY // for demo is same ENEXA_SERVICE_URL is it the
+         * Host (ourself) url http://
+         *
+>>>>>>> b9a70ad0593055db5344141ecf9fa3a9eabcaf8b
          */
 
-        List<AbstractMap.SimpleEntry<String,String>> variables  = new ArrayList<>();
+        List<AbstractMap.SimpleEntry<String, String>> variables = new ArrayList<>();
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_EXPERIMENT_IRI", scModel.getExperiment()));
-        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_META_DATA_ENDPOINT", metadataManager.getMetadataEndpointInfo(scModel.getExperiment())[0]));
-        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_META_DATA_GRAPH", metadataManager.getMetadataEndpointInfo(scModel.getExperiment())[1]));
+        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_META_DATA_ENDPOINT",
+                metadataManager.getMetadataEndpointInfo(scModel.getExperiment())[0]));
+        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_META_DATA_GRAPH",
+                metadataManager.getMetadataEndpointInfo(scModel.getExperiment())[1]));
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_IRI", instanceIri));
-        //TODO : after demo replace the hardcoded strings
+        // TODO : after demo replace the hardcoded strings
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SHARED_DIRECTORY", "/enexa/"));
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_WRITEABLE_DIRECTORY", "/enexa/"));
+
         //TODO: update this
         if(System.getenv("ENEXA_SERVICE_URL").equals("")){
             LOGGER.error("ENEXA_SERVICE_URL environment is null");
@@ -113,12 +127,11 @@ public class EnexaServiceImpl implements EnexaService {
         }
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SERVICE_URL", System.getenv("ENEXA_SERVICE_URL")));
 
-        String containerId = containerManager.startContainer(module.getImage(),generatePodName(module.getModuleIri()),variables);
+        String containerId = containerManager.startContainer(module.getImage(), generatePodName(module.getModuleIri()),
+                variables);
         /*
-         * 4. Add start time (or error code in case it couldn’t be started) to the
-        // TODO create RDF model with new metadata
-        metadataManager.addMetaData(null);
-        /*
+         * 4. Add start time (or error code in case it couldn’t be started) to the //
+         * TODO create RDF model with new metadata metadataManager.addMetaData(null); /*
          * 5. Return the meta data of the newly created container (including its DNS
          * name)
          */
@@ -126,11 +139,13 @@ public class EnexaServiceImpl implements EnexaService {
         return null;
     }
 
-     public String generatePodName(String moduleIri) {
-        /*MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
-        messageDigest.update(moduleIri.getBytes());
-        String stringHash = new String(messageDigest.digest());*/
-        return "enexa-"+Integer.toString(moduleIri.hashCode());
+    public String generatePodName(String moduleIri) {
+        /*
+         * MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+         * messageDigest.update(moduleIri.getBytes()); String stringHash = new
+         * String(messageDigest.digest());
+         */
+        return "enexa-" + Integer.toString(moduleIri.hashCode());
     }
 
     @Override
@@ -140,9 +155,17 @@ public class EnexaServiceImpl implements EnexaService {
     }
 
     @Override
-    public Model containerStatus(String experimentIri, String containerIri) {
-        // TODO Auto-generated method stub
-        return null;
+    public Model containerStatus(String experimentIri, String instanceIRI) {
+        // Query container / pod name
+        String podName = metadataManager.getContainerName(experimentIri, instanceIRI);
+        // Get status
+        String status = containerManager.getContainerStatus(podName);
+
+        Model result = ModelFactory.createDefaultModel();
+        Resource instance = result.createResource(instanceIRI);
+        result.add(instance, ENEXA.experiment, result.createResource(experimentIri));
+        result.add(instance, ENEXA.containerStatus, result.createLiteral(status));
+        return result;
     }
 
     @Override

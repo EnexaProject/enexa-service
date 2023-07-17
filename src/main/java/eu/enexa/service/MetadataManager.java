@@ -21,11 +21,23 @@ public interface MetadataManager {
      * @return a random IRI that is not yet present in the metadata graph.
      */
     public String generateResourceIRI();
-    
+
     /**
      * Adds the given triples to the metadata graph.
      * 
      * @param model the triples that should be added to the metadata graph
      */
     public void addMetaData(Model model);
+
+    /**
+     * Retrieve the container or pod name of the module instance with the given IRI
+     * from the meta data graph.
+     * 
+     * @param experimentIri the experiment's IRI in which the module instance is
+     *                      involved
+     * @param instanceIRI   the IRI of the instance for which the container name
+     *                      should be retrieved
+     * @return the container or pod name of the module instance with the given IRI
+     */
+    public String getContainerName(String experimentIri, String instanceIRI);
 }

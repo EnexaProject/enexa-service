@@ -33,7 +33,8 @@ public class ExampleApplication implements AutoCloseable {
 
     private static final String SHARED_DIR_PREFIX = "enexa-dir:";
 
-    private static final String STATUS_RUNNING = "running";
+    private static final String STATUS_PENDING = "Pending";
+    private static final String STATUS_RUNNING = "Running";
 
     private CloseableHttpClient client;
     private String enexaURL;
@@ -213,7 +214,7 @@ public class ExampleApplication implements AutoCloseable {
             if (status == null) {
                 throw new Exception("Couldn't find the status of the module instance resource.");
             }
-            if (STATUS_RUNNING.equals(status)) {
+            if (status.equals(STATUS_PENDING) || status.equals(STATUS_RUNNING)) {
                 Thread.sleep(1000);
             } else {
                 return;
