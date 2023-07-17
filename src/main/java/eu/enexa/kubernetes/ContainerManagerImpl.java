@@ -1,8 +1,7 @@
 package eu.enexa.kubernetes;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.UUID;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,11 +35,21 @@ public class ContainerManagerImpl implements ContainerManager {
     }
 
     @Override
-    public String startContainer(String image, String podName) {
+    public String startContainer(String image, String podName, List<AbstractMap.SimpleEntry<String,String>> variables) {
+
+        List<V1EnvVar> env = new ArrayList<>();
+        if(variables!=null) {
+            for (Map.Entry<String, String> entry : variables) {
+                V1EnvVar v1env = new V1EnvVar();
+                v1env.setName(entry.getKey());
+                v1env.setValue(entry.getValue());
+                env.add(v1env);
+            }
+        }
 
         //TODO : maybe need change container name "b" to variable
         V1Pod pod = new V1Pod().metadata(new V1ObjectMeta().name(podName).namespace("default")).spec(new V1PodSpec()
-                .restartPolicy("Never").containers(Arrays.asList(new V1Container().name("b").image(image))));
+                .restartPolicy("Never").containers(Arrays.asList(new V1Container().name("b").image(image).env(env))));
 
         GenericKubernetesApi<V1Pod, V1PodList> podClient = new GenericKubernetesApi<>(V1Pod.class, V1PodList.class, "",
                 "v1", "pods", client);
@@ -75,6 +84,6 @@ public class ContainerManagerImpl implements ContainerManager {
 
     public static void main(String[] args) throws IOException {
         ContainerManagerImpl manager = ContainerManagerImpl.create();
-        System.out.println(manager.startContainer("busybox","test"+ UUID.randomUUID().toString()));
+        System.out.println(manager.startContainer("busybox","test"+ UUID.randomUUID().toString(), null));
     }
 }
