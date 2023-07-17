@@ -54,6 +54,7 @@ public class ENEXA {
     public static final Resource ModuleInstance = resource("ModuleInstance");
 
     // Properties sorted alphabetically
+    public static final Property containerName = property("containerName");
     public static final Property containerStatus = property("containerStatus");
     public static final Property experiment = property("experiment");
     public static final Property location = property("location");

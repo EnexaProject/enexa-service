@@ -7,15 +7,22 @@ import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.pagination.core.QueryExecutionFactoryPaginated;
 import org.aksw.jenax.arq.connection.core.QueryExecutionFactory;
 import org.aksw.jenax.arq.connection.core.UpdateExecutionFactory;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QuerySolution;
+import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.update.UpdateProcessor;
 import org.dice_research.sparql.SparqlQueryUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import eu.enexa.service.MetadataManager;
 
 @Component
 public class SparqlBasedMetadataManager implements MetadataManager, AutoCloseable {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SparqlBasedMetadataManager.class);
 
     private static final String DEFAULT_META_DATA_GRAPH_IRI = "http://w3id.org/dice-research/enexa/meta1";
     private static final String DEFAULT_RESOURCE_NAMESPACE = "http://w3id.org/dice-research/enexa/default/";
@@ -95,6 +102,20 @@ public class SparqlBasedMetadataManager implements MetadataManager, AutoCloseabl
             updateExecFactory.close();
         } catch (Exception e) {
         }
+    }
+
+    @Override
+    public String getContainerName(String experimentIri, String instanceIRI) {
+        QueryExecution qe = queryExecFactory.createQueryExecution("SELECT ?name WHERE {" + "<" + instanceIRI
+                + "> <http://w3id.org/dice-research/enexa/ontology#containerName> ?name . }");
+        ResultSet rs = qe.execSelect();
+        if (rs.hasNext()) {
+            QuerySolution qs = rs.next();
+            return qs.getLiteral("name").getString();
+        } else {
+            LOGGER.error("Couldn't get the expected result file from the meta data endpoint.");
+        }
+        return null;
     }
 
 }
