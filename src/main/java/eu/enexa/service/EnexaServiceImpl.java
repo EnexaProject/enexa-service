@@ -9,6 +9,9 @@ import eu.enexa.model.StartContainerModel;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class EnexaServiceImpl implements EnexaService {
@@ -53,15 +56,35 @@ public class EnexaServiceImpl implements EnexaService {
         String instanceIri = metadataManager.generateResourceIRI();
         scModel.setInstanceIri(instanceIri);
         metadataManager.addMetaData(scModel.getModel());
+
         /*
          * 3. Start the image a. with the ENEXA environmental variables b. as part of
          * the local network of the ENEXA service.
+         * * experiment’s meta data.
+         * ENEXA_EXPERIMENT_IRI StartContainerModel.experiment
+           ENEXA_META_DATA_ENDPOINT metadataManager.getMetadataEndpointInfo()
+           ENEXA_META_DATA_GRAPH //
+           ENEXA_MODULE_IRI instanceIri
+           ENEXA_SHARED_DIRECTORY  /enexa/ HARDCODED we should tell the container manager this is default mounting
+           ENEXA_WRITEABLE_DIRECTORY  // for demo is same
+           ENEXA_SERVICE_URL is it the Host (ourself) url  http://
+
          */
-        String containerId = containerManager.startContainer(module.getImage(),generatePodName(module.getModuleIri()));
+
+        List<AbstractMap.SimpleEntry<String,String>> variables  = new ArrayList<>();
+        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_EXPERIMENT_IRI", scModel.getExperiment()));
+        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_META_DATA_ENDPOINT", metadataManager.getMetadataEndpointInfo(scModel.getExperiment())[0]));
+        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_META_DATA_GRAPH", metadataManager.getMetadataEndpointInfo(scModel.getExperiment())[1]));
+        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_IRI", instanceIri));
+        //TODO : after demo replace the hardcoded strings
+        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SHARED_DIRECTORY", "/enexa/"));
+        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_WRITEABLE_DIRECTORY", "/enexa/"));
+        //TODO: update this
+        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SERVICE_URL", ""));
+
+        String containerId = containerManager.startContainer(module.getImage(),generatePodName(module.getModuleIri()),variables);
         /*
          * 4. Add start time (or error code in case it couldn’t be started) to the
-         * experiment’s meta data.
-         */
         // TODO create RDF model with new metadata
         metadataManager.addMetaData(null);
         /*
