@@ -3,6 +3,7 @@ package eu.enexa.kubernetes;
 import java.io.IOException;
 import java.util.*;
 
+import io.kubernetes.client.openapi.models.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -11,11 +12,6 @@ import eu.enexa.service.ContainerManager;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.Configuration;
-import io.kubernetes.client.openapi.models.V1Container;
-import io.kubernetes.client.openapi.models.V1ObjectMeta;
-import io.kubernetes.client.openapi.models.V1Pod;
-import io.kubernetes.client.openapi.models.V1PodList;
-import io.kubernetes.client.openapi.models.V1PodSpec;
 import io.kubernetes.client.util.Config;
 import io.kubernetes.client.util.generic.GenericKubernetesApi;
 

@@ -1,20 +1,26 @@
 package eu.enexa.service;
 
+import eu.enexa.vocab.ENEXA;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.vocabulary.RDF;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import java.security.MessageDigest;
+
+import java.io.File;
 import eu.enexa.model.ModuleModel;
 import eu.enexa.model.StartContainerModel;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class EnexaServiceImpl implements EnexaService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(EnexaServiceImpl.class);
 
     @Autowired
     private ContainerManager containerManager;
@@ -27,8 +33,29 @@ public class EnexaServiceImpl implements EnexaService {
 
     @Override
     public Model startExperiment() {
-        // TODO Auto-generated method stub
-        return null;
+        //1.	Generate experiment IRI and create its meta data
+        String experimentIRI = metadataManager.generateResourceIRI();
+
+        //2.	Create shared directory
+        String sharedDirPath = System.getenv("sharedDirectory");
+        if (sharedDirPath.endsWith(File.separator)) {
+            sharedDirPath = sharedDirPath.substring(0, sharedDirPath.length() - 1);
+        }
+        sharedDirPath = sharedDirPath +File.separator+"ex"+experimentIRI;
+
+        //3.	Start default containers
+        //TODO : implement this
+
+        //4.	Update experiment meta data with data from steps 2 and 3
+        Model model = ModelFactory.createDefaultModel();
+
+        Resource instance = model.createResource(experimentIRI);
+        model.add(instance, RDF.type, ENEXA.Experiment);
+        model.add(instance, ENEXA.sharedDirectory, model.createResource(sharedDirPath));
+
+        metadataManager.addMetaData(model);
+
+        return model;
     }
 
     @Override
@@ -68,7 +95,6 @@ public class EnexaServiceImpl implements EnexaService {
            ENEXA_SHARED_DIRECTORY  /enexa/ HARDCODED we should tell the container manager this is default mounting
            ENEXA_WRITEABLE_DIRECTORY  // for demo is same
            ENEXA_SERVICE_URL is it the Host (ourself) url  http://
-
          */
 
         List<AbstractMap.SimpleEntry<String,String>> variables  = new ArrayList<>();
@@ -80,7 +106,12 @@ public class EnexaServiceImpl implements EnexaService {
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SHARED_DIRECTORY", "/enexa/"));
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_WRITEABLE_DIRECTORY", "/enexa/"));
         //TODO: update this
-        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SERVICE_URL", ""));
+        if(System.getenv("ENEXA_SERVICE_URL").equals("")){
+            LOGGER.error("ENEXA_SERVICE_URL environment is null");
+        }else{
+            LOGGER.info("ENEXA_SERVICE_URL is : " + System.getenv("ENEXA_SERVICE_URL"));
+        }
+        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SERVICE_URL", System.getenv("ENEXA_SERVICE_URL")));
 
         String containerId = containerManager.startContainer(module.getImage(),generatePodName(module.getModuleIri()),variables);
         /*

@@ -52,6 +52,8 @@ public class ENEXA {
     // Resources sorted alphabetically
     public static final Resource Module = resource("Module");
     public static final Resource ModuleInstance = resource("ModuleInstance");
+    public static final Resource Experiment = resource("Experiment");
+
 
     // Properties sorted alphabetically
     public static final Property containerStatus = property("containerStatus");
@@ -60,5 +62,5 @@ public class ENEXA {
     public static final Property metaDataEndpoint = property("metaDataEndpoint");
     public static final Property metaDataGraph = property("metaDataGraph");
     public static final Property moduleURL = property("moduleURL");
-
+    public static final Property sharedDirectory = property("sharedDirectory");
 }
