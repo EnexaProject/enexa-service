@@ -86,7 +86,6 @@ public class EnexaServiceImpl implements EnexaService {
 
         /*
          * 3. Start the image a. with the ENEXA environmental variables b. as part of
-<<<<<<< HEAD
          * the local network of the ENEXA service.
          * * experiment’s meta data.
          * ENEXA_EXPERIMENT_IRI StartContainerModel.experiment
@@ -96,17 +95,8 @@ public class EnexaServiceImpl implements EnexaService {
            ENEXA_SHARED_DIRECTORY  /enexa/ HARDCODED we should tell the container manager this is default mounting
            ENEXA_WRITEABLE_DIRECTORY  // for demo is same
            ENEXA_SERVICE_URL is it the Host (ourself) url  http://
-=======
-         * the local network of the ENEXA service. * experiment’s meta data.
-         * ENEXA_EXPERIMENT_IRI StartContainerModel.experiment ENEXA_META_DATA_ENDPOINT
-         * metadataManager.getMetadataEndpointInfo() ENEXA_META_DATA_GRAPH //
-         * ENEXA_MODULE_IRI instanceIri ENEXA_SHARED_DIRECTORY /enexa/ HARDCODED we
-         * should tell the container manager this is default mounting
-         * ENEXA_WRITEABLE_DIRECTORY // for demo is same ENEXA_SERVICE_URL is it the
-         * Host (ourself) url http://
-         *
->>>>>>> b9a70ad0593055db5344141ecf9fa3a9eabcaf8b
          */
+
 
         List<AbstractMap.SimpleEntry<String, String>> variables = new ArrayList<>();
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_EXPERIMENT_IRI", scModel.getExperiment()));
