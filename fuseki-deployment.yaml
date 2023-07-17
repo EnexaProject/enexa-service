@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.26.0 (40646f47)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: fuseki
+  name: fuseki
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: fuseki
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.26.0 (40646f47)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: fuseki
+    spec:
+      containers:
+        - image: atomgraph/fuseki:4.6.1
+          name: fuseki
+          ports:
+            - containerPort: 3030
+          resources: {}
+      restartPolicy: Always
+status: {}

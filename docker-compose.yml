@@ -1,0 +1,16 @@
+version: "2"
+
+services:
+
+  fuseki:
+    image: atomgraph/fuseki:4.6.1
+    ports:
+      - "3030:3030"
+
+  enexa-service:
+    image: enexa-service
+    environment:
+      - ENEXA_SERVICE_URL=http://enexa-service:8080
+      - ENEXA_SHARED_DIRECTORY=/enexa
+    ports:
+      - "8080:8081"

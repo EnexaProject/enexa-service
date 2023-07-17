@@ -39,7 +39,7 @@ public class EnexaServiceImpl implements EnexaService {
         String experimentIRI = metadataManager.generateResourceIRI();
 
         //2.	Create shared directory
-        String sharedDirPath = System.getenv("sharedDirectory");
+        String sharedDirPath = System.getenv("ENEXA_SHARED_DIRECTORY");
         if (sharedDirPath.endsWith(File.separator)) {
             sharedDirPath = sharedDirPath.substring(0, sharedDirPath.length() - 1);
         }
