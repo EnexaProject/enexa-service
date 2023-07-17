@@ -162,7 +162,6 @@ public class ExampleApplication implements AutoCloseable {
 
     public void finishExperiment() {
         // TODO Auto-generated method stub
-
     }
 
     protected Model requestRDF(String url, Model data) {
@@ -234,8 +233,10 @@ public class ExampleApplication implements AutoCloseable {
                 QuerySolution qs = rs.next();
                 resultFileIri = qs.getResource("fileIri").getURI();
                 resultFileLocation = qs.getLiteral("fileLocation").getString();
+                LOGGER.info("Result file {} located at {}.", resultFileIri, resultFileLocation);
+            } else {
+                LOGGER.error("Couldn't get the expected result file from the meta data endpoint.");
             }
-            LOGGER.info("Result file {} located at {}.", resultFileIri, resultFileLocation);
         }
     }
 
