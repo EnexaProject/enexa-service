@@ -35,11 +35,13 @@ public class ContainerManagerImpl implements ContainerManager {
     public String startContainer(String image, String podName, List<AbstractMap.SimpleEntry<String,String>> variables) {
 
         List<V1EnvVar> env = new ArrayList<>();
-        for (Map.Entry<String, String> entry: variables) {
-            V1EnvVar v1env = new V1EnvVar();
-            v1env.setName(entry.getKey());
-            v1env.setValue(entry.getValue());
-            env.add(v1env);
+        if(variables!=null) {
+            for (Map.Entry<String, String> entry : variables) {
+                V1EnvVar v1env = new V1EnvVar();
+                v1env.setName(entry.getKey());
+                v1env.setValue(entry.getValue());
+                env.add(v1env);
+            }
         }
 
         //TODO : maybe need change container name "b" to variable
