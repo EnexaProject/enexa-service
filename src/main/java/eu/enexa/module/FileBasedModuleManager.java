@@ -42,7 +42,7 @@ public class FileBasedModuleManager implements ModuleManager {
             File enexaModuleDirectory = new File(path);
             if (!enexaModuleDirectory.exists()) {
                 LOGGER.error(enexaModuleDirectory.getAbsolutePath() + " is not exist");
-                throw new IOException(path + " is not exist");
+                //throw new IOException(path + " is not exist");
             } else {
                 LOGGER.info(enexaModuleDirectory.getAbsolutePath() + " exist");
                 addFileOrDirectory(enexaModuleDirectory);

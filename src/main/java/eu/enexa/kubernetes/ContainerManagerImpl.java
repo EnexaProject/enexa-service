@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import io.kubernetes.client.openapi.models.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -17,12 +18,6 @@ import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.Configuration;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
-import io.kubernetes.client.openapi.models.V1Container;
-import io.kubernetes.client.openapi.models.V1EnvVar;
-import io.kubernetes.client.openapi.models.V1ObjectMeta;
-import io.kubernetes.client.openapi.models.V1Pod;
-import io.kubernetes.client.openapi.models.V1PodList;
-import io.kubernetes.client.openapi.models.V1PodSpec;
 import io.kubernetes.client.util.Config;
 import io.kubernetes.client.util.generic.GenericKubernetesApi;
 
@@ -55,9 +50,51 @@ public class ContainerManagerImpl implements ContainerManager {
             }
         }
 
+/*        // Create a shared volume
+        V1Volume sharedVolume = new V1Volume();
+        sharedVolume.setName("shared-volume");
+
+        // Define the shared volume source
+        V1EmptyDirVolumeSource emptyDirVolumeSource = new V1EmptyDirVolumeSource();
+        sharedVolume.setEmptyDir(emptyDirVolumeSource);*/
+
+        // Create a VolumeClaim
+        V1PersistentVolumeClaimVolumeSource persistentVolumeClaim = new V1PersistentVolumeClaimVolumeSource();
+        persistentVolumeClaim.setClaimName("enexa-shared-dir-claim");
+
+        V1Volume volume = new V1Volume();
+        volume.setName("enexa-volume");
+        volume.setPersistentVolumeClaim(persistentVolumeClaim);
+
+        // Create a container and set the volume mount
+        V1Container container = new V1Container();
+        container.setName("b");
+        container.setImage("your-image");
+
+        V1VolumeMount volumeMount = new V1VolumeMount();
+        volumeMount.setName("enexa-volume");
+        volumeMount.setMountPath("/enexa");
+        container.setVolumeMounts(Arrays.asList(volumeMount));
+
+
+        // Create a PodSpec and add the shared volume and container
+        V1PodSpec podSpec = new V1PodSpec();
+        podSpec.restartPolicy("Never");
+        //podSpec.setVolumes(Arrays.asList(sharedVolume));
+        podSpec.setVolumes(Arrays.asList(volume));
+        podSpec.setContainers(Arrays.asList(container));
+
+        // Create a Pod with the PodSpec
+        V1Pod pod = new V1Pod();
+        pod.setMetadata(new V1ObjectMeta().name(podName).namespace("default"));
+        pod.setSpec(podSpec);
+
+
         // TODO : maybe need change container name "b" to variable
-        V1Pod pod = new V1Pod().metadata(new V1ObjectMeta().name(podName).namespace("default")).spec(new V1PodSpec()
-                .restartPolicy("Never").containers(Arrays.asList(new V1Container().name("b").image(image).env(env))));
+        /*V1Pod pod = new V1Pod().metadata(new V1ObjectMeta().name(podName).namespace("default")).spec(new V1PodSpec()
+                .restartPolicy("Never")
+            .containers(Arrays.asList(new V1Container().name("b").image(image).env(env).setVolumeMounts(Arrays.asList(volumeMount)))));*/
+
 //        V1Pod pod = new V1Pod().metadata(new V1ObjectMeta().name(podName).namespace("default")).spec(new V1PodSpec()
 //                .restartPolicy("Never").containers(Arrays.asList(new V1Container().name("b").image(image).env(env).addCommandItem("sleep").addCommandItem("20"))));
 
