@@ -41,6 +41,7 @@ public class EnexaController {
         if (request == null) {
             return new ResponseEntity<String>("Couldn't read provided RDF model.", HttpStatus.BAD_REQUEST);
         }
+        //TODO : should all of these be null ?
         // Get RDF model from service as result of operation
         Model model = enexa.addResource(null, null, null);
         // serialize the model as JSON-LD
@@ -116,8 +117,10 @@ public class EnexaController {
          */
 
         Model model = enexa.startExperiment(); // Get RDF model from service as result of operation
-        String content = null; // serialize the model as JSON-LD
-        return new ResponseEntity<String>(content, HttpStatus.OK);
+         // serialize the model as JSON-LD
+        StringWriter writer = new StringWriter();
+        model.write(writer, "JSON-LD");
+        return new ResponseEntity<String>(writer.toString(), HttpStatus.OK);
     }
 
     @PostMapping("stop-container")
