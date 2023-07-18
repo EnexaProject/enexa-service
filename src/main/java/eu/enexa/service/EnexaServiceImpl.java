@@ -173,8 +173,13 @@ public class EnexaServiceImpl implements EnexaService {
 
     @Override
     public Model stopContainer(String experimentIri, String containerIri) {
-        // TODO Auto-generated method stub
-        return null;
+        Model model = ModelFactory.createDefaultModel();
+        //finishes the experiment with the given IRI by stopping all its remaining containers.
+
+        //list of all containers
+        // TODO : read from meta data or use labels ( we use meta data for now) get module instance from it and also module instance lead to container name
+        //updates and stores the meta data of the experiment in the shared directory
+        return model;
     }
 
     @Override

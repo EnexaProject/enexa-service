@@ -4,8 +4,10 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
+import eu.enexa.vocab.ENEXA;
+import eu.enexa.vocab.HOBBIT;
+import org.apache.jena.rdf.model.*;
+import org.dice_research.rdf.RdfHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -123,16 +125,48 @@ public class EnexaController {
         return new ResponseEntity<String>(writer.toString(), HttpStatus.OK);
     }
 
+    // This method finishes the experiment with the given IRI by stopping all its remaining containers.
     @PostMapping("stop-container")
-    public ResponseEntity<String> stopContainer() {
+    public ResponseEntity<String> stopContainer(@RequestBody String body) {
         /*
          * Errors · HTTP 400: o Experiment IRI is not known / not available. o The image
          * does not exist or cannot be found. · HTTP 500: o An error occurs while
          * communicating with the Kubernetes service.
          */
-        Model model = null; // Get RDF model from service as result of operation
-        String content = null; // serialize the model as JSON-LD
-        return new ResponseEntity<String>(content, HttpStatus.OK);
+
+        Model model = ModelFactory.createDefaultModel();
+        model.read(new StringReader(body), "", "JSON-LD");
+
+        StmtIterator iterator = model.listStatements(null, HOBBIT.instanceOf, (RDFNode) null);
+        if (!iterator.hasNext()) {
+            throw new IllegalArgumentException("Couldn't find a module instance in the provided RDF model.");
+        }
+
+        Statement s = iterator.next();
+        // If there is more than one hobbit:instanceOf triple
+        if (iterator.hasNext()) {
+            LOGGER.warn("Found multiple module instanceOf definitions. They will be ignored. Model dump: "
+                + model.toString());
+        }
+
+        // Get the instance representation
+        Resource instance = s.getSubject();
+        if (!s.getObject().isURIResource()) {
+            throw new IllegalArgumentException("Got a module without an IRI.");
+        }
+
+        // Get the experiment IRI
+        Resource experimentResource = RdfHelper.getObjectResource(model, instance, ENEXA.experiment);
+        if ((experimentResource == null) || !experimentResource.isURIResource()) {
+            throw new IllegalArgumentException("Got a Request without an experiment IRI.");
+        }
+
+        // Get RDF model from service as result of operation
+        Model stopModel = enexa.stopContainer(experimentResource.getURI(), null);
+
+        StringWriter writer = new StringWriter();
+        stopModel.write(writer, "JSON-LD");
+        return new ResponseEntity<String>(writer.toString(), HttpStatus.OK);
     }
 
     protected String writeModel(Model model, String language) {

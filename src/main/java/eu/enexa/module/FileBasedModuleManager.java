@@ -30,11 +30,27 @@ public class FileBasedModuleManager implements ModuleManager {
     private boolean throwIfMissingInformation = true;
     private Map<String, ModuleModel> modules;
 
-    public FileBasedModuleManager() {
-        // TODO : fill the map , do we need read it from file and write it after change
-        // ?
+    public FileBasedModuleManager() throws IOException {
         this.modules = new HashMap<>();
+        // read the directory path from ENEXA_MODULE_DIRECTORY
+        String path = System.getenv("ENEXA_MODULE_DIRECTORY");
+
+        if(path == null){
+            LOGGER.error("ENEXA_MODULE_DIRECTORY is null");
+            LOGGER.warn(" no modules read");
+        }else {
+            File enexaModuleDirectory = new File(path);
+            if (!enexaModuleDirectory.exists()) {
+                LOGGER.error(enexaModuleDirectory.getAbsolutePath() + " is not exist");
+                throw new IOException(path + " is not exist");
+            } else {
+                LOGGER.info(enexaModuleDirectory.getAbsolutePath() + " exist");
+                addFileOrDirectory(enexaModuleDirectory);
+                LOGGER.info("modules size is : "+ modules.size());
+            }
+        }
     }
+
 
     @Override
     public ModuleModel deriveModule(String moduleIri, String moduleUrl) {
