@@ -12,5 +12,9 @@ services:
     environment:
       - ENEXA_SERVICE_URL=http://enexa-service:8080
       - ENEXA_SHARED_DIRECTORY=/enexa
+      - ENEXA_MODULE_DIRECTORY=/modules
     ports:
       - "8080:8081"
+    volumes:
+      - /home/micha/data/enexa/shared:/enexa
+      - /home/micha/data/enexa/modules:/modules

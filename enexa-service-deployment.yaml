@@ -13,7 +13,8 @@ spec:
   selector:
     matchLabels:
       io.kompose.service: enexa-service
-  strategy: {}
+  strategy:
+    type: Recreate
   template:
     metadata:
       annotations:
@@ -25,6 +26,8 @@ spec:
     spec:
       containers:
         - env:
+            - name: ENEXA_MODULE_DIRECTORY
+              value: /modules
             - name: ENEXA_SERVICE_URL
               value: http://enexa-service:8080
             - name: ENEXA_SHARED_DIRECTORY
@@ -34,5 +37,12 @@ spec:
           ports:
             - containerPort: 8081
           resources: {}
+          volumeMounts:
+            - mountPath: /enexa
+              name: enexa-shared-dir-claim
       restartPolicy: Always
+      volumes:
+        - name: enexa-shared-dir-claim
+          persistentVolumeClaim:
+            claimName: enexa-shared-dir-claim
 status: {}
