@@ -5,6 +5,7 @@ import javax.annotation.Nullable;
 
 import org.apache.jena.rdf.model.*;
 
+import org.dice_research.rdf.ModelHelper;
 import org.dice_research.rdf.RdfHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -162,25 +163,7 @@ public class StartContainerModel {
         // new resource
         Resource updatedInstanceIri = ResourceFactory.createResource(instanceIri);
 
-        // get all triples with oldInstanceIRI
-        StmtIterator oldInstanceIRIIterator = model.listStatements(oldInstanceIRI,(Property) null, (RDFNode) null);
-        List<Statement> toRemove = new ArrayList<>();
-        while(oldInstanceIRIIterator.hasNext()){
-            // add old one ti list for removing
-            Statement oldStatement = oldInstanceIRIIterator.next();
-            Property predicate = oldStatement.getPredicate();
-            RDFNode object = oldStatement.getObject();
-            toRemove.add(oldStatement);
-
-            //add new one
-            Statement newstatement  = model.createStatement(updatedInstanceIri, predicate, object);
-            model.add(newstatement);
-        }
-
-        // remove the old statements
-        for (Statement statement:toRemove) {
-            statement.remove();
-        }
+        ModelHelper.replaceResource(this.model, oldInstanceIRI, updatedInstanceIri);
 
         this.instance = updatedInstanceIri;
     }
