@@ -1,5 +1,6 @@
 package eu.enexa.sparql;
 
+import java.net.http.HttpClient;
 import java.util.UUID;
 
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryHttp;
@@ -11,6 +12,7 @@ import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.update.UpdateProcessor;
 import org.dice_research.sparql.SparqlQueryUtils;
 import org.slf4j.Logger;
@@ -65,9 +67,12 @@ public class SparqlBasedMetadataManager implements MetadataManager, AutoCloseabl
         this.defaultMetaDataGraphIRI = defaultMetaDataGraphIRI;
         this.resourceNamespace = resourceNamespace;
 
-        queryExecFactory = new QueryExecutionFactoryHttp(sparqlEndpointUrl, defaultMetaDataGraphIRI);
+        HttpClient client = HttpClient.newHttpClient();
+        DatasetDescription desc = new DatasetDescription();
+        desc.addNamedGraphURI(defaultMetaDataGraphIRI);
+        queryExecFactory = new QueryExecutionFactoryHttp(sparqlEndpointUrl, desc, client);
         queryExecFactory = new QueryExecutionFactoryPaginated(queryExecFactory, DEFAULT_MAX_RESULT);
-        updateExecFactory = new UpdateExecutionFactoryHttp(sparqlEndpointUrl);
+        updateExecFactory = new UpdateExecutionFactoryHttp(sparqlEndpointUrl, client);
     }
 
     @Override
