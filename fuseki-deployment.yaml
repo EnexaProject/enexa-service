@@ -24,8 +24,13 @@ spec:
         io.kompose.service: fuseki
     spec:
       containers:
-        - image: atomgraph/fuseki:4.6.1
+        - image: stain/jena-fuseki:4.8.0
           name: fuseki
+          env:
+            - name: ADMIN_PASSWORD
+              value: pw123
+            - name: FUSEKI_DATASET_1
+              value: enexa
           ports:
             - containerPort: 3030
           resources: {}

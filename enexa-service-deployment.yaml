@@ -25,24 +25,41 @@ spec:
         io.kompose.service: enexa-service
     spec:
       containers:
-        - env:
+        - name: enexa-service
+          imagePullPolicy: IfNotPresent
+          image: enexa-service:0.0.1
+          env:
             - name: ENEXA_MODULE_DIRECTORY
               value: /modules
             - name: ENEXA_SERVICE_URL
               value: http://enexa-service:8080
             - name: ENEXA_SHARED_DIRECTORY
               value: /enexa
-          image: enexa-service
-          name: enexa-service
+            - name: ENEXA_SHARED_VOLUME
+              value: enexa-shared-dir-claim
+            - name: ENEXA_META_DATA_ENDPOINT
+              value: http://localhost:3030/enexa/
+            - name: ENEXA_META_DATA_GRAPH
+              value: http://example.org/meta-data
+            - name: ENEXA_RESOURCE_NAMESPACE
+              value: http://example.org/resource/
           ports:
-            - containerPort: 8081
+            - containerPort: 8080
           resources: {}
           volumeMounts:
             - mountPath: /enexa
               name: enexa-shared-dir-claim
+            - mountPath: /modules
+              name: enexa-module-dir
       restartPolicy: Always
       volumes:
         - name: enexa-shared-dir-claim
           persistentVolumeClaim:
             claimName: enexa-shared-dir-claim
+        - name: enexa-module-dir
+          hostPath:
+            # directory location on host
+            path: /home/micha/data/enexa/modules
+            # this field is optional
+            type: DirectoryOrCreate
 status: {}

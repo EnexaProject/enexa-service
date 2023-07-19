@@ -15,6 +15,7 @@ import org.apache.jena.update.UpdateProcessor;
 import org.dice_research.sparql.SparqlQueryUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import eu.enexa.service.MetadataManager;
@@ -53,15 +54,13 @@ public class SparqlBasedMetadataManager implements MetadataManager, AutoCloseabl
      */
     private UpdateExecutionFactory updateExecFactory = null;
 
-    public SparqlBasedMetadataManager() {
-    }
+//    public SparqlBasedMetadataManager(@Value("${ENEXA_META_DATA_ENDPOINT}") String sparqlEndpointUrl) {
+//        this(sparqlEndpointUrl, DEFAULT_META_DATA_GRAPH_IRI, DEFAULT_RESOURCE_NAMESPACE);
+//    }
 
-    public SparqlBasedMetadataManager(String sparqlEndpointUrl) {
-        this(sparqlEndpointUrl, DEFAULT_META_DATA_GRAPH_IRI, DEFAULT_RESOURCE_NAMESPACE);
-    }
-
-    public SparqlBasedMetadataManager(String sparqlEndpointUrl, String defaultMetaDataGraphIRI,
-            String resourceNamespace) {
+    public SparqlBasedMetadataManager(@Value("${ENEXA_META_DATA_ENDPOINT}") String sparqlEndpointUrl,
+            @Value("${ENEXA_META_DATA_GRAPH}") String defaultMetaDataGraphIRI,
+            @Value("${ENEXA_RESOURCE_NAMESPACE}") String resourceNamespace) {
         this.sparqlEndpointUrl = sparqlEndpointUrl;
         this.defaultMetaDataGraphIRI = defaultMetaDataGraphIRI;
         this.resourceNamespace = resourceNamespace;

@@ -39,6 +39,11 @@ public class ContainerManagerImpl implements ContainerManager {
     @Override
     public String startContainer(String image, String podName,
             List<AbstractMap.SimpleEntry<String, String>> variables) {
+        return startContainer(image, podName, variables, null);
+    }
+
+    public String startContainer(String image, String podName, List<AbstractMap.SimpleEntry<String, String>> variables,
+            String[] command) {
 
         List<V1EnvVar> env = new ArrayList<>();
         if (variables != null) {
@@ -50,13 +55,14 @@ public class ContainerManagerImpl implements ContainerManager {
             }
         }
 
-/*        // Create a shared volume
-        V1Volume sharedVolume = new V1Volume();
-        sharedVolume.setName("shared-volume");
-
-        // Define the shared volume source
-        V1EmptyDirVolumeSource emptyDirVolumeSource = new V1EmptyDirVolumeSource();
-        sharedVolume.setEmptyDir(emptyDirVolumeSource);*/
+        /*
+         * // Create a shared volume V1Volume sharedVolume = new V1Volume();
+         * sharedVolume.setName("shared-volume");
+         * 
+         * // Define the shared volume source V1EmptyDirVolumeSource
+         * emptyDirVolumeSource = new V1EmptyDirVolumeSource();
+         * sharedVolume.setEmptyDir(emptyDirVolumeSource);
+         */
 
         // Create a VolumeClaim
         V1PersistentVolumeClaimVolumeSource persistentVolumeClaim = new V1PersistentVolumeClaimVolumeSource();
@@ -69,18 +75,22 @@ public class ContainerManagerImpl implements ContainerManager {
         // Create a container and set the volume mount
         V1Container container = new V1Container();
         container.setName("b");
-        container.setImage("your-image");
+        container.setImage(image);
+        if (command != null) {
+            for (int i = 0; i < command.length; ++i) {
+                container.addCommandItem(command[i]);
+            }
+        }
 
         V1VolumeMount volumeMount = new V1VolumeMount();
         volumeMount.setName("enexa-volume");
         volumeMount.setMountPath("/enexa");
         container.setVolumeMounts(Arrays.asList(volumeMount));
 
-
         // Create a PodSpec and add the shared volume and container
         V1PodSpec podSpec = new V1PodSpec();
         podSpec.restartPolicy("Never");
-        //podSpec.setVolumes(Arrays.asList(sharedVolume));
+        // podSpec.setVolumes(Arrays.asList(sharedVolume));
         podSpec.setVolumes(Arrays.asList(volume));
         podSpec.setContainers(Arrays.asList(container));
 
@@ -89,11 +99,14 @@ public class ContainerManagerImpl implements ContainerManager {
         pod.setMetadata(new V1ObjectMeta().name(podName).namespace("default"));
         pod.setSpec(podSpec);
 
-
         // TODO : maybe need change container name "b" to variable
-        /*V1Pod pod = new V1Pod().metadata(new V1ObjectMeta().name(podName).namespace("default")).spec(new V1PodSpec()
-                .restartPolicy("Never")
-            .containers(Arrays.asList(new V1Container().name("b").image(image).env(env).setVolumeMounts(Arrays.asList(volumeMount)))));*/
+        /*
+         * V1Pod pod = new V1Pod().metadata(new
+         * V1ObjectMeta().name(podName).namespace("default")).spec(new V1PodSpec()
+         * .restartPolicy("Never") .containers(Arrays.asList(new
+         * V1Container().name("b").image(image).env(env).setVolumeMounts(Arrays.asList(
+         * volumeMount)))));
+         */
 
 //        V1Pod pod = new V1Pod().metadata(new V1ObjectMeta().name(podName).namespace("default")).spec(new V1PodSpec()
 //                .restartPolicy("Never").containers(Arrays.asList(new V1Container().name("b").image(image).env(env).addCommandItem("sleep").addCommandItem("20"))));
@@ -143,7 +156,8 @@ public class ContainerManagerImpl implements ContainerManager {
 
     public static void main(String[] args) throws Exception {
         ContainerManagerImpl manager = ContainerManagerImpl.create();
-        String containerId = manager.startContainer("busybox", "test" + UUID.randomUUID().toString(), null);
+        String containerId = manager.startContainer("busybox", "test" + UUID.randomUUID().toString(), null,
+                new String[] { "sleep", "10000" });
         System.out.println(containerId);
 
         String status = null;
