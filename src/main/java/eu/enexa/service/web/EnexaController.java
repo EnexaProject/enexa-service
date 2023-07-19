@@ -45,7 +45,7 @@ public class EnexaController {
         }
         //TODO : should all of these be null ?
         // Get RDF model from service as result of operation
-        Model model = enexa.addResource(null, null, null);
+        Model model = enexa.addResource(request);
         // serialize the model as JSON-LD
         String content = writeModel(model, "JSON-LD");
         if (content == null) {
