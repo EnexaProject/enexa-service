@@ -28,10 +28,9 @@ public class FileBasedModuleManager implements ModuleManager {
 
     private boolean throwIfFileUnknown = true;
     private boolean throwIfMissingInformation = true;
-    private Map<String, ModuleModel> modules;
+    private Map<String, ModuleModel> modules = new HashMap<>();
 
     public FileBasedModuleManager() throws IOException {
-        this.modules = new HashMap<>();
         // read the directory path from ENEXA_MODULE_DIRECTORY
         String path = System.getenv("ENEXA_MODULE_DIRECTORY");
 
