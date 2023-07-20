@@ -67,7 +67,15 @@ public class EnexaServiceImpl implements EnexaService {
     }
 
     @Override
-    public Model startContainer(StartContainerModel scModel) {
+    public Model startContainer(StartContainerModel scModel) throws RuntimeException {
+    	
+    	// TODO: establish exception package and move the exception to this place
+    	class ModuleNotFoundException extends RuntimeException {
+    		public ModuleNotFoundException() {
+				super("Module with ID " + scModel.getModuleIri().toString() + " not found.");
+			}
+    	}
+    	
         /*
          * 1. Derive meta data for the module that should be started a. The module IRI
          * is looked up in a local repository (e.g., in a set of files) or, b. The
@@ -78,6 +86,11 @@ public class EnexaServiceImpl implements EnexaService {
          * publication date) is used.
          */
         ModuleModel module = moduleManager.deriveModule(scModel.getModuleIri(), scModel.getModuleUrl());
+        
+        if (module == null) {
+			throw new ModuleNotFoundException();
+		}
+        
         /*
          * 2. Create a resource for the new module instance in the meta data graph. Add
          * the parameters and their values.
