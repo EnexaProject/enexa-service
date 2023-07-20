@@ -94,7 +94,7 @@ public class ExampleApplication implements AutoCloseable {
     public void addKGFile(String kgFile) throws Exception {
         String metaFilePath = kgFile;
         // Move file if it is not located in the shared directory
-        if (!metaFilePath.startsWith(metaFilePath)) {
+        if (!metaFilePath.startsWith(appPath)) {
             File kgf = new File(kgFile);
             File dest = new File(appPath + File.separator + kgf.getName());
             try {

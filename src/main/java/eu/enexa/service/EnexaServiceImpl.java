@@ -35,25 +35,25 @@ public class EnexaServiceImpl implements EnexaService {
 
     @Override
     public Model startExperiment() {
-        //1.	Generate experiment IRI and create its meta data
+        Model model = ModelFactory.createDefaultModel();
+        // 1. Generate experiment IRI and create its meta data
         String experimentIRI = metadataManager.generateResourceIRI();
+        Resource experiment = model.createResource(experimentIRI);
 
-        //2.	Create shared directory
+        // 2. Create shared directory
         String sharedDirPath = System.getenv("ENEXA_SHARED_DIRECTORY");
         if (sharedDirPath.endsWith(File.separator)) {
             sharedDirPath = sharedDirPath.substring(0, sharedDirPath.length() - 1);
         }
-        sharedDirPath = sharedDirPath +File.separator+"ex"+experimentIRI;
+        sharedDirPath = sharedDirPath + File.separator + experiment.getLocalName();
+        // TODO create directory
 
-        //3.	Start default containers
-        //TODO : implement this
+        // 3. Start default containers
+        // TODO : implement this
 
-        //4.	Update experiment meta data with data from steps 2 and 3
-        Model model = ModelFactory.createDefaultModel();
-
-        Resource instance = model.createResource(experimentIRI);
-        model.add(instance, RDF.type, ENEXA.Experiment);
-        model.add(instance, ENEXA.sharedDirectory, model.createResource(sharedDirPath));
+        // 4. Update experiment meta data with data from steps 2 and 3
+        model.add(experiment, RDF.type, ENEXA.Experiment);
+        model.add(experiment, ENEXA.sharedDirectory, sharedDirPath);
 
         metadataManager.addMetaData(model);
 
@@ -88,17 +88,14 @@ public class EnexaServiceImpl implements EnexaService {
 
         /*
          * 3. Start the image a. with the ENEXA environmental variables b. as part of
-         * the local network of the ENEXA service.
-         * * experiment’s meta data.
-         * ENEXA_EXPERIMENT_IRI StartContainerModel.experiment
-           ENEXA_META_DATA_ENDPOINT metadataManager.getMetadataEndpointInfo()
-           ENEXA_META_DATA_GRAPH //
-           ENEXA_MODULE_IRI instanceIri
-           ENEXA_SHARED_DIRECTORY  /enexa/ HARDCODED we should tell the container manager this is default mounting
-           ENEXA_WRITEABLE_DIRECTORY  // for demo is same
-           ENEXA_SERVICE_URL is it the Host (ourself) url  http://
+         * the local network of the ENEXA service. * experiment’s meta data.
+         * ENEXA_EXPERIMENT_IRI StartContainerModel.experiment ENEXA_META_DATA_ENDPOINT
+         * metadataManager.getMetadataEndpointInfo() ENEXA_META_DATA_GRAPH //
+         * ENEXA_MODULE_IRI instanceIri ENEXA_SHARED_DIRECTORY /enexa/ HARDCODED we
+         * should tell the container manager this is default mounting
+         * ENEXA_WRITEABLE_DIRECTORY // for demo is same ENEXA_SERVICE_URL is it the
+         * Host (ourself) url http://
          */
-
 
         List<AbstractMap.SimpleEntry<String, String>> variables = new ArrayList<>();
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_EXPERIMENT_IRI", scModel.getExperiment()));
@@ -111,10 +108,10 @@ public class EnexaServiceImpl implements EnexaService {
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SHARED_DIRECTORY", "/enexa/"));
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_WRITEABLE_DIRECTORY", "/enexa/"));
 
-        //TODO: update this
-        if(System.getenv("ENEXA_SERVICE_URL").equals("")){
+        // TODO: update this
+        if (System.getenv("ENEXA_SERVICE_URL").equals("")) {
             LOGGER.error("ENEXA_SERVICE_URL environment is null");
-        }else{
+        } else {
             LOGGER.info("ENEXA_SERVICE_URL is : " + System.getenv("ENEXA_SERVICE_URL"));
         }
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SERVICE_URL", System.getenv("ENEXA_SERVICE_URL")));
@@ -174,11 +171,13 @@ public class EnexaServiceImpl implements EnexaService {
     @Override
     public Model stopContainer(String experimentIri, String containerIri) {
         Model model = ModelFactory.createDefaultModel();
-        //finishes the experiment with the given IRI by stopping all its remaining containers.
+        // finishes the experiment with the given IRI by stopping all its remaining
+        // containers.
 
-        //list of all containers
-        // TODO : read from meta data or use labels ( we use meta data for now) get module instance from it and also module instance lead to container name
-        //updates and stores the meta data of the experiment in the shared directory
+        // list of all containers
+        // TODO : read from meta data or use labels ( we use meta data for now) get
+        // module instance from it and also module instance lead to container name
+        // updates and stores the meta data of the experiment in the shared directory
         return model;
     }
 

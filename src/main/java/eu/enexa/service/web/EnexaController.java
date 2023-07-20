@@ -7,6 +7,7 @@ import java.io.StringWriter;
 import eu.enexa.vocab.ENEXA;
 import eu.enexa.vocab.HOBBIT;
 import org.apache.jena.rdf.model.*;
+import org.apache.jena.vocabulary.RDF;
 import org.dice_research.rdf.RdfHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,13 +44,13 @@ public class EnexaController {
         if (request == null) {
             return new ResponseEntity<String>("Couldn't read provided RDF model.", HttpStatus.BAD_REQUEST);
         }
-        //TODO : should all of these be null ?
+        // TODO : should all of these be null ?
         // Get RDF model from service as result of operation
         Model model = enexa.addResource(request);
         // serialize the model as JSON-LD
         String content = writeModel(model, "JSON-LD");
         if (content == null) {
-            return new ResponseEntity<String>("Couldn't serialilze result model.", HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<String>("Couldn't serialize result model.", HttpStatus.INTERNAL_SERVER_ERROR);
         } else {
             return new ResponseEntity<String>(content, HttpStatus.OK);
         }
@@ -77,6 +78,34 @@ public class EnexaController {
         Model model = null; // Get RDF model from service as result of operation
         String content = null; // serialize the model as JSON-LD
         return new ResponseEntity<String>(content, HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/container-status", produces = { "application/json",
+            "application/ld+json" }, method = RequestMethod.GET)
+    public ResponseEntity<String> containerStatusJsonLD(@RequestBody String body) {
+        /*
+         * Errors · HTTP 400: o Experiment IRI is not known / not available. o The
+         * resource URL does not exist or cannot be downloaded. · HTTP 500: o An error
+         * occurs while adding the resource.
+         */
+        Model request = readModel(body, "JSON-LD");
+        if (request == null) {
+            return new ResponseEntity<String>("Couldn't read provided RDF model.", HttpStatus.BAD_REQUEST);
+        }
+        // TODO : should all of these be null ?
+        // Get RDF model from service as result of operation
+        Resource moduleInstance = RdfHelper.getSubjectResource(request, RDF.type, ENEXA.ModuleInstance);
+        // TODO handle error
+        RDFNode experiment = RdfHelper.getObjectResource(request, moduleInstance, ENEXA.experiment);
+     // TODO handle error
+        Model model = enexa.containerStatus(experiment.asResource().getURI(), moduleInstance.getURI());
+        // serialize the model as JSON-LD
+        String content = writeModel(model, "JSON-LD");
+        if (content == null) {
+            return new ResponseEntity<String>("Couldn't serialize result model.", HttpStatus.INTERNAL_SERVER_ERROR);
+        } else {
+            return new ResponseEntity<String>(content, HttpStatus.OK);
+        }
     }
 
     @PostMapping("finish-experiment")
@@ -119,13 +148,14 @@ public class EnexaController {
          */
 
         Model model = enexa.startExperiment(); // Get RDF model from service as result of operation
-         // serialize the model as JSON-LD
+        // serialize the model as JSON-LD
         StringWriter writer = new StringWriter();
         model.write(writer, "JSON-LD");
         return new ResponseEntity<String>(writer.toString(), HttpStatus.OK);
     }
 
-    // This method finishes the experiment with the given IRI by stopping all its remaining containers.
+    // This method finishes the experiment with the given IRI by stopping all its
+    // remaining containers.
     @PostMapping("stop-container")
     public ResponseEntity<String> stopContainer(@RequestBody String body) {
         /*
@@ -146,7 +176,7 @@ public class EnexaController {
         // If there is more than one hobbit:instanceOf triple
         if (iterator.hasNext()) {
             LOGGER.warn("Found multiple module instanceOf definitions. They will be ignored. Model dump: "
-                + model.toString());
+                    + model.toString());
         }
 
         // Get the instance representation
