@@ -21,7 +21,7 @@ import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.util.Config;
 import io.kubernetes.client.util.generic.GenericKubernetesApi;
 
-@Component
+@Component("kubernetesContainerManager")
 public class ContainerManagerImpl implements ContainerManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ContainerManagerImpl.class);
@@ -42,6 +42,7 @@ public class ContainerManagerImpl implements ContainerManager {
         return startContainer(image, podName, variables, null);
     }
 
+    // podName is the containerName for kubernetes
     public String startContainer(String image, String podName, List<AbstractMap.SimpleEntry<String, String>> variables,
             String[] command) {
 
@@ -58,7 +59,7 @@ public class ContainerManagerImpl implements ContainerManager {
         /*
          * // Create a shared volume V1Volume sharedVolume = new V1Volume();
          * sharedVolume.setName("shared-volume");
-         * 
+         *
          * // Define the shared volume source V1EmptyDirVolumeSource
          * emptyDirVolumeSource = new V1EmptyDirVolumeSource();
          * sharedVolume.setEmptyDir(emptyDirVolumeSource);
