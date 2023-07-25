@@ -42,7 +42,9 @@ public class ENEXA {
     }
 
     protected static final Resource resource(String local) {
-        return ResourceFactory.createResource(uri + local);
+            Resource tmp = ResourceFactory.createResource(uri + local);
+            return tmp;
+
     }
 
     protected static final Property property(String local) {

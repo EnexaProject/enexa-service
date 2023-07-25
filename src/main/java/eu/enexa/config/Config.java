@@ -5,9 +5,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 
-@Configuration
+//TODO use this config
+//@Configuration
 public class Config {
-    @Bean
+    //@Bean
     public ContainerManager getContainerManager() {
             return new eu.enexa.docker.ContainerManagerImpl();
     }

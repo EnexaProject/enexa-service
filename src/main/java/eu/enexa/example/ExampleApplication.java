@@ -7,13 +7,14 @@ import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jenax.arq.connection.core.QueryExecutionFactory;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.ContentType;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
@@ -172,7 +173,8 @@ public class ExampleApplication implements AutoCloseable {
             try (StringWriter writer = new StringWriter()) {
                 request.addHeader("Content-type", "application/ld+json");
                 data.write(writer, "JSON-LD");
-                request.setEntity(new StringEntity(writer.toString()));
+                //TODO update this base on library
+                //request.setEntity(StringEntity(writer.toString(), ContentType.TEXT_PLAIN));
             } catch (IOException e) {
                 LOGGER.error("Catched unexpected exception while adding data to the request. Returning null.", e);
                 return null;
@@ -180,9 +182,9 @@ public class ExampleApplication implements AutoCloseable {
         }
         Model model = null;
         try (CloseableHttpResponse httpResponse = client.execute(request)) {
-            if (httpResponse.getStatusLine().getStatusCode() >= 300) {
+            if (httpResponse.getCode() >= 300) {
                 throw new IllegalStateException(
-                        "Received HTTP response with code " + httpResponse.getStatusLine().getStatusCode());
+                        "Received HTTP response with code " + httpResponse.getCode());
             }
 
             try (InputStream is = httpResponse.getEntity().getContent()) {
