@@ -143,7 +143,7 @@ public class ContainerManagerImpl implements ContainerManager {
                 }
             }
         } catch (ApiException e) {
-            LOGGER.error("Got an exception while trying to get the satus of \"" + podName + "\". Returning null.", e);
+            LOGGER.error("Got an exception while trying to get the status of \"" + podName + "\". Returning null.", e);
             return null;
         }
         return null;
