@@ -1,6 +1,7 @@
 package eu.enexa.docker;
 
 import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
@@ -73,25 +74,44 @@ public class ContainerManagerImpl implements ContainerManager {
     }
 
     @Override
-    public String stopContainer(String podName) {
-        return null;
+    public String stopContainer(String containerId) {
+        try{
+            //TODO: we can remove the search part and stop just based on containerId
+            Container c = searchContainer(containerId);
+            if(c==null){
+                return null;
+            }
+            dockerClient.stopContainerCmd(c.getId()).exec();
+            return containerId;
+        }catch (DockerException e) {
+            return "Error stopping container with ID " + containerId + ": " + e.getMessage();
+        }
     }
 
     @Override
     public String getContainerStatus(String containerId) {
         try{
-            List<Container> containers = this.dockerClient.listContainersCmd()
-                .withShowAll(true)
-                .exec();
-            if(containers==null){return null;}
-            for (Container container : containers) {
-                if (container.getId().equals(containerId)) {
-                    return container.getState();
-                }
+            Container c = searchContainer(containerId);
+            if(c==null){
+                return null;
             }
+            return c.getState();
         } catch (Exception e) {
             LOGGER.error("Got an exception while trying to get the status of \"" + containerId + "\". Returning null.", e);
             return null;
+        }
+    }
+
+    private Container searchContainer(String containerId){
+        List<Container> containers = this.dockerClient.listContainersCmd()
+            .withShowAll(true)
+            .exec();
+        if(containers==null){return null;}
+        boolean containerExists = false;
+        for (Container container : containers) {
+            if (container.getId().equals(containerId)) {
+                return container;
+            }
         }
         return null;
     }

@@ -1,20 +1,17 @@
 package eu.enexa.example;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
-import org.aksw.jenax.arq.connection.core.QueryExecutionFactory;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
-import org.apache.hc.core5.http.ContentType;
-import org.apache.http.entity.StringEntity;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+
+import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
+import org.aksw.jenax.arq.connection.core.QueryExecutionFactory;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
@@ -72,7 +69,7 @@ public class ExampleApplication implements AutoCloseable {
         if (model == null) {
             throw new IOException("Couldn't create experiment.");
         }
-        Resource expResource = RdfHelper.getSubjectResource(model, RDF.type, ENEXA.experiment);
+        Resource expResource = RdfHelper.getSubjectResource(model, RDF.type, ENEXA.Experiment);
         if (expResource == null) {
             throw new Exception("Couldn't find experiment resource.");
         }
@@ -173,8 +170,7 @@ public class ExampleApplication implements AutoCloseable {
             try (StringWriter writer = new StringWriter()) {
                 request.addHeader("Content-type", "application/ld+json");
                 data.write(writer, "JSON-LD");
-                //TODO update this base on library
-                //request.setEntity(StringEntity(writer.toString(), ContentType.TEXT_PLAIN));
+                request.setEntity(new StringEntity(writer.toString()));
             } catch (IOException e) {
                 LOGGER.error("Catched unexpected exception while adding data to the request. Returning null.", e);
                 return null;

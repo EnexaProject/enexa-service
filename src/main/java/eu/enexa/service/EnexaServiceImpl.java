@@ -5,9 +5,7 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.*;
 import org.apache.jena.vocabulary.RDF;
 import org.dice_research.rdf.ModelHelper;
 import org.dice_research.rdf.RdfHelper;
@@ -45,15 +43,35 @@ public class EnexaServiceImpl implements EnexaService {
         if (sharedDirPath.endsWith(File.separator)) {
             sharedDirPath = sharedDirPath.substring(0, sharedDirPath.length() - 1);
         }
-        sharedDirPath = sharedDirPath + File.separator + experiment.getLocalName();
+        // do not use experiment.getLocalName() it will remove the first character !
+        sharedDirPath = sharedDirPath + File.separator + experiment.getURI();
         // TODO create directory
-
+        File theDir = new File(sharedDirPath);
+        if (!theDir.exists()){
+            theDir.mkdirs();
+        }
         // 3. Start default containers
         // TODO : implement this
 
         // 4. Update experiment meta data with data from steps 2 and 3
         model.add(experiment, RDF.type, ENEXA.Experiment);
         model.add(experiment, ENEXA.sharedDirectory, sharedDirPath);
+            /* The first String is the URL of the SPARQL endpoint while the second is the graph IRI in
+            * which the metadata of the experiment can be found.*/
+        String[] metaDataInfos = metadataManager.getMetadataEndpointInfo(experimentIRI);
+        if(metaDataInfos.length==0){
+            LOGGER.error("there is no data in metadata for this experiments: "+experimentIRI);
+        }else{
+            Property sparqlEndpoint = ResourceFactory.createProperty(metaDataInfos[0]);
+            model.add(experiment, ENEXA.metaDataEndpoint, sparqlEndpoint);
+
+            if(metaDataInfos.length>1){
+                // graphIRI
+                //TODO : check if ENEXA.metaDataGraph is correct
+                Property graphIRI = ResourceFactory.createProperty(metaDataInfos[1]);
+                model.add(experiment, ENEXA.metaDataGraph, graphIRI);
+            }
+        }
 
         metadataManager.addMetaData(model);
 
@@ -68,14 +86,14 @@ public class EnexaServiceImpl implements EnexaService {
 
     @Override
     public Model startContainer(StartContainerModel scModel) throws RuntimeException {
-    	
+
     	// TODO: establish exception package and move the exception to this place
     	class ModuleNotFoundException extends RuntimeException {
     		public ModuleNotFoundException() {
 				super("Module with ID " + scModel.getModuleIri().toString() + " not found.");
 			}
     	}
-    	
+
         /*
          * 1. Derive meta data for the module that should be started a. The module IRI
          * is looked up in a local repository (e.g., in a set of files) or, b. The
@@ -86,11 +104,11 @@ public class EnexaServiceImpl implements EnexaService {
          * publication date) is used.
          */
         ModuleModel module = moduleManager.deriveModule(scModel.getModuleIri(), scModel.getModuleUrl());
-        
+
         if (module == null) {
 			throw new ModuleNotFoundException();
 		}
-        
+
         /*
          * 2. Create a resource for the new module instance in the meta data graph. Add
          * the parameters and their values.
