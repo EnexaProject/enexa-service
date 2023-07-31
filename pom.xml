@@ -133,7 +133,8 @@
         <!-- slf4j: Logging Binding -->
         <dependency>
             <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
+            <!--<artifactId>slf4j-log4j12</artifactId>-->
+            <artifactId>slf4j-simple</artifactId>
         </dependency>
         <!-- ~~~~~~~~~~~~~~~~~~~ End Logging ~~~~~~~~~~~~~~~~~~~~~~ -->
         <!-- ~~~~~~~~~~~~~~~~~~~ Testing ~~~~~~~~~~~~~~~~~~~~~~ -->

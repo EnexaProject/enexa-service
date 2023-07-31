@@ -138,8 +138,8 @@ public class ExampleApplication implements AutoCloseable {
         instanceModel.add(instance, RDF.type, ENEXA.ModuleInstance);
         instanceModel.add(instance, ENEXA.experiment, instanceModel.createResource(experimentIRI));
         // TODO Add parameters
-        // instanceModel.add(instance, ENEXA.location,
-        // instanceModel.createLiteral(kgFileLocation));
+        instanceModel.add(instance, ENEXA.location,
+             instanceModel.createLiteral(kgFileLocation));
         // instanceModel.add(instance,
         // instanceModel.createProperty("http://www.w3.org/ns/dcat#mediaType"),
         // instanceModel.createResource("https://www.iana.org/assignments/media-types/text/turtle"));

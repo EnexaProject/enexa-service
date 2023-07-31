@@ -56,18 +56,18 @@ public class EnexaController {
         }
     }
 
-    @RequestMapping(value = "/add-resource", produces = { "application/xml",
+/*    @RequestMapping(value = "/add-resource", produces = { "application/xml",
             "application/ld+json" }, method = RequestMethod.POST)
     public ResponseEntity<String> addResourceXML() {
-        /*
+        *//*
          * Errors · HTTP 400: o Experiment IRI is not known / not available. o The
          * resource URL does not exist or cannot be downloaded. · HTTP 500: o An error
          * occurs while adding the resource.
-         */
+         *//*
         Model model = null; // Get RDF model from service as result of operation
         String content = null; // serialize the model as RDF/XML
         return new ResponseEntity<String>(content, HttpStatus.OK);
-    }
+    }*/
 
     @GetMapping("/container-status")
     public ResponseEntity<String> containerStatus(String experiment, String container) {
