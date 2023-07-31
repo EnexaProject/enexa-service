@@ -137,12 +137,16 @@ public class ExampleApplication implements AutoCloseable {
         Resource instance = instanceModel.createResource();
         instanceModel.add(instance, RDF.type, ENEXA.ModuleInstance);
         instanceModel.add(instance, ENEXA.experiment, instanceModel.createResource(experimentIRI));
-        // TODO Add parameters
-        instanceModel.add(instance, ENEXA.location,
-             instanceModel.createLiteral(kgFileLocation));
-        // instanceModel.add(instance,
-        // instanceModel.createProperty("http://www.w3.org/ns/dcat#mediaType"),
-        // instanceModel.createResource("https://www.iana.org/assignments/media-types/text/turtle"));
+        // Add parameters
+        instanceModel.add(instance, instanceModel.createProperty("http://example.org/dicee/parameters/model"),
+                instanceModel.createResource(kgFileIri));
+        instanceModel.add(instance,
+                instanceModel.createProperty("http://example.org/dicee/parameters/path_dataset_folder"),
+                instanceModel.createLiteral(kgFileLocation));
+        instanceModel.add(instance, instanceModel.createProperty("http://example.org/dicee/parameters/num_epochs"),
+                instanceModel.createTypedLiteral(10));
+        instanceModel.add(instance, instanceModel.createProperty("http://example.org/dicee/parameters/embedding_dim"),
+                instanceModel.createTypedLiteral(16));
 
         // Send the model
         Model response = requestRDF(enexaURL + "/start-container", instanceModel);
@@ -179,8 +183,7 @@ public class ExampleApplication implements AutoCloseable {
         Model model = null;
         try (CloseableHttpResponse httpResponse = client.execute(request)) {
             if (httpResponse.getCode() >= 300) {
-                throw new IllegalStateException(
-                        "Received HTTP response with code " + httpResponse.getCode());
+                throw new IllegalStateException("Received HTTP response with code " + httpResponse.getCode());
             }
 
             try (InputStream is = httpResponse.getEntity().getContent()) {
@@ -223,9 +226,7 @@ public class ExampleApplication implements AutoCloseable {
     private void queryFilePath() throws Exception {
         try (QueryExecutionFactory queryExecFactory = new QueryExecutionFactoryHttp(metaDataEndpoint, metaDataGraph)) {
             QueryExecution qe = queryExecFactory.createQueryExecution("SELECT ?fileIri ?fileLocation WHERE {" + "<"
-                    + instanceIRI + "> ex:result ?fileIri . "// TODO Add
-                                                             // resultIRI for
-                                                             // the file
+                    + instanceIRI + "> <http://example.org/dicee/parameters/model.pt> ?fileIri . "
                     + "?fileIri <http://w3id.org/dice-research/enexa/ontology#location> ?fileLocation . " + "}");
             ResultSet rs = qe.execSelect();
             if (rs.hasNext()) {
