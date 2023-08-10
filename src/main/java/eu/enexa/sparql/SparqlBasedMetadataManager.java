@@ -92,8 +92,11 @@ public class SparqlBasedMetadataManager implements MetadataManager, AutoCloseabl
             String[] queries = SparqlQueryUtils.getUpdateQueriesFromDiff(null, model, defaultMetaDataGraphIRI);
             UpdateProcessor update;
             for (String query : queries) {
+                //TODO if work should not be hardcoded
+                query = query.replace("WITH <mydataset>","");
                 update = updateExecFactory.createUpdateProcessor(query);
                 update.execute();
+                //todo what happened if update can not find a triple to update !
             }
         }catch (Exception ex){
             LOGGER.error(ex.getMessage());

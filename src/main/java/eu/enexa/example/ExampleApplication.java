@@ -4,6 +4,8 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 
+import eu.enexa.vocab.HOBBIT;
+import org.apache.commons.io.FileUtils;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
@@ -29,7 +31,7 @@ public class ExampleApplication implements AutoCloseable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExampleApplication.class);
 
-    private static final String SHARED_DIR_PREFIX = "enexa-dir:";
+    private static final String SHARED_DIR_PREFIX = "enexa-dir:/";
 
     private static final String STATUS_PENDING = "Pending";
     private static final String STATUS_RUNNING = "Running";
@@ -46,6 +48,8 @@ public class ExampleApplication implements AutoCloseable {
     private String kgFileLocation;
     private String resultFileIri;
     private String resultFileLocation;
+
+    private final String preFix = "http://w3id.org/dice-research/enexa/module/dice-embeddings/";
 
     public ExampleApplication(String enexaURL, String sharedDirPath, String appPath) {
         super();
@@ -94,16 +98,17 @@ public class ExampleApplication implements AutoCloseable {
         // Move file if it is not located in the shared directory
         if (!metaFilePath.startsWith(appPath)) {
             File kgf = new File(kgFile);
-            File dest = new File(appPath + File.separator + kgf.getName());
+            File dest = new File(appPath + File.separator+ experimentIRI.replace("http://","") +File.separator + kgf.getName());
             try {
-                Files.copy(kgf.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                //Files.copy(kgf.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                FileUtils.copyDirectory(kgf, dest);
             } catch (IOException e) {
                 throw new IOException("Couldn't copy the kg file into the shared directory.", e);
             }
             metaFilePath = dest.getAbsolutePath();
         }
         // Get relative path in the shared directory
-        kgFileLocation = SHARED_DIR_PREFIX + metaFilePath.substring(sharedDirPath.length());
+        kgFileLocation = SHARED_DIR_PREFIX + metaFilePath.substring(appPath.length());
 
         // Create a model with the meta data of our file
         Model fileDescription = ModelFactory.createDefaultModel();
@@ -121,6 +126,7 @@ public class ExampleApplication implements AutoCloseable {
         if (response == null) {
             throw new Exception("Couldn't add a resource to the meta data.");
         }
+
         // Get the new IRI of the resource
         Resource fileResource = RdfHelper.getSubjectResource(response, RDF.type,
                 response.createResource("http://www.w3.org/ns/prov#Entity"));
@@ -128,6 +134,8 @@ public class ExampleApplication implements AutoCloseable {
             throw new Exception("Couldn't find the file resource.");
         }
         LOGGER.info("File resource {} has been created.", fileResource.getURI());
+
+        //
     }
 
     private void startEmbeddingGeneration() throws Exception {
@@ -136,17 +144,23 @@ public class ExampleApplication implements AutoCloseable {
         // The module instance itself will be a blank node
         Resource instance = instanceModel.createResource();
         instanceModel.add(instance, RDF.type, ENEXA.ModuleInstance);
+        //TODO is it correct ?
+        instanceModel.add(instance, HOBBIT.instanceOf, instanceModel.createResource(preFix+"v1.0"));
         instanceModel.add(instance, ENEXA.experiment, instanceModel.createResource(experimentIRI));
         // Add parameters
-        instanceModel.add(instance, instanceModel.createProperty("http://example.org/dicee/parameters/model"),
-                instanceModel.createResource(kgFileIri));
-        instanceModel.add(instance,
-                instanceModel.createProperty("http://example.org/dicee/parameters/path_dataset_folder"),
-                instanceModel.createLiteral(kgFileLocation));
-        instanceModel.add(instance, instanceModel.createProperty("http://example.org/dicee/parameters/num_epochs"),
-                instanceModel.createTypedLiteral(10));
-        instanceModel.add(instance, instanceModel.createProperty("http://example.org/dicee/parameters/embedding_dim"),
-                instanceModel.createTypedLiteral(16));
+        /*instanceModel.add(instance, instanceModel.createProperty(preFix+"parameters/model"),
+                instanceModel.createResource(kgFileIri));*/
+        instanceModel.add(instance, instanceModel.createProperty(preFix+"parameter/model"),
+            instanceModel.createTypedLiteral("ConEx"));
+        //http://module-instance-1> <parameters/path_dataset_folder> <http://aresource> .
+        instanceModel.add(instance,instanceModel.createProperty(preFix+"parameter/path_dataset_folder"),instanceModel.createResource(kgFileLocation.replace("enexa-dir:","http:")));
+//<http://aresource> enexa:location "enexa-dir://something" .
+        instanceModel.add(instanceModel.createResource(kgFileLocation.replace("enexa-dir:","http:")),ENEXA.location,instanceModel.createLiteral(kgFileLocation));
+
+        instanceModel.add(instance, instanceModel.createProperty(preFix+"parameter/num_epochs"),
+                instanceModel.createTypedLiteral(5));
+        instanceModel.add(instance, instanceModel.createProperty(preFix+"parameter/embedding_dim"),
+                instanceModel.createTypedLiteral(2));
 
         // Send the model
         Model response = requestRDF(enexaURL + "/start-container", instanceModel);
@@ -226,7 +240,7 @@ public class ExampleApplication implements AutoCloseable {
     private void queryFilePath() throws Exception {
         try (QueryExecutionFactory queryExecFactory = new QueryExecutionFactoryHttp(metaDataEndpoint, metaDataGraph)) {
             QueryExecution qe = queryExecFactory.createQueryExecution("SELECT ?fileIri ?fileLocation WHERE {" + "<"
-                    + instanceIRI + "> <http://example.org/dicee/parameters/model.pt> ?fileIri . "
+                    + instanceIRI + "> <http://example.org/dicee/parameter/model.pt> ?fileIri . "
                     + "?fileIri <http://w3id.org/dice-research/enexa/ontology#location> ?fileLocation . " + "}");
             ResultSet rs = qe.execSelect();
             if (rs.hasNext()) {

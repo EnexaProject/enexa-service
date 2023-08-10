@@ -8,7 +8,7 @@
 @prefix sd:     <http://www.w3.org/ns/sparql-service-description#> .
 @prefix xsd:    <http://www.w3.org/2000/10/XMLSchema#> .
 
-<http://dice-research.org/DICE-framework/v1.0> a enexa:Module ; 
+<http://dice-research.org/DICE-framework/v1.0> a enexa:Module ;
 	rdfs:label "DICE Knowledge Graph Embedding Framework"@en ;
 	rdfs:comment "This framework provides the functionality to generate knowledge graph embedding models based on a variaty of embedding algorithms."@en ;
 	hobbit:image <urn:container:docker:image:docker.io/dicegroup/dice-embeddings:0.1.3> ;

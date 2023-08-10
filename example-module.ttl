@@ -11,34 +11,35 @@
 
 <http://dice-research.org/DICE-framework/v1.0> a enexa:Module ;
 	rdfs:label "DICE Knowledge Graph Embedding Framework"@en ;
-	rdfs:comment "This framework provides the functionality to generate knowledge graph embedding models based on a variaty of embedding algorithms."@en ; 
-	hobbit:image <urn:container:docker:image:docker.io/dicegroup/dice-embeddings:0.1.3> ; 
-	alg:parameter <http://dice-research.org/DICE-framework/parameters/algorithm> ; 
-	alg:parameter <http://dice-research.org/DICE-framework/parameters/dimensions> ; 
-	alg:parameter <http://dice-research.org/DICE-framework/parameters/knowledgeGraph> ; 
+	rdfs:comment "This framework provides the functionality to generate knowledge graph embedding models based on a variaty of embedding algorithms."@en ;
+	hobbit:image <urn:container:docker:image:docker.io/dicegroup/dice-embeddings:0.1.3> ;
+	alg:parameter <http://dice-research.org/DICE-framework/parameters/algorithm> ;
+	alg:parameter <http://dice-research.org/DICE-framework/parameters/dimensions> ;
+	alg:parameter <http://dice-research.org/DICE-framework/parameters/knowledgeGraph> ;
 	alg:produces <http://dice-research.org/DICE-framework/results/model> .
 
 <http://dice-research.org/DICE-framework/parameters/algorithm> a alg:Parameter ;
-	rdfs:label "Embedding algorithm"@en ; 
-	rdfs:comment "The knowledge graph embedding algorithm that is used to generate the embedding model." 
+	rdfs:label "Embedding algorithm"@en ;
+	rdfs:comment "The knowledge graph embedding algorithm that is used to generate the embedding model."
 	rdfs:range <http://dice-research.org/DICE-framework/algorithms/KGEAlgorithm> .
 
-<http://dice-research.org/DICE-framework/parameters/dimensions> a alg:Parameter ; 
-	rdfs:label "Number of dimensions"@en ; 
-	rdfs:comment "The number of dimensions the generated embedding model should have" ; 
+<http://dice-research.org/DICE-framework/parameters/dimensions> a alg:Parameter ;
+	rdfs:label "Number of dimensions"@en ;
+	rdfs:comment "The number of dimensions the generated embedding model should have" ;
 	rdfs:range xsd:nonNegativeInteger .
 
-<http://dice-research.org/DICE-framework/parameters/knowledgeGraph> a hobbit:Parameter ; 
-	rdfs:label "Knowledge graph"@en ; 
-	rdfs:comment "The knowledge graph that should be embedded." ; 
+<http://dice-research.org/DICE-framework/parameters/knowledgeGraph> a hobbit:Parameter ;
+	rdfs:label "Knowledge graph"@en ;
+	rdfs:comment "The knowledge graph that should be embedded." ;
 	rdfs:range rdf:Resource .
 
-<http://dice-research.org/DICE-framework/algorithms/KGEAlgorithm> a rdfs:Class ; 
-	rdfs:label "Knowledge graph embedding algorithm" ; 
+<http://dice-research.org/DICE-framework/algorithms/KGEAlgorithm> a rdfs:Class ;
+	rdfs:label "Knowledge graph embedding algorithm" ;
 	rdfs:comment "The class of Knowledge graph embedding algorithms." .
 
 <http://dice-research.org/DICE-framework/algorithms/ConEx> a <http://dice-research.org/DICE-framework/algorithms/Algorithm> ;
-	rdfs:label "ConEx";
+  rdf:value "ConEx" ;
+  rdfs:label "ConEx"@en ;
 	rdfs:comment "The knowledge graph embedding algorithm ConEx proposed by Demir et al." .
 
 <http://dice-research.org/DICE-framework/results/model> a alg:Result ;

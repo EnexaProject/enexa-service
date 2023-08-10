@@ -31,6 +31,8 @@ public class EnexaServiceImpl implements EnexaService {
     @Autowired
     private ModuleManager moduleManager;
 
+    private static final String metaDataEndpoint = "http://fuseki-devwd:3030/mydataset";
+
     @Override
     public Model startExperiment() {
         Model model = ModelFactory.createDefaultModel();
@@ -44,11 +46,15 @@ public class EnexaServiceImpl implements EnexaService {
             sharedDirPath = sharedDirPath.substring(0, sharedDirPath.length() - 1);
         }
         // do not use experiment.getLocalName() it will remove the first character !
-        sharedDirPath = sharedDirPath + File.separator + experiment.getURI();
+
+        sharedDirPath = sharedDirPath + File.separator + experiment.getURI().replace("http://","");
         // TODO create directory
         File theDir = new File(sharedDirPath);
         if (!theDir.exists()){
-            theDir.mkdirs();
+            boolean isCreated = theDir.mkdirs();
+            if(!isCreated){
+                LOGGER.warn("the directory can not created at :"+sharedDirPath);
+            }
         }
         // 3. Start default containers
         // TODO : implement this
@@ -117,6 +123,9 @@ public class EnexaServiceImpl implements EnexaService {
         scModel.setInstanceIri(instanceIri);
         metadataManager.addMetaData(scModel.getModel());
 
+        Model tmpModel = ModelFactory.createDefaultModel();
+        //tmpModel.addLiteral(tmpModel.createResource(instanceIri),tmpModel.createProperty("http://w3id.org/dice-research/enexa/module/dice-embeddings/parameters/num_epochs"),10);
+        //metadataManager.addMetaData(tmpModel);
         /*
          * 3. Start the image a. with the ENEXA environmental variables b. as part of
          * the local network of the ENEXA service. * experiment’s meta data.
@@ -130,14 +139,20 @@ public class EnexaServiceImpl implements EnexaService {
 
         List<AbstractMap.SimpleEntry<String, String>> variables = new ArrayList<>();
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_EXPERIMENT_IRI", scModel.getExperiment()));
-        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_META_DATA_ENDPOINT",
-                metadataManager.getMetadataEndpointInfo(scModel.getExperiment())[0]));
+        /*variables.add(new AbstractMap.SimpleEntry<>("ENEXA_META_DATA_ENDPOINT",
+                metadataManager.getMetadataEndpointInfo(scModel.getExperiment())[0]));*/
+        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_META_DATA_ENDPOINT", metaDataEndpoint));
+
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_META_DATA_GRAPH",
                 metadataManager.getMetadataEndpointInfo(scModel.getExperiment())[1]));
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_IRI", instanceIri));
         // TODO : after demo replace the hardcoded strings
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SHARED_DIRECTORY", "/enexa/"));
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_WRITEABLE_DIRECTORY", "/enexa/"));
+
+        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_INSTANCE_IRI",scModel.getInstanceIri()));
+        //TODO : should be specific
+        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_INSTANCE_DIRECTORY","/output/result"));
 
         // TODO: update this
         if (System.getenv("ENEXA_SERVICE_URL").equals("")) {
@@ -147,16 +162,19 @@ public class EnexaServiceImpl implements EnexaService {
         }
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SERVICE_URL", System.getenv("ENEXA_SERVICE_URL")));
 
-        String containerId = containerManager.startContainer(module.getImage(), generatePodName(module.getModuleIri()),
-                variables);
+        String containerId = containerManager.startContainer(module.getImage(), generatePodName(module.getModuleIri()), variables);
+        //String containerId = containerManager.startContainer("dicegroup/copaal-demo-service-splitedsearchcount:2.5.0", generatePodName(module.getModuleIri()), variables);
         /*
-         * 4. Add start time (or error code in case it couldn’t be started) to the //
-         * TODO create RDF model with new metadata metadataManager.addMetaData(null); /*
+         * 4. Add start time (or error code in case it couldn’t be started) to the
+         * TODO create RDF model with new metadata metadataManager.addMetaData(null); */
+
+         /*
          * 5. Return the meta data of the newly created container (including its DNS
          * name)
          */
         // TODO merge scModel and previously created metadata
-        return null;
+
+        return scModel.toModel();
     }
 
     public String generatePodName(String moduleIri) {
