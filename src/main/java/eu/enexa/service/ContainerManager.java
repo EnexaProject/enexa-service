@@ -5,7 +5,8 @@ import java.util.List;
 
 public interface ContainerManager {
 
-    public String startContainer(String image, String podName, List<AbstractMap.SimpleEntry<String,String>> variables);
+    // containerName is the podName for kubernetes
+    public String startContainer(String image, String containerName, List<AbstractMap.SimpleEntry<String,String>> variables);
 
     public String stopContainer(String podName);
 

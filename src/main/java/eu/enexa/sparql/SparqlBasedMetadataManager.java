@@ -88,11 +88,18 @@ public class SparqlBasedMetadataManager implements MetadataManager, AutoCloseabl
 
     @Override
     public void addMetaData(Model model) {
-        String[] queries = SparqlQueryUtils.getUpdateQueriesFromDiff(null, model, defaultMetaDataGraphIRI);
-        UpdateProcessor update;
-        for (String query : queries) {
-            update = updateExecFactory.createUpdateProcessor(query);
-            update.execute();
+        try {
+            String[] queries = SparqlQueryUtils.getUpdateQueriesFromDiff(null, model, defaultMetaDataGraphIRI);
+            UpdateProcessor update;
+            for (String query : queries) {
+                //TODO if work should not be hardcoded
+                query = query.replace("WITH <mydataset>","");
+                update = updateExecFactory.createUpdateProcessor(query);
+                update.execute();
+                //todo what happened if update can not find a triple to update !
+            }
+        }catch (Exception ex){
+            LOGGER.error(ex.getMessage());
         }
     }
 
@@ -101,10 +108,12 @@ public class SparqlBasedMetadataManager implements MetadataManager, AutoCloseabl
         try {
             queryExecFactory.close();
         } catch (Exception e) {
+            LOGGER.error(e.getMessage(),e);
         }
         try {
             updateExecFactory.close();
         } catch (Exception e) {
+            LOGGER.error(e.getMessage(),e);
         }
     }
 

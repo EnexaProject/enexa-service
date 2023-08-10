@@ -45,4 +45,10 @@ export ENEXA_RESOURCE_NAMESPACE=http://example.org/resource/; \
 java -jar target/enexa-service-0.0.1-SNAPSHOT.jar 
 ```
 
+### running fuseki
+
+```shell
+sudo docker run --name fuseki-dev -p 3030:3030 -e FUSEKI_DATASET_1=mydataset -e FUSEKI_DATASET_2=otherdataset -e ADMIN_PASSWORD=pw123 -v /home/farshad/test/enexa/metadata:/fuseki stain/jena-fuseki
+```
+
 

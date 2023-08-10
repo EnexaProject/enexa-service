@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * This class represents the request to start an ENEXA module.
  *
- * @author TODO Farshad, please add yourself :D
+ * @author Farshad Afshari (farshad.afshari@uni-paderborn.de)
  * @author Michael R&ouml;der (michael.roeder@uni-paderborn.de)
  *
  */
@@ -199,5 +199,11 @@ public class StartContainerModel {
 
         return new StartContainerModel(experimentResource.getURI(), moduleIri,
                 moduleUrlResource == null ? null : moduleUrlResource.getURI(), instance, model);
+    }
+
+    public Model toModel(){
+        Model model = ModelFactory.createDefaultModel();
+        //TODO develop this.
+        return model;
     }
 }

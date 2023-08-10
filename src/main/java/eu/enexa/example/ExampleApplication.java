@@ -1,19 +1,19 @@
 package eu.enexa.example;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 
+import eu.enexa.vocab.HOBBIT;
+import org.apache.commons.io.FileUtils;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jenax.arq.connection.core.QueryExecutionFactory;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
@@ -31,7 +31,7 @@ public class ExampleApplication implements AutoCloseable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExampleApplication.class);
 
-    private static final String SHARED_DIR_PREFIX = "enexa-dir:";
+    private static final String SHARED_DIR_PREFIX = "enexa-dir:/";
 
     private static final String STATUS_PENDING = "Pending";
     private static final String STATUS_RUNNING = "Running";
@@ -48,6 +48,8 @@ public class ExampleApplication implements AutoCloseable {
     private String kgFileLocation;
     private String resultFileIri;
     private String resultFileLocation;
+
+    private final String preFix = "http://w3id.org/dice-research/enexa/module/dice-embeddings/";
 
     public ExampleApplication(String enexaURL, String sharedDirPath, String appPath) {
         super();
@@ -71,7 +73,7 @@ public class ExampleApplication implements AutoCloseable {
         if (model == null) {
             throw new IOException("Couldn't create experiment.");
         }
-        Resource expResource = RdfHelper.getSubjectResource(model, RDF.type, ENEXA.experiment);
+        Resource expResource = RdfHelper.getSubjectResource(model, RDF.type, ENEXA.Experiment);
         if (expResource == null) {
             throw new Exception("Couldn't find experiment resource.");
         }
@@ -96,16 +98,17 @@ public class ExampleApplication implements AutoCloseable {
         // Move file if it is not located in the shared directory
         if (!metaFilePath.startsWith(appPath)) {
             File kgf = new File(kgFile);
-            File dest = new File(appPath + File.separator + kgf.getName());
+            File dest = new File(appPath + File.separator+ experimentIRI.replace("http://","") +File.separator + kgf.getName());
             try {
-                Files.copy(kgf.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                //Files.copy(kgf.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                FileUtils.copyDirectory(kgf, dest);
             } catch (IOException e) {
                 throw new IOException("Couldn't copy the kg file into the shared directory.", e);
             }
             metaFilePath = dest.getAbsolutePath();
         }
         // Get relative path in the shared directory
-        kgFileLocation = SHARED_DIR_PREFIX + metaFilePath.substring(sharedDirPath.length());
+        kgFileLocation = SHARED_DIR_PREFIX + metaFilePath.substring(appPath.length());
 
         // Create a model with the meta data of our file
         Model fileDescription = ModelFactory.createDefaultModel();
@@ -123,6 +126,7 @@ public class ExampleApplication implements AutoCloseable {
         if (response == null) {
             throw new Exception("Couldn't add a resource to the meta data.");
         }
+
         // Get the new IRI of the resource
         Resource fileResource = RdfHelper.getSubjectResource(response, RDF.type,
                 response.createResource("http://www.w3.org/ns/prov#Entity"));
@@ -130,6 +134,8 @@ public class ExampleApplication implements AutoCloseable {
             throw new Exception("Couldn't find the file resource.");
         }
         LOGGER.info("File resource {} has been created.", fileResource.getURI());
+
+        //
     }
 
     private void startEmbeddingGeneration() throws Exception {
@@ -138,13 +144,23 @@ public class ExampleApplication implements AutoCloseable {
         // The module instance itself will be a blank node
         Resource instance = instanceModel.createResource();
         instanceModel.add(instance, RDF.type, ENEXA.ModuleInstance);
+        //TODO is it correct ?
+        instanceModel.add(instance, HOBBIT.instanceOf, instanceModel.createResource(preFix+"v1.0"));
         instanceModel.add(instance, ENEXA.experiment, instanceModel.createResource(experimentIRI));
-        // TODO Add parameters
-        // instanceModel.add(instance, ENEXA.location,
-        // instanceModel.createLiteral(kgFileLocation));
-        // instanceModel.add(instance,
-        // instanceModel.createProperty("http://www.w3.org/ns/dcat#mediaType"),
-        // instanceModel.createResource("https://www.iana.org/assignments/media-types/text/turtle"));
+        // Add parameters
+        /*instanceModel.add(instance, instanceModel.createProperty(preFix+"parameters/model"),
+                instanceModel.createResource(kgFileIri));*/
+        instanceModel.add(instance, instanceModel.createProperty(preFix+"parameter/model"),
+            instanceModel.createTypedLiteral("ConEx"));
+        //http://module-instance-1> <parameters/path_dataset_folder> <http://aresource> .
+        instanceModel.add(instance,instanceModel.createProperty(preFix+"parameter/path_dataset_folder"),instanceModel.createResource(kgFileLocation.replace("enexa-dir:","http:")));
+//<http://aresource> enexa:location "enexa-dir://something" .
+        instanceModel.add(instanceModel.createResource(kgFileLocation.replace("enexa-dir:","http:")),ENEXA.location,instanceModel.createLiteral(kgFileLocation));
+
+        instanceModel.add(instance, instanceModel.createProperty(preFix+"parameter/num_epochs"),
+                instanceModel.createTypedLiteral(5));
+        instanceModel.add(instance, instanceModel.createProperty(preFix+"parameter/embedding_dim"),
+                instanceModel.createTypedLiteral(2));
 
         // Send the model
         Model response = requestRDF(enexaURL + "/start-container", instanceModel);
@@ -180,9 +196,8 @@ public class ExampleApplication implements AutoCloseable {
         }
         Model model = null;
         try (CloseableHttpResponse httpResponse = client.execute(request)) {
-            if (httpResponse.getStatusLine().getStatusCode() >= 300) {
-                throw new IllegalStateException(
-                        "Received HTTP response with code " + httpResponse.getStatusLine().getStatusCode());
+            if (httpResponse.getCode() >= 300) {
+                throw new IllegalStateException("Received HTTP response with code " + httpResponse.getCode());
             }
 
             try (InputStream is = httpResponse.getEntity().getContent()) {
@@ -225,9 +240,7 @@ public class ExampleApplication implements AutoCloseable {
     private void queryFilePath() throws Exception {
         try (QueryExecutionFactory queryExecFactory = new QueryExecutionFactoryHttp(metaDataEndpoint, metaDataGraph)) {
             QueryExecution qe = queryExecFactory.createQueryExecution("SELECT ?fileIri ?fileLocation WHERE {" + "<"
-                    + instanceIRI + "> ex:result ?fileIri . "// TODO Add
-                                                             // resultIRI for
-                                                             // the file
+                    + instanceIRI + "> <http://example.org/dicee/parameter/model.pt> ?fileIri . "
                     + "?fileIri <http://w3id.org/dice-research/enexa/ontology#location> ?fileLocation . " + "}");
             ResultSet rs = qe.execSelect();
             if (rs.hasNext()) {
