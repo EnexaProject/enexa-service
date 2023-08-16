@@ -9,6 +9,7 @@ import org.apache.jena.rdf.model.*;
 import org.apache.jena.vocabulary.RDF;
 import org.dice_research.rdf.ModelHelper;
 import org.dice_research.rdf.RdfHelper;
+import org.dice_research.enexa.utils.EnexaPathUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,7 +62,8 @@ public class EnexaServiceImpl implements EnexaService {
 
         // 4. Update experiment meta data with data from steps 2 and 3
         model.add(experiment, RDF.type, ENEXA.Experiment);
-        model.add(experiment, ENEXA.sharedDirectory, sharedDirPath);
+
+        model.add(experiment, ENEXA.sharedDirectory, EnexaPathUtils.translateLocal2EnexaPath(sharedDirPath));
             /* The first String is the URL of the SPARQL endpoint while the second is the graph IRI in
             * which the metadata of the experiment can be found.*/
         String[] metaDataInfos = metadataManager.getMetadataEndpointInfo(experimentIRI);

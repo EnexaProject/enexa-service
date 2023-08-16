@@ -3,6 +3,7 @@ package eu.enexa.model;
 
 import javax.annotation.Nullable;
 
+import eu.enexa.vocab.ALGORITHM;
 import org.apache.jena.rdf.model.*;
 
 import org.dice_research.rdf.ModelHelper;
@@ -147,7 +148,7 @@ public class StartContainerModel {
      * @param instanceIri the instanceIri to set
      */
     public void setInstanceIri(String instanceIri) {
-        StmtIterator iterator = model.listStatements(null, HOBBIT.instanceOf, (RDFNode) null);
+        StmtIterator iterator = model.listStatements(null, ALGORITHM.instanceOf, (RDFNode) null);
         if (!iterator.hasNext()) {
             throw new IllegalArgumentException("Couldn't find a module instance in the provided RDF model.");
         }
@@ -170,7 +171,7 @@ public class StartContainerModel {
 
     public static StartContainerModel parse(Model model) throws IllegalArgumentException {
         // Search for triple that uses hobbit:instanceOf
-        StmtIterator iterator = model.listStatements(null, HOBBIT.instanceOf, (RDFNode) null);
+        StmtIterator iterator = model.listStatements(null, ALGORITHM.instanceOf, (RDFNode) null);
         if (!iterator.hasNext()) {
             throw new IllegalArgumentException("Couldn't find a module instance in the provided RDF model.");
         }

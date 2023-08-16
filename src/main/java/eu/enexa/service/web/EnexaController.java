@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 
+import eu.enexa.vocab.ALGORITHM;
 import eu.enexa.vocab.ENEXA;
 import eu.enexa.vocab.HOBBIT;
 import org.apache.jena.rdf.model.*;
@@ -167,7 +168,7 @@ public class EnexaController {
         Model model = ModelFactory.createDefaultModel();
         model.read(new StringReader(body), "", "JSON-LD");
 
-        StmtIterator iterator = model.listStatements(null, HOBBIT.instanceOf, (RDFNode) null);
+        StmtIterator iterator = model.listStatements(null, ALGORITHM.instanceOf, (RDFNode) null);
         if (!iterator.hasNext()) {
             throw new IllegalArgumentException("Couldn't find a module instance in the provided RDF model.");
         }

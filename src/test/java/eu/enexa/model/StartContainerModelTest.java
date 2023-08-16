@@ -3,6 +3,7 @@ package eu.enexa.model;
 import java.io.StringReader;
 
 import eu.enexa.service.BootApplication;
+import eu.enexa.vocab.ALGORITHM;
 import eu.enexa.vocab.ENEXA;
 import eu.enexa.vocab.HOBBIT;
 import org.apache.jena.rdf.model.*;
@@ -77,7 +78,7 @@ public class StartContainerModelTest {
         // Parse the model
         StartContainerModel scModel = StartContainerModel.parse(model);
 
-        StmtIterator iterator = model.listStatements(null, HOBBIT.instanceOf, (RDFNode) null);
+        StmtIterator iterator = model.listStatements(null, ALGORITHM.instanceOf, (RDFNode) null);
         Statement s = iterator.next();
 
         Model tmpModel = scModel.getModel();
