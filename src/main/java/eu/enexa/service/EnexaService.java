@@ -2,6 +2,7 @@ package eu.enexa.service;
 
 import org.apache.jena.rdf.model.Model;
 
+import eu.enexa.model.AddedResource;
 import eu.enexa.model.StartContainerModel;
 
 public interface EnexaService {
@@ -55,7 +56,7 @@ public interface EnexaService {
      * @param requestModel
      * @return Meta data of the newly added file
      */
-    public Model addResource(Model requestModel);
+    public AddedResource addResource(Model requestModel);
 
     /**
      * 1. If the resource has a known protocol that does not start with the file
@@ -67,7 +68,7 @@ public interface EnexaService {
      * @param targetDir
      * @return Meta data of the newly added file
      */
-    public Model addResource(String experimentIri, String resource, String targetDir);
+    public AddedResource addResource(String experimentIri, String resource, String targetDir);
 
     /**
      * This method returns status information for the given container that is

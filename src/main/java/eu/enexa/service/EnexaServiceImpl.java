@@ -5,7 +5,11 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.jena.rdf.model.*;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.vocabulary.RDF;
 import org.dice_research.rdf.ModelHelper;
 import org.dice_research.rdf.RdfHelper;
@@ -15,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import eu.enexa.model.AddedResource;
 import eu.enexa.model.ModuleModel;
 import eu.enexa.model.StartContainerModel;
 import eu.enexa.vocab.ENEXA;
@@ -62,19 +67,21 @@ public class EnexaServiceImpl implements EnexaService {
 
         // 4. Update experiment meta data with data from steps 2 and 3
         model.add(experiment, RDF.type, ENEXA.Experiment);
+
         model.add(experiment, ENEXA.sharedDirectory, EnexaPathUtils.translateLocal2EnexaPath(sharedDirLocalPath,System.getenv("ENEXA_SHARED_DIRECTORY")));
             /* The first String is the URL of the SPARQL endpoint while the second is the graph IRI in
             * which the metadata of the experiment can be found.*/
+
         String[] metaDataInfos = metadataManager.getMetadataEndpointInfo(experimentIRI);
-        if(metaDataInfos.length==0){
-            LOGGER.error("there is no data in metadata for this experiments: "+experimentIRI);
-        }else{
+        if (metaDataInfos.length == 0) {
+            LOGGER.error("there is no data in metadata for this experiments: " + experimentIRI);
+        } else {
             Property sparqlEndpoint = ResourceFactory.createProperty(metaDataInfos[0]);
             model.add(experiment, ENEXA.metaDataEndpoint, sparqlEndpoint);
 
-            if(metaDataInfos.length>1){
+            if (metaDataInfos.length > 1) {
                 // graphIRI
-                //TODO : check if ENEXA.metaDataGraph is correct
+                // TODO : check if ENEXA.metaDataGraph is correct
                 Property graphIRI = ResourceFactory.createProperty(metaDataInfos[1]);
                 model.add(experiment, ENEXA.metaDataGraph, graphIRI);
             }
@@ -94,12 +101,12 @@ public class EnexaServiceImpl implements EnexaService {
     @Override
     public Model startContainer(StartContainerModel scModel) throws RuntimeException {
 
-    	// TODO: establish exception package and move the exception to this place
-    	class ModuleNotFoundException extends RuntimeException {
-    		public ModuleNotFoundException() {
-				super("Module with ID " + scModel.getModuleIri().toString() + " not found.");
-			}
-    	}
+        // TODO: establish exception package and move the exception to this place
+        class ModuleNotFoundException extends RuntimeException {
+            public ModuleNotFoundException() {
+                super("Module with ID " + scModel.getModuleIri().toString() + " not found.");
+            }
+        }
 
         /*
          * 1. Derive meta data for the module that should be started a. The module IRI
@@ -113,8 +120,8 @@ public class EnexaServiceImpl implements EnexaService {
         ModuleModel module = moduleManager.deriveModule(scModel.getModuleIri(), scModel.getModuleUrl());
 
         if (module == null) {
-			throw new ModuleNotFoundException();
-		}
+            throw new ModuleNotFoundException();
+        }
 
         /*
          * 2. Create a resource for the new module instance in the meta data graph. Add
@@ -125,8 +132,8 @@ public class EnexaServiceImpl implements EnexaService {
         metadataManager.addMetaData(scModel.getModel());
 
         Model tmpModel = ModelFactory.createDefaultModel();
-        //tmpModel.addLiteral(tmpModel.createResource(instanceIri),tmpModel.createProperty("http://w3id.org/dice-research/enexa/module/dice-embeddings/parameters/num_epochs"),10);
-        //metadataManager.addMetaData(tmpModel);
+        // tmpModel.addLiteral(tmpModel.createResource(instanceIri),tmpModel.createProperty("http://w3id.org/dice-research/enexa/module/dice-embeddings/parameters/num_epochs"),10);
+        // metadataManager.addMetaData(tmpModel);
         /*
          * 3. Start the image a. with the ENEXA environmental variables b. as part of
          * the local network of the ENEXA service. * experiment’s meta data.
@@ -140,8 +147,10 @@ public class EnexaServiceImpl implements EnexaService {
 
         List<AbstractMap.SimpleEntry<String, String>> variables = new ArrayList<>();
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_EXPERIMENT_IRI", scModel.getExperiment()));
-        /*variables.add(new AbstractMap.SimpleEntry<>("ENEXA_META_DATA_ENDPOINT",
-                metadataManager.getMetadataEndpointInfo(scModel.getExperiment())[0]));*/
+        /*
+         * variables.add(new AbstractMap.SimpleEntry<>("ENEXA_META_DATA_ENDPOINT",
+         * metadataManager.getMetadataEndpointInfo(scModel.getExperiment())[0]));
+         */
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_META_DATA_ENDPOINT", metaDataEndpoint));
 
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_META_DATA_GRAPH",
@@ -151,9 +160,9 @@ public class EnexaServiceImpl implements EnexaService {
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SHARED_DIRECTORY", "/enexa"));
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_WRITEABLE_DIRECTORY", "/enexa"));
 
-        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_INSTANCE_IRI",scModel.getInstanceIri()));
-        //TODO : should be specific
-        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_INSTANCE_DIRECTORY","/output/result"));
+        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_INSTANCE_IRI", scModel.getInstanceIri()));
+        // TODO : should be specific
+        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_INSTANCE_DIRECTORY", "/output/result"));
 
         // TODO: update this
         if (System.getenv("ENEXA_SERVICE_URL").equals("")) {
@@ -163,13 +172,17 @@ public class EnexaServiceImpl implements EnexaService {
         }
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SERVICE_URL", System.getenv("ENEXA_SERVICE_URL")));
 
-        String containerId = containerManager.startContainer(module.getImage(), generatePodName(module.getModuleIri()), variables);
-        //String containerId = containerManager.startContainer("dicegroup/copaal-demo-service-splitedsearchcount:2.5.0", generatePodName(module.getModuleIri()), variables);
+        String containerId = containerManager.startContainer(module.getImage(), generatePodName(module.getModuleIri()),
+                variables);
+        // String containerId =
+        // containerManager.startContainer("dicegroup/copaal-demo-service-splitedsearchcount:2.5.0",
+        // generatePodName(module.getModuleIri()), variables);
         /*
-         * 4. Add start time (or error code in case it couldn’t be started) to the
-         * TODO create RDF model with new metadata metadataManager.addMetaData(null); */
+         * 4. Add start time (or error code in case it couldn’t be started) to the TODO
+         * create RDF model with new metadata metadataManager.addMetaData(null);
+         */
 
-         /*
+        /*
          * 5. Return the meta data of the newly created container (including its DNS
          * name)
          */
@@ -188,17 +201,17 @@ public class EnexaServiceImpl implements EnexaService {
     }
 
     @Override
-    public Model addResource(Model requestModel) {
+    public AddedResource addResource(Model requestModel) {
         Resource requestResIri = RdfHelper.getSubjectResource(requestModel, ENEXA.experiment, null);
         String newIri = metadataManager.generateResourceIRI();
         Resource newResource = requestModel.createResource(newIri);
         ModelHelper.replaceResource(requestModel, requestResIri, newResource);
         metadataManager.addMetaData(requestModel);
-        return requestModel;
+        return new AddedResource(newResource, requestModel);
     }
 
     @Override
-    public Model addResource(String experimentIri, String resource, String targetDir) {
+    public AddedResource addResource(String experimentIri, String resource, String targetDir) {
         // TODO Auto-generated method stub
 
         return null;

@@ -4,10 +4,19 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 
+
 import eu.enexa.vocab.ALGORITHM;
 import eu.enexa.vocab.ENEXA;
 import eu.enexa.vocab.HOBBIT;
 import org.apache.jena.rdf.model.*;
+import org.apache.hc.core5.http.HttpHeaders;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
+
 import org.apache.jena.vocabulary.RDF;
 import org.dice_research.rdf.RdfHelper;
 import org.slf4j.Logger;
@@ -22,8 +31,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import eu.enexa.model.AddedResource;
 import eu.enexa.model.StartContainerModel;
 import eu.enexa.service.EnexaService;
+import eu.enexa.vocab.ENEXA;
+import eu.enexa.vocab.HOBBIT;
 
 @RestController
 public class EnexaController {
@@ -47,28 +59,39 @@ public class EnexaController {
         }
         // TODO : should all of these be null ?
         // Get RDF model from service as result of operation
-        Model model = enexa.addResource(request);
+        AddedResource addedResource = enexa.addResource(request);
         // serialize the model as JSON-LD
-        String content = writeModel(model, "JSON-LD");
+        String content = writeModel(addedResource.getModel(), "JSON-LD");
+        ResponseEntity<String> entity;
         if (content == null) {
-            return new ResponseEntity<String>("Couldn't serialize result model.", HttpStatus.INTERNAL_SERVER_ERROR);
+            entity = new ResponseEntity<String>("Couldn't serialize result model.", HttpStatus.INTERNAL_SERVER_ERROR);
         } else {
-            return new ResponseEntity<String>(content, HttpStatus.OK);
+            entity = new ResponseEntity<String>(content, HttpStatus.OK);
         }
+        // Add Content-Location header
+        if ((addedResource.getResource() != null) && (addedResource.getResource().isURIResource())) {
+            try {
+                entity.getHeaders().add(HttpHeaders.CONTENT_LOCATION, addedResource.getResource().getURI());
+            }catch(Exception ex){
+                String error = ex.getMessage();
+            }
+        }
+        return entity;
     }
 
-/*    @RequestMapping(value = "/add-resource", produces = { "application/xml",
-            "application/ld+json" }, method = RequestMethod.POST)
-    public ResponseEntity<String> addResourceXML() {
+    /*
+     * @RequestMapping(value = "/add-resource", produces = { "application/xml",
+     * "application/ld+json" }, method = RequestMethod.POST) public
+     * ResponseEntity<String> addResourceXML() {
+     *//*
+        * Errors · HTTP 400: o Experiment IRI is not known / not available. o The
+        * resource URL does not exist or cannot be downloaded. · HTTP 500: o An error
+        * occurs while adding the resource.
         *//*
-         * Errors · HTTP 400: o Experiment IRI is not known / not available. o The
-         * resource URL does not exist or cannot be downloaded. · HTTP 500: o An error
-         * occurs while adding the resource.
-         *//*
-        Model model = null; // Get RDF model from service as result of operation
-        String content = null; // serialize the model as RDF/XML
-        return new ResponseEntity<String>(content, HttpStatus.OK);
-    }*/
+           * Model model = null; // Get RDF model from service as result of operation
+           * String content = null; // serialize the model as RDF/XML return new
+           * ResponseEntity<String>(content, HttpStatus.OK); }
+           */
 
     @GetMapping("/container-status")
     public ResponseEntity<String> containerStatus(String experiment, String container) {
@@ -98,7 +121,7 @@ public class EnexaController {
         Resource moduleInstance = RdfHelper.getSubjectResource(request, RDF.type, ENEXA.ModuleInstance);
         // TODO handle error
         RDFNode experiment = RdfHelper.getObjectResource(request, moduleInstance, ENEXA.experiment);
-     // TODO handle error
+        // TODO handle error
         Model model = enexa.containerStatus(experiment.asResource().getURI(), moduleInstance.getURI());
         // serialize the model as JSON-LD
         String content = writeModel(model, "JSON-LD");
