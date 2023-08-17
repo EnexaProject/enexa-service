@@ -42,19 +42,19 @@ public class EnexaServiceImpl implements EnexaService {
         Resource experiment = model.createResource(experimentIRI);
 
         // 2. Create shared directory
-        String sharedDirPath = System.getenv("ENEXA_SHARED_DIRECTORY");
-        if (sharedDirPath.endsWith(File.separator)) {
-            sharedDirPath = sharedDirPath.substring(0, sharedDirPath.length() - 1);
+        String sharedDirLocalPath = System.getenv("ENEXA_SHARED_DIRECTORY");
+        if (sharedDirLocalPath.endsWith(File.separator)) {
+            sharedDirLocalPath = sharedDirLocalPath.substring(0, sharedDirLocalPath.length() - 1);
         }
         // do not use experiment.getLocalName() it will remove the first character !
 
-        sharedDirPath = sharedDirPath + File.separator + experiment.getURI().replace("http://","");
+        sharedDirLocalPath = sharedDirLocalPath + File.separator + experiment.getURI().replace("http://","");
         // TODO create directory
-        File theDir = new File(sharedDirPath);
+        File theDir = new File(sharedDirLocalPath);
         if (!theDir.exists()){
             boolean isCreated = theDir.mkdirs();
             if(!isCreated){
-                LOGGER.warn("the directory can not created at :"+sharedDirPath);
+                LOGGER.warn("the directory can not created at :"+sharedDirLocalPath);
             }
         }
         // 3. Start default containers
@@ -62,8 +62,7 @@ public class EnexaServiceImpl implements EnexaService {
 
         // 4. Update experiment meta data with data from steps 2 and 3
         model.add(experiment, RDF.type, ENEXA.Experiment);
-
-        model.add(experiment, ENEXA.sharedDirectory, EnexaPathUtils.translateLocal2EnexaPath(sharedDirPath));
+        model.add(experiment, ENEXA.sharedDirectory, EnexaPathUtils.translateLocal2EnexaPath(sharedDirLocalPath,System.getenv("ENEXA_SHARED_DIRECTORY")));
             /* The first String is the URL of the SPARQL endpoint while the second is the graph IRI in
             * which the metadata of the experiment can be found.*/
         String[] metaDataInfos = metadataManager.getMetadataEndpointInfo(experimentIRI);
@@ -149,8 +148,8 @@ public class EnexaServiceImpl implements EnexaService {
                 metadataManager.getMetadataEndpointInfo(scModel.getExperiment())[1]));
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_IRI", instanceIri));
         // TODO : after demo replace the hardcoded strings
-        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SHARED_DIRECTORY", "/enexa/"));
-        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_WRITEABLE_DIRECTORY", "/enexa/"));
+        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SHARED_DIRECTORY", "/enexa"));
+        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_WRITEABLE_DIRECTORY", "/enexa"));
 
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_INSTANCE_IRI",scModel.getInstanceIri()));
         //TODO : should be specific

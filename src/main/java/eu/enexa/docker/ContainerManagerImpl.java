@@ -29,7 +29,7 @@ import java.util.List;
 @Component("dockerContainerManager")
 public class ContainerManagerImpl implements ContainerManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(ContainerManagerImpl.class);
-    private static final String VOLUME_PATH = "";
+    private static final String VOLUME_PATH = "/enexa";
     private static final String HOST_Base_PATH = System.getenv("ENEXA_SHARED_DIRECTORY");
     private DockerClient dockerClient;
 
@@ -80,6 +80,7 @@ public class ContainerManagerImpl implements ContainerManager {
                 .withNetworkMode("enexaNet")
                 .withBinds(allBinds);
 
+            String testImage = "";
             CreateContainerResponse container = dockerClient.createContainerCmd(image)
                 .withName(containerName)
                 .withEnv(mapToEnvironmentArray(variables))
