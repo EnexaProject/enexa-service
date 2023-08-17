@@ -24,6 +24,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -57,26 +59,21 @@ public class EnexaController {
         if (request == null) {
             return new ResponseEntity<String>("Couldn't read provided RDF model.", HttpStatus.BAD_REQUEST);
         }
-        // TODO : should all of these be null ?
         // Get RDF model from service as result of operation
         AddedResource addedResource = enexa.addResource(request);
         // serialize the model as JSON-LD
         String content = writeModel(addedResource.getModel(), "JSON-LD");
-        ResponseEntity<String> entity;
+        HttpStatus status = HttpStatus.OK;
         if (content == null) {
-            entity = new ResponseEntity<String>("Couldn't serialize result model.", HttpStatus.INTERNAL_SERVER_ERROR);
-        } else {
-            entity = new ResponseEntity<String>(content, HttpStatus.OK);
+            content = "Couldn't serialize result model.";
+            status = HttpStatus.INTERNAL_SERVER_ERROR;
         }
+        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         // Add Content-Location header
         if ((addedResource.getResource() != null) && (addedResource.getResource().isURIResource())) {
-            try {
-                entity.getHeaders().add(HttpHeaders.CONTENT_LOCATION, addedResource.getResource().getURI());
-            }catch(Exception ex){
-                String error = ex.getMessage();
-            }
+                headers.add(HttpHeaders.CONTENT_LOCATION, addedResource.getResource().getURI());
         }
-        return entity;
+        return new ResponseEntity<String>(content, headers, status);
     }
 
     /*
