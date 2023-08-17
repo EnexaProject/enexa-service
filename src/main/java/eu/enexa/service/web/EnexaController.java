@@ -10,12 +10,20 @@ import eu.enexa.vocab.ENEXA;
 import eu.enexa.vocab.HOBBIT;
 import org.apache.jena.rdf.model.*;
 import org.apache.hc.core5.http.HttpHeaders;
+import org.apache.jena.atlas.web.ContentType;
+import org.apache.jena.atlas.web.TypedInputStream;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
+
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFLanguages;
+import org.apache.jena.riot.RDFParser;
+import org.apache.jena.riot.WebContent;
 
 import org.apache.jena.vocabulary.RDF;
 import org.dice_research.rdf.RdfHelper;
@@ -29,6 +37,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -49,13 +58,14 @@ public class EnexaController {
 
     @RequestMapping(value = "/add-resource", produces = { "application/json",
             "application/ld+json" }, method = RequestMethod.POST)
-    public ResponseEntity<String> addResourceJsonLD(@RequestBody String body) {
+    public ResponseEntity<String> addResourceJsonLD(@RequestBody String body,
+            @RequestHeader(HttpHeaders.CONTENT_TYPE) String contentType) {
         /*
          * Errors · HTTP 400: o Experiment IRI is not known / not available. o The
          * resource URL does not exist or cannot be downloaded. · HTTP 500: o An error
          * occurs while adding the resource.
          */
-        Model request = readModel(body, "JSON-LD");
+        Model request = readModel(body, contentType);
         if (request == null) {
             return new ResponseEntity<String>("Couldn't read provided RDF model.", HttpStatus.BAD_REQUEST);
         }
@@ -103,13 +113,14 @@ public class EnexaController {
 
     @RequestMapping(value = "/container-status", produces = { "application/json",
             "application/ld+json" }, method = RequestMethod.GET)
-    public ResponseEntity<String> containerStatusJsonLD(@RequestBody String body) {
+    public ResponseEntity<String> containerStatusJsonLD(@RequestBody String body,
+            @RequestHeader(HttpHeaders.CONTENT_TYPE) String contentType) {
         /*
          * Errors · HTTP 400: o Experiment IRI is not known / not available. o The
          * resource URL does not exist or cannot be downloaded. · HTTP 500: o An error
          * occurs while adding the resource.
          */
-        Model request = readModel(body, "JSON-LD");
+        Model request = readModel(body, contentType);
         if (request == null) {
             return new ResponseEntity<String>("Couldn't read provided RDF model.", HttpStatus.BAD_REQUEST);
         }
@@ -144,15 +155,15 @@ public class EnexaController {
     // public ResponseEntity<String> startContainer(@RequestBody StartContainerModel
     // startContainerModel) {
     @PostMapping("start-container")
-    public ResponseEntity<String> startContainer(@RequestBody String body) {
+    public ResponseEntity<String> startContainer(@RequestBody String body,
+            @RequestHeader(HttpHeaders.CONTENT_TYPE) String contentType) {
         /*
          * Errors · HTTP 400: o Experiment IRI is not known / not available. o The image
          * does not exist or cannot be found. · HTTP 500: o An error occurs while
          * communicating with the Kubernetes service.
          */
-        Model model = ModelFactory.createDefaultModel();
-        model.read(new StringReader(body), "", "JSON-LD");
-        StartContainerModel scModel = StartContainerModel.parse(model);
+        Model request = readModel(body, contentType);
+        StartContainerModel scModel = StartContainerModel.parse(request);
 
         Model resultModel = enexa.startContainer(scModel);
         StringWriter writer = new StringWriter();
@@ -230,11 +241,20 @@ public class EnexaController {
         }
     }
 
-    protected Model readModel(String body, String language) {
+    protected Model readModel(String body, String contentType) {
         // TODO We could also make use of the RDFDataMgr class here
+        Lang lang = Lang.JSONLD;
+        if (contentType != null) {
+            ContentType ct = WebContent.determineCT(contentType, null, null);
+            lang = RDFLanguages.contentTypeToLang(ct);
+            if (lang == null) {
+                LOGGER.warn("Got an unknown content type \"{}\". Using default RDF serialization.");
+                lang = Lang.JSONLD;
+            }
+        }
         Model model = ModelFactory.createDefaultModel();
         try (StringReader reader = new StringReader(body)) {
-            model.read(reader, "", language);
+            RDFDataMgr.read(model, reader, "", lang);
         } catch (Exception e) {
             LOGGER.error("Error while reading request model. Returning null.", e);
             return null;
