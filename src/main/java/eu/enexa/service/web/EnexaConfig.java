@@ -1,8 +1,10 @@
 package eu.enexa.service.web;
 
 import org.springframework.http.MediaType;
+import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
 
+@Component
 public class EnexaConfig {
 
     public void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
