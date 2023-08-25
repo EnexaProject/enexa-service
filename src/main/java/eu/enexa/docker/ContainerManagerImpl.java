@@ -29,8 +29,11 @@ import java.util.List;
 @Component("dockerContainerManager")
 public class ContainerManagerImpl implements ContainerManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(ContainerManagerImpl.class);
-    private static final String VOLUME_PATH = "/enexa";
+    private static final String VOLUME_PATH = System.getenv("ENEXA_SHARED_DIRECTORY");
     private static final String HOST_Base_PATH = System.getenv("ENEXA_SHARED_DIRECTORY");
+
+    //private static final String NETWORK_NAME = "enexaNet";
+    private static final String NETWORK_NAME = "host";
     private DockerClient dockerClient;
 
     public ContainerManagerImpl(){
@@ -66,20 +69,23 @@ public class ContainerManagerImpl implements ContainerManager {
                 LOGGER.warn("ENEXA_EXPERIMENT_IRI is null or less than 10 character");
             }
 
-            String HOST_PATH = HOST_Base_PATH.concat(expIRI.replace("http://",""));
-            if(!HOST_Base_PATH.endsWith(File.separator)){
+            //String HOST_PATH = HOST_Base_PATH.concat(expIRI.replace("http://",""));
+            String HOST_PATH = HOST_Base_PATH;
+            /*if(!HOST_Base_PATH.endsWith(File.separator)){
                 HOST_PATH = HOST_Base_PATH.concat(File.separator.concat(expIRI.replace("http://","")));
-            }
+            }*/
 
             List<Bind> allBinds = new ArrayList<>();
-            allBinds.add(new Bind(HOST_PATH, new Volume(VOLUME_PATH+"/"+expIRI.replace("http://",""))));
-            allBinds.add(new Bind(HOST_PATH+"/output", new Volume("/output")));
+            //allBinds.add(new Bind(HOST_PATH, new Volume(VOLUME_PATH+"/"+expIRI.replace("http://",""))));
+            //allBinds.add(new Bind(HOST_PATH+"/output", new Volume("/output")));
+            allBinds.add(new Bind(HOST_PATH, new Volume("/enexa")));
 
             HostConfig hostConfig = HostConfig
                 .newHostConfig()
-                .withNetworkMode("enexaNet")
+                .withNetworkMode(NETWORK_NAME)
                 .withBinds(allBinds);
 
+            String testImage = "";
             CreateContainerResponse container = dockerClient.createContainerCmd(image)
                 .withName(containerName)
                 .withEnv(mapToEnvironmentArray(variables))

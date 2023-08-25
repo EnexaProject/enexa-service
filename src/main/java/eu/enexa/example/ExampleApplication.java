@@ -4,6 +4,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 
+import eu.enexa.vocab.ALGORITHM;
 import eu.enexa.vocab.HOBBIT;
 import org.apache.commons.io.FileUtils;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
@@ -145,7 +146,7 @@ public class ExampleApplication implements AutoCloseable {
         Resource instance = instanceModel.createResource();
         instanceModel.add(instance, RDF.type, ENEXA.ModuleInstance);
         //TODO is it correct ?
-        instanceModel.add(instance, HOBBIT.instanceOf, instanceModel.createResource(preFix+"v1.0"));
+        instanceModel.add(instance, ALGORITHM.instanceOf, instanceModel.createResource(preFix+"v1.0"));
         instanceModel.add(instance, ENEXA.experiment, instanceModel.createResource(experimentIRI));
         // Add parameters
         /*instanceModel.add(instance, instanceModel.createProperty(preFix+"parameters/model"),

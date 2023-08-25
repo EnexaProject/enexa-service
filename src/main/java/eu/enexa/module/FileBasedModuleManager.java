@@ -122,8 +122,10 @@ public class FileBasedModuleManager implements ModuleManager {
                 modules.put(moduleModel.getModuleIri(), moduleModel);
             } else {
                 if (throwIfFileUnknown) {
-                    throw new IOException(
-                            "The given file has an unknown file ending: \"" + moduleFile.getAbsolutePath() + "\".");
+                    /*throw new IOException(
+                            "The given file has an unknown file ending: \"" + moduleFile.getAbsolutePath() + "\".");*/
+                    LOGGER.warn("The given file has an unknown file ending: \"" + moduleFile.getAbsolutePath()
+                        + "\". It will be ignored.");
                 } else {
                     LOGGER.warn("The given file has an unknown file ending: \"" + moduleFile.getAbsolutePath()
                             + "\". It will be ignored.");

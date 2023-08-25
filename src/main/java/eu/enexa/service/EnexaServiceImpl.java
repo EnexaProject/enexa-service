@@ -13,6 +13,7 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.vocabulary.RDF;
 import org.dice_research.rdf.ModelHelper;
 import org.dice_research.rdf.RdfHelper;
+import org.dice_research.enexa.utils.EnexaPathUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +37,7 @@ public class EnexaServiceImpl implements EnexaService {
     @Autowired
     private ModuleManager moduleManager;
 
-    private static final String metaDataEndpoint = "http://fuseki-devwd:3030/mydataset";
+    private static final String metaDataEndpoint = "http://localhost:3030/mydataset";
 
     @Override
     public Model startExperiment() {
@@ -46,31 +47,31 @@ public class EnexaServiceImpl implements EnexaService {
         Resource experiment = model.createResource(experimentIRI);
 
         // 2. Create shared directory
-        String sharedDirPath = System.getenv("ENEXA_SHARED_DIRECTORY");
-        if (sharedDirPath.endsWith(File.separator)) {
-            sharedDirPath = sharedDirPath.substring(0, sharedDirPath.length() - 1);
+        String sharedDirLocalPath = System.getenv("ENEXA_SHARED_DIRECTORY");
+        if (sharedDirLocalPath.endsWith(File.separator)) {
+            sharedDirLocalPath = sharedDirLocalPath.substring(0, sharedDirLocalPath.length() - 1);
         }
         // do not use experiment.getLocalName() it will remove the first character !
 
-        sharedDirPath = sharedDirPath + File.separator + experiment.getURI().replace("http://", "");
+        sharedDirLocalPath = sharedDirLocalPath + File.separator + experiment.getURI().replace("http://","");
         // TODO create directory
-        File theDir = new File(sharedDirPath);
-        if (!theDir.exists()) {
+       /* File theDir = new File(sharedDirLocalPath);
+        if (!theDir.exists()){
             boolean isCreated = theDir.mkdirs();
-            if (!isCreated) {
-                LOGGER.warn("the directory can not created at :" + sharedDirPath);
+            if(!isCreated){
+                LOGGER.warn("the directory can not created at :"+sharedDirLocalPath);
             }
-        }
+        }*/
         // 3. Start default containers
         // TODO : implement this
 
         // 4. Update experiment meta data with data from steps 2 and 3
         model.add(experiment, RDF.type, ENEXA.Experiment);
-        model.add(experiment, ENEXA.sharedDirectory, sharedDirPath);
-        /*
-         * The first String is the URL of the SPARQL endpoint while the second is the
-         * graph IRI in which the metadata of the experiment can be found.
-         */
+
+        model.add(experiment, ENEXA.sharedDirectory, EnexaPathUtils.translateLocal2EnexaPath(sharedDirLocalPath,System.getenv("ENEXA_SHARED_DIRECTORY")));
+            /* The first String is the URL of the SPARQL endpoint while the second is the graph IRI in
+            * which the metadata of the experiment can be found.*/
+
         String[] metaDataInfos = metadataManager.getMetadataEndpointInfo(experimentIRI);
         if (metaDataInfos.length == 0) {
             LOGGER.error("there is no data in metadata for this experiments: " + experimentIRI);
@@ -161,12 +162,12 @@ public class EnexaServiceImpl implements EnexaService {
                 metadataManager.getMetadataEndpointInfo(scModel.getExperiment())[1]));
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_IRI", instanceIri));
         // TODO : after demo replace the hardcoded strings
-        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SHARED_DIRECTORY", "/enexa/"));
-        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_WRITEABLE_DIRECTORY", "/enexa/"));
+        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SHARED_DIRECTORY", "/enexa"));
+        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_WRITEABLE_DIRECTORY", "/enexa"));
 
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_INSTANCE_IRI", scModel.getInstanceIri()));
         // TODO : should be specific
-        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_INSTANCE_DIRECTORY", "/output/result"));
+        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_INSTANCE_DIRECTORY", "/enexa"));
 
         // TODO: update this
         if (System.getenv("ENEXA_SERVICE_URL").equals("")) {
@@ -176,11 +177,14 @@ public class EnexaServiceImpl implements EnexaService {
         }
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SERVICE_URL", System.getenv("ENEXA_SERVICE_URL")));
 
-        String containerId = containerManager.startContainer(module.getImage(), generatePodName(module.getModuleIri()),
-                variables);
-        // String containerId =
-        // containerManager.startContainer("dicegroup/copaal-demo-service-splitedsearchcount:2.5.0",
-        // generatePodName(module.getModuleIri()), variables);
+        String containerId = containerManager.startContainer(module.getImage(), generatePodName(module.getModuleIri()),variables);
+        //String containerId = containerManager.startContainer("dicegroup/copaal-demo-service-splitedsearchcount:2.5.0", generatePodName(module.getModuleIri()), variables);
+
+        Model createdContainerModel = ModelFactory.createDefaultModel();
+        createdContainerModel.add( ResourceFactory.createResource(instanceIri), ENEXA.containerName, containerId);
+
+        metadataManager.addMetaData(createdContainerModel);
+
         /*
          * 4. Add start time (or error code in case it couldn’t be started) to the TODO
          * create RDF model with new metadata metadataManager.addMetaData(null);
@@ -192,7 +196,7 @@ public class EnexaServiceImpl implements EnexaService {
          */
         // TODO merge scModel and previously created metadata
 
-        return scModel.toModel();
+        return scModel.getModel();
     }
 
     public String generatePodName(String moduleIri) {

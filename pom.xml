@@ -106,6 +106,12 @@
             <artifactId>rdf-tools.sparql</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
+        <!-- JAVA utilities -->
+        <dependency>
+            <groupId>org.dice-research</groupId>
+            <artifactId>enexa.java-utils</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
         <!-- SPARQL API library -->
         <dependency>
             <groupId>org.aksw.jenax</groupId>
