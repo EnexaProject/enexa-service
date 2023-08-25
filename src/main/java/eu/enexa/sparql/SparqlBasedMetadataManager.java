@@ -70,9 +70,9 @@ public class SparqlBasedMetadataManager implements MetadataManager, AutoCloseabl
         HttpClient client = HttpClient.newHttpClient();
         DatasetDescription desc = new DatasetDescription();
         desc.addNamedGraphURI(defaultMetaDataGraphIRI);
-        queryExecFactory = new QueryExecutionFactoryHttp(sparqlEndpointUrl, desc, client);
+        queryExecFactory = new QueryExecutionFactoryHttp(sparqlEndpointUrl, new DatasetDescription(), client);
         queryExecFactory = new QueryExecutionFactoryPaginated(queryExecFactory, DEFAULT_MAX_RESULT);
-        updateExecFactory = new UpdateExecutionFactoryHttp(sparqlEndpointUrl, client);
+        updateExecFactory = new UpdateExecutionFactoryHttp(sparqlEndpointUrl, desc ,client);
     }
 
     @Override
@@ -93,7 +93,10 @@ public class SparqlBasedMetadataManager implements MetadataManager, AutoCloseabl
             UpdateProcessor update;
             for (String query : queries) {
                 //TODO if work should not be hardcoded
-                query = query.replace("WITH <mydataset>","");
+                //query = query.replace("WITH <mydataset>","");
+                LOGGER.info("query is :"+query);
+                //query = query.replace("INSERT","INSERT DATA").replace("WHERE","").replace("{}","");
+                //LOGGER.info("after replacing the query where clause :"+query);
                 update = updateExecFactory.createUpdateProcessor(query);
                 update.execute();
                 //todo what happened if update can not find a triple to update !
@@ -119,8 +122,8 @@ public class SparqlBasedMetadataManager implements MetadataManager, AutoCloseabl
 
     @Override
     public String getContainerName(String experimentIri, String instanceIRI) {
-        QueryExecution qe = queryExecFactory.createQueryExecution("SELECT ?name WHERE {" + "<" + instanceIRI
-                + "> <http://w3id.org/dice-research/enexa/ontology#containerName> ?name . }");
+        QueryExecution qe = queryExecFactory.createQueryExecution("SELECT ?name FROM <"+defaultMetaDataGraphIRI+"> WHERE {" + "<" + instanceIRI
+                + "> <http://w3id.org/dice-research/enexa/ontology#containerName> ?name }");
         ResultSet rs = qe.execSelect();
         if (rs.hasNext()) {
             QuerySolution qs = rs.next();

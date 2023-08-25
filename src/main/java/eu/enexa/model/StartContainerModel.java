@@ -201,10 +201,4 @@ public class StartContainerModel {
         return new StartContainerModel(experimentResource.getURI(), moduleIri,
                 moduleUrlResource == null ? null : moduleUrlResource.getURI(), instance, model);
     }
-
-    public Model toModel(){
-        Model model = ModelFactory.createDefaultModel();
-        //TODO develop this.
-        return model;
-    }
 }

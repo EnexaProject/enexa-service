@@ -37,7 +37,7 @@ public class EnexaServiceImpl implements EnexaService {
     @Autowired
     private ModuleManager moduleManager;
 
-    private static final String metaDataEndpoint = "http://fuseki-devwd:3030/mydataset";
+    private static final String metaDataEndpoint = "http://localhost:3030/mydataset";
 
     @Override
     public Model startExperiment() {
@@ -55,13 +55,13 @@ public class EnexaServiceImpl implements EnexaService {
 
         sharedDirLocalPath = sharedDirLocalPath + File.separator + experiment.getURI().replace("http://","");
         // TODO create directory
-        File theDir = new File(sharedDirLocalPath);
+       /* File theDir = new File(sharedDirLocalPath);
         if (!theDir.exists()){
             boolean isCreated = theDir.mkdirs();
             if(!isCreated){
                 LOGGER.warn("the directory can not created at :"+sharedDirLocalPath);
             }
-        }
+        }*/
         // 3. Start default containers
         // TODO : implement this
 
@@ -162,7 +162,7 @@ public class EnexaServiceImpl implements EnexaService {
 
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_INSTANCE_IRI", scModel.getInstanceIri()));
         // TODO : should be specific
-        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_INSTANCE_DIRECTORY", "/output/result"));
+        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_INSTANCE_DIRECTORY", "/enexa"));
 
         // TODO: update this
         if (System.getenv("ENEXA_SERVICE_URL").equals("")) {
@@ -172,11 +172,14 @@ public class EnexaServiceImpl implements EnexaService {
         }
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SERVICE_URL", System.getenv("ENEXA_SERVICE_URL")));
 
-        String containerId = containerManager.startContainer(module.getImage(), generatePodName(module.getModuleIri()),
-                variables);
-        // String containerId =
-        // containerManager.startContainer("dicegroup/copaal-demo-service-splitedsearchcount:2.5.0",
-        // generatePodName(module.getModuleIri()), variables);
+        String containerId = containerManager.startContainer(module.getImage(), generatePodName(module.getModuleIri()),variables);
+        //String containerId = containerManager.startContainer("dicegroup/copaal-demo-service-splitedsearchcount:2.5.0", generatePodName(module.getModuleIri()), variables);
+
+        Model createdContainerModel = ModelFactory.createDefaultModel();
+        createdContainerModel.add( ResourceFactory.createResource(instanceIri), ENEXA.containerName, containerId);
+
+        metadataManager.addMetaData(createdContainerModel);
+
         /*
          * 4. Add start time (or error code in case it couldn’t be started) to the TODO
          * create RDF model with new metadata metadataManager.addMetaData(null);
@@ -188,7 +191,7 @@ public class EnexaServiceImpl implements EnexaService {
          */
         // TODO merge scModel and previously created metadata
 
-        return scModel.toModel();
+        return scModel.getModel();
     }
 
     public String generatePodName(String moduleIri) {
