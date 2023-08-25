@@ -224,6 +224,38 @@ public class EnexaController {
         return new ResponseEntity<String>(writer.toString(), HttpStatus.OK);
     }
 
+    @RequestMapping(value = "/meta", produces = { "application/json",
+            "application/ld+json" }, method = RequestMethod.GET)
+    public ResponseEntity<String> meta(@RequestBody String body,
+            @RequestHeader(HttpHeaders.CONTENT_TYPE) String contentType) {
+        /*
+         * Errors · HTTP 400: o Experiment IRI is not known / not available. o The
+         * resource URL does not exist or cannot be downloaded. · HTTP 500: o An error
+         * occurs while adding the resource.
+         */
+        Model request = readModel(body, contentType);
+        if (request == null) {
+            return new ResponseEntity<String>("Couldn't read provided RDF model.", HttpStatus.BAD_REQUEST);
+        }
+        Resource experiment = RdfHelper.getSubjectResource(request, RDF.type, ENEXA.Experiment);
+        if (experiment == null) {
+            return new ResponseEntity<String>("Got a request with an RDF model without an experiment IRI.",
+                    HttpStatus.BAD_REQUEST);
+        }
+        // Get RDF model from service as result of operation
+        Model metadata = enexa.getMetadataEndpoint(contentType);
+        if (metadata == null) {
+            return new ResponseEntity<String>(
+                    "Couldn't retrieve the metadata endpoint for " + experiment.getURI() + ".", HttpStatus.BAD_REQUEST);
+        }
+        // serialize the model as JSON-LD
+        String content = writeModel(metadata, "JSON-LD");
+        if (content == null) {
+            return new ResponseEntity<String>("Couldn't serialize result model.", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return new ResponseEntity<String>(content, HttpStatus.OK);
+    }
+
     protected String writeModel(Model model, String language) {
         try (StringWriter writer = new StringWriter()) {
             model.write(writer, language);

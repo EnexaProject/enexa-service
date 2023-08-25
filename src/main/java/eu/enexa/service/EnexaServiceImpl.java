@@ -93,8 +93,13 @@ public class EnexaServiceImpl implements EnexaService {
 
     @Override
     public Model getMetadataEndpoint(String experimentIri) {
-        // TODO Auto-generated method stub
-        return null;
+        String[] endpointInfo = metadataManager.getMetadataEndpointInfo(experimentIri);
+        Model model = ModelFactory.createDefaultModel();
+        Resource experimentResource = model.createResource(experimentIri);
+        model.add(experimentResource, RDF.type, ENEXA.Experiment);
+        model.add(experimentResource, ENEXA.metaDataEndpoint, model.createResource(endpointInfo[0]));
+        model.add(experimentResource, ENEXA.metaDataGraph, model.createResource(endpointInfo[1]));
+        return model;
     }
 
     @Override
