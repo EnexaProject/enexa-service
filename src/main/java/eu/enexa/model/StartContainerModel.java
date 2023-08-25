@@ -3,21 +3,20 @@ package eu.enexa.model;
 
 import javax.annotation.Nullable;
 
-import eu.enexa.vocab.ALGORITHM;
-import org.apache.jena.rdf.model.*;
-
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
+import org.dice_research.enexa.vocab.Algorithm;
+import org.dice_research.enexa.vocab.ENEXA;
 import org.dice_research.rdf.ModelHelper;
 import org.dice_research.rdf.RdfHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-
-import eu.enexa.vocab.ENEXA;
-import eu.enexa.vocab.HOBBIT;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * This class represents the request to start an ENEXA module.
@@ -148,7 +147,7 @@ public class StartContainerModel {
      * @param instanceIri the instanceIri to set
      */
     public void setInstanceIri(String instanceIri) {
-        StmtIterator iterator = model.listStatements(null, ALGORITHM.instanceOf, (RDFNode) null);
+        StmtIterator iterator = model.listStatements(null, Algorithm.instanceOf, (RDFNode) null);
         if (!iterator.hasNext()) {
             throw new IllegalArgumentException("Couldn't find a module instance in the provided RDF model.");
         }
@@ -171,7 +170,7 @@ public class StartContainerModel {
 
     public static StartContainerModel parse(Model model) throws IllegalArgumentException {
         // Search for triple that uses hobbit:instanceOf
-        StmtIterator iterator = model.listStatements(null, ALGORITHM.instanceOf, (RDFNode) null);
+        StmtIterator iterator = model.listStatements(null, Algorithm.instanceOf, (RDFNode) null);
         if (!iterator.hasNext()) {
             throw new IllegalArgumentException("Couldn't find a module instance in the provided RDF model.");
         }

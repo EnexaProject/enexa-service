@@ -1,20 +1,18 @@
 package eu.enexa.example;
 
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringWriter;
 
-import eu.enexa.vocab.ALGORITHM;
-import eu.enexa.vocab.HOBBIT;
+import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
+import org.aksw.jenax.arq.connection.core.QueryExecutionFactory;
 import org.apache.commons.io.FileUtils;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.io.entity.StringEntity;
-
-import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
-import org.aksw.jenax.arq.connection.core.QueryExecutionFactory;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
@@ -22,11 +20,11 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.RDF;
+import org.dice_research.enexa.vocab.Algorithm;
+import org.dice_research.enexa.vocab.ENEXA;
 import org.dice_research.rdf.RdfHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import eu.enexa.vocab.ENEXA;
 
 public class ExampleApplication implements AutoCloseable {
 
@@ -146,7 +144,7 @@ public class ExampleApplication implements AutoCloseable {
         Resource instance = instanceModel.createResource();
         instanceModel.add(instance, RDF.type, ENEXA.ModuleInstance);
         //TODO is it correct ?
-        instanceModel.add(instance, ALGORITHM.instanceOf, instanceModel.createResource(preFix+"v1.0"));
+        instanceModel.add(instance, Algorithm.instanceOf, instanceModel.createResource(preFix+"v1.0"));
         instanceModel.add(instance, ENEXA.experiment, instanceModel.createResource(experimentIRI));
         // Add parameters
         /*instanceModel.add(instance, instanceModel.createProperty(preFix+"parameters/model"),

@@ -3,6 +3,7 @@ package eu.enexa.service;
 import org.apache.jena.rdf.model.Model;
 
 import eu.enexa.model.AddedResource;
+import eu.enexa.model.ModuleNotFoundException;
 import eu.enexa.model.StartContainerModel;
 
 public interface EnexaService {
@@ -45,10 +46,13 @@ public interface EnexaService {
      * couldn’t be started) to the experiment’s meta data. 5. Return the meta data
      * of the newly created container (including its DNS name)
      *
-     * @param scModel data object that contains all necessary information to start the container
-     * @return
+     * @param scModel data object that contains all necessary information to start
+     *                the container
+     * @return An RDF model with the started module's metadata
+     * @throws ModuleNotFoundException if the module with the given identifier
+     *                                 couldn't be found
      */
-    public Model startContainer(StartContainerModel scModel);
+    public Model startContainer(StartContainerModel scModel) throws ModuleNotFoundException;
 
     /**
      * Alternative method to add a resource based on already existing meta data.

@@ -12,15 +12,15 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.util.FileUtils;
+import org.dice_research.enexa.vocab.ENEXA;
+import org.dice_research.enexa.vocab.HOBBIT;
 import org.dice_research.rdf.RdfHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import eu.enexa.model.ModuleModel;
 import eu.enexa.service.ModuleManager;
-import eu.enexa.vocab.ENEXA;
-import eu.enexa.vocab.HOBBIT;
-import org.springframework.stereotype.Component;
 
 @Component
 public class FileBasedModuleManager implements ModuleManager {

@@ -11,9 +11,10 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.vocabulary.RDF;
+import org.dice_research.enexa.utils.EnexaPathUtils;
+import org.dice_research.enexa.vocab.ENEXA;
 import org.dice_research.rdf.ModelHelper;
 import org.dice_research.rdf.RdfHelper;
-import org.dice_research.enexa.utils.EnexaPathUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,8 +22,8 @@ import org.springframework.stereotype.Service;
 
 import eu.enexa.model.AddedResource;
 import eu.enexa.model.ModuleModel;
+import eu.enexa.model.ModuleNotFoundException;
 import eu.enexa.model.StartContainerModel;
-import eu.enexa.vocab.ENEXA;
 
 @Service
 public class EnexaServiceImpl implements EnexaService {
@@ -53,24 +54,25 @@ public class EnexaServiceImpl implements EnexaService {
         }
         // do not use experiment.getLocalName() it will remove the first character !
 
-        sharedDirLocalPath = sharedDirLocalPath + File.separator + experiment.getURI().replace("http://","");
+        sharedDirLocalPath = sharedDirLocalPath + File.separator + experiment.getURI().replace("http://", "");
         // TODO create directory
-       /* File theDir = new File(sharedDirLocalPath);
-        if (!theDir.exists()){
-            boolean isCreated = theDir.mkdirs();
-            if(!isCreated){
-                LOGGER.warn("the directory can not created at :"+sharedDirLocalPath);
-            }
-        }*/
+        /*
+         * File theDir = new File(sharedDirLocalPath); if (!theDir.exists()){ boolean
+         * isCreated = theDir.mkdirs(); if(!isCreated){
+         * LOGGER.warn("the directory can not created at :"+sharedDirLocalPath); } }
+         */
         // 3. Start default containers
         // TODO : implement this
 
         // 4. Update experiment meta data with data from steps 2 and 3
         model.add(experiment, RDF.type, ENEXA.Experiment);
 
-        model.add(experiment, ENEXA.sharedDirectory, EnexaPathUtils.translateLocal2EnexaPath(sharedDirLocalPath,System.getenv("ENEXA_SHARED_DIRECTORY")));
-            /* The first String is the URL of the SPARQL endpoint while the second is the graph IRI in
-            * which the metadata of the experiment can be found.*/
+        model.add(experiment, ENEXA.sharedDirectory,
+                EnexaPathUtils.translateLocal2EnexaPath(sharedDirLocalPath, System.getenv("ENEXA_SHARED_DIRECTORY")));
+        /*
+         * The first String is the URL of the SPARQL endpoint while the second is the
+         * graph IRI in which the metadata of the experiment can be found.
+         */
 
         String[] metaDataInfos = metadataManager.getMetadataEndpointInfo(experimentIRI);
         if (metaDataInfos.length == 0) {
@@ -104,14 +106,7 @@ public class EnexaServiceImpl implements EnexaService {
     }
 
     @Override
-    public Model startContainer(StartContainerModel scModel) throws RuntimeException {
-
-        // TODO: establish exception package and move the exception to this place
-        class ModuleNotFoundException extends RuntimeException {
-            public ModuleNotFoundException() {
-                super("Module with ID " + scModel.getModuleIri().toString() + " not found.");
-            }
-        }
+    public Model startContainer(StartContainerModel scModel) throws ModuleNotFoundException {
 
         /*
          * 1. Derive meta data for the module that should be started a. The module IRI
@@ -122,10 +117,14 @@ public class EnexaServiceImpl implements EnexaService {
          * contains more than one module, the "latest" (i.e., the one with the latest
          * publication date) is used.
          */
-        ModuleModel module = moduleManager.deriveModule(scModel.getModuleIri(), scModel.getModuleUrl());
-
+        ModuleModel module = null;
+        try {
+            module = moduleManager.deriveModule(scModel.getModuleIri(), scModel.getModuleUrl());
+        } catch (Exception e) {
+            throw new ModuleNotFoundException(scModel);
+        }
         if (module == null) {
-            throw new ModuleNotFoundException();
+            throw new ModuleNotFoundException(scModel);
         }
 
         /*
@@ -136,9 +135,6 @@ public class EnexaServiceImpl implements EnexaService {
         scModel.setInstanceIri(instanceIri);
         metadataManager.addMetaData(scModel.getModel());
 
-        Model tmpModel = ModelFactory.createDefaultModel();
-        // tmpModel.addLiteral(tmpModel.createResource(instanceIri),tmpModel.createProperty("http://w3id.org/dice-research/enexa/module/dice-embeddings/parameters/num_epochs"),10);
-        // metadataManager.addMetaData(tmpModel);
         /*
          * 3. Start the image a. with the ENEXA environmental variables b. as part of
          * the local network of the ENEXA service. * experiment’s meta data.
@@ -177,25 +173,27 @@ public class EnexaServiceImpl implements EnexaService {
         }
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SERVICE_URL", System.getenv("ENEXA_SERVICE_URL")));
 
-        String containerId = containerManager.startContainer(module.getImage(), generatePodName(module.getModuleIri()),variables);
-        //String containerId = containerManager.startContainer("dicegroup/copaal-demo-service-splitedsearchcount:2.5.0", generatePodName(module.getModuleIri()), variables);
-
-        Model createdContainerModel = ModelFactory.createDefaultModel();
-        createdContainerModel.add( ResourceFactory.createResource(instanceIri), ENEXA.containerName, containerId);
-
-        metadataManager.addMetaData(createdContainerModel);
+        String containerName = generatePodName(module.getModuleIri());
+        String containerId = containerManager.startContainer(module.getImage(), generatePodName(module.getModuleIri()),
+                variables);
+        // TODO take point in time
 
         /*
          * 4. Add start time (or error code in case it couldn’t be started) to the TODO
          * create RDF model with new metadata metadataManager.addMetaData(null);
          */
+        Model createdContainerModel = scModel.getModel();
+        Resource instanceRes = createdContainerModel.getResource(instanceIri);
+        createdContainerModel.add(instanceRes, ENEXA.containerId, containerId);
+        createdContainerModel.add(instanceRes, ENEXA.containerName, containerName);
+        // TODO add start time
+
+        metadataManager.addMetaData(createdContainerModel);
 
         /*
          * 5. Return the meta data of the newly created container (including its DNS
          * name)
          */
-        // TODO merge scModel and previously created metadata
-
         return scModel.getModel();
     }
 

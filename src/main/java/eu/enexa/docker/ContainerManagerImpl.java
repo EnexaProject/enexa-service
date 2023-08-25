@@ -30,7 +30,7 @@ import java.util.List;
 public class ContainerManagerImpl implements ContainerManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(ContainerManagerImpl.class);
     private static final String VOLUME_PATH = System.getenv("ENEXA_SHARED_DIRECTORY");
-    private static final String HOST_Base_PATH = System.getenv("ENEXA_SHARED_DIRECTORY");
+    private static final String HOST_BASE_PATH = System.getenv("ENEXA_SHARED_DIRECTORY");
 
     //private static final String NETWORK_NAME = "enexaNet";
     private static final String NETWORK_NAME = "host";
@@ -70,7 +70,7 @@ public class ContainerManagerImpl implements ContainerManager {
             }
 
             //String HOST_PATH = HOST_Base_PATH.concat(expIRI.replace("http://",""));
-            String HOST_PATH = HOST_Base_PATH;
+            String HOST_PATH = HOST_BASE_PATH;
             /*if(!HOST_Base_PATH.endsWith(File.separator)){
                 HOST_PATH = HOST_Base_PATH.concat(File.separator.concat(expIRI.replace("http://","")));
             }*/
