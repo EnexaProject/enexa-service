@@ -38,7 +38,7 @@ public class EnexaServiceImpl implements EnexaService {
     @Autowired
     private ModuleManager moduleManager;
 
-    private static final String metaDataEndpoint = "http://localhost:3030/mydataset";
+    private static final String metaDataEndpoint = System.getenv("ENEXA_META_DATA_ENDPOINT");
 
     @Override
     public Model startExperiment() {
@@ -174,8 +174,7 @@ public class EnexaServiceImpl implements EnexaService {
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SERVICE_URL", System.getenv("ENEXA_SERVICE_URL")));
 
         String containerName = generatePodName(module.getModuleIri());
-        String containerId = containerManager.startContainer(module.getImage(), generatePodName(module.getModuleIri()),
-                variables);
+        String containerId = containerManager.startContainer(module.getImage(), containerName, variables);
         // TODO take point in time
 
         /*
@@ -225,11 +224,14 @@ public class EnexaServiceImpl implements EnexaService {
 
     @Override
     public Model containerStatus(String experimentIri, String instanceIRI) {
+        LOGGER.info("experimentIri is : "+ experimentIri);
+        LOGGER.info("instanceIRI is : "+ instanceIRI);
         // Query container / pod name
         String podName = metadataManager.getContainerName(experimentIri, instanceIRI);
+        LOGGER.info("pod/container name is : "+ podName);
         // Get status
         String status = containerManager.getContainerStatus(podName);
-
+        LOGGER.info("container status is : "+ status);
         Model result = ModelFactory.createDefaultModel();
         Resource instance = result.createResource(instanceIRI);
         result.add(instance, ENEXA.experiment, result.createResource(experimentIri));
