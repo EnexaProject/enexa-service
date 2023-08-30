@@ -112,6 +112,12 @@
             <artifactId>enexa.java-utils</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
+        <!-- Spring Jena -->
+        <dependency>
+            <groupId>org.dice-research</groupId>
+            <artifactId>rdf-tools.spring-jena</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
         <!-- SPARQL API library -->
         <dependency>
             <groupId>org.aksw.jenax</groupId>

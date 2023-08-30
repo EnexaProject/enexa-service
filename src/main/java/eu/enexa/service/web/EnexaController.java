@@ -8,10 +8,7 @@ import org.apache.hc.core5.http.HttpHeaders;
 import org.apache.jena.atlas.web.ContentType;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFLanguages;
@@ -20,6 +17,7 @@ import org.apache.jena.vocabulary.RDF;
 import org.dice_research.enexa.vocab.Algorithm;
 import org.dice_research.enexa.vocab.ENEXA;
 import org.dice_research.rdf.RdfHelper;
+import org.dice_research.rdf.spring_jena.Jena2SpringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +28,6 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -46,69 +43,54 @@ public class EnexaController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EnexaController.class);
 
+    protected final static Lang[] SUPPORTED_LANGUAGES = new Lang[] { Lang.JSONLD, Lang.TURTLE, Lang.NTRIPLES,
+            Lang.RDFXML, Lang.TRIG, Lang.TRIX, Lang.NQUADS, Lang.RDFJSON, Lang.RDFPROTO, Lang.RDFTHRIFT, Lang.JSONLD10,
+            Lang.JSONLD11 };
+    public final static String[] SUPPORTED_MEDIA_TYPES = Jena2SpringUtils.SUPPORTED_MEDIA_TYPES;
+
     @Autowired
     private EnexaService enexa;
 
-    @PostMapping(value = "/add-resource")
-    public ResponseEntity<String> addResourceJsonLD(@RequestBody String body,
-            @RequestHeader(HttpHeaders.CONTENT_TYPE) String contentType,
-            @RequestHeader(HttpHeaders.ACCEPT) String acceptHeader) {
+    @PostMapping(value = "/add-resource", consumes = { WebContent.contentTypeJSONLD, WebContent.contentTypeTurtle,
+            WebContent.contentTypeTurtleAlt1, WebContent.contentTypeRDFXML, WebContent.contentTypeRDFJSON,
+            WebContent.contentTypeTextPlain, WebContent.contentTypeNTriples, WebContent.contentTypeNTriplesAlt,
+            WebContent.contentTypeXML, WebContent.contentTypeXMLAlt, WebContent.contentTypeTriG,
+            WebContent.contentTypeNQuads, WebContent.contentTypeTriGAlt1, WebContent.contentTypeRDFProto,
+            WebContent.contentTypeRDFThrift, WebContent.contentTypeNQuadsAlt1, WebContent.contentTypeTriX,
+            WebContent.contentTypeTriXxml, WebContent.contentTypeN3, WebContent.contentTypeN3Alt1,
+            WebContent.contentTypeN3Alt2 }, produces = { WebContent.contentTypeJSONLD, WebContent.contentTypeTurtle,
+                    WebContent.contentTypeTurtleAlt1, WebContent.contentTypeRDFXML, WebContent.contentTypeRDFJSON,
+                    WebContent.contentTypeTextPlain, WebContent.contentTypeNTriples, WebContent.contentTypeNTriplesAlt,
+                    WebContent.contentTypeXML, WebContent.contentTypeXMLAlt, WebContent.contentTypeTriG,
+                    WebContent.contentTypeNQuads, WebContent.contentTypeTriGAlt1, WebContent.contentTypeRDFProto,
+                    WebContent.contentTypeRDFThrift, WebContent.contentTypeNQuadsAlt1, WebContent.contentTypeTriX,
+                    WebContent.contentTypeTriXxml, WebContent.contentTypeN3, WebContent.contentTypeN3Alt1,
+                    WebContent.contentTypeN3Alt2 })
+    public ResponseEntity<Model> addResource(@RequestBody Model request) {
         /*
          * Errors · HTTP 400: o Experiment IRI is not known / not available. o The
          * resource URL does not exist or cannot be downloaded. · HTTP 500: o An error
          * occurs while adding the resource.
          */
-        Model request = readModel(body, contentType);
-        if (request == null) {
-            return new ResponseEntity<String>("Couldn't read provided RDF model.", HttpStatus.BAD_REQUEST);
-        }
         // Get RDF model from service as result of operation
         AddedResource addedResource = enexa.addResource(request);
-        Lang lang = RDFLanguages.contentTypeToLang(acceptHeader);
-
-        // serialize the model as JSON-LD
-        String content = writeModel(addedResource.getModel(), lang.getName());
-        HttpStatus status = HttpStatus.OK;
-        if (content == null) {
-            content = "Couldn't serialize result model.";
-            status = HttpStatus.INTERNAL_SERVER_ERROR;
-        }
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         // Add Content-Location header
         if ((addedResource.getResource() != null) && (addedResource.getResource().isURIResource())) {
             headers.add(HttpHeaders.CONTENT_LOCATION, addedResource.getResource().getURI());
         }
-        return new ResponseEntity<String>(content, headers, status);
+        return new ResponseEntity<Model>(addedResource.getModel(), headers, HttpStatus.OK);
     }
 
-    /*
-     * @RequestMapping(value = "/add-resource", produces = { "application/xml",
-     * "application/ld+json" }, method = RequestMethod.POST) public
-     * ResponseEntity<String> addResourceXML() {
-     *//*
-        * Errors · HTTP 400: o Experiment IRI is not known / not available. o The
-        * resource URL does not exist or cannot be downloaded. · HTTP 500: o An error
-        * occurs while adding the resource.
-        *//*
-           * Model model = null; // Get RDF model from service as result of operation
-           * String content = null; // serialize the model as RDF/XML return new
-           * ResponseEntity<String>(content, HttpStatus.OK); }
-           */
-
-    /*
-     * @GetMapping("/container-status") public ResponseEntity<String>
-     * containerStatus(String experiment, String container) {
-     *//*
-        * Errors · HTTP 400: o Experiment IRI is not known / not available. · HTTP 500:
-        * o An error occurs while communicating with the Kubernetes service.
-        *//*
-           * Model model = null; // Get RDF model from service as result of operation
-           * String content = null; // serialize the model as JSON-LD return new
-           * ResponseEntity<String>(content, HttpStatus.OK); }
-           */
-
-    @GetMapping("/container-status")
-    public ResponseEntity<String> containerStatusJsonLD(
+    @GetMapping(value = "/container-status", consumes = "application/x-www-form-urlencoded", produces = {
+            WebContent.contentTypeJSONLD, WebContent.contentTypeTurtle, WebContent.contentTypeTurtleAlt1,
+            WebContent.contentTypeRDFXML, WebContent.contentTypeRDFJSON, WebContent.contentTypeTextPlain,
+            WebContent.contentTypeNTriples, WebContent.contentTypeNTriplesAlt, WebContent.contentTypeXML,
+            WebContent.contentTypeXMLAlt, WebContent.contentTypeTriG, WebContent.contentTypeNQuads,
+            WebContent.contentTypeTriGAlt1, WebContent.contentTypeRDFProto, WebContent.contentTypeRDFThrift,
+            WebContent.contentTypeNQuadsAlt1, WebContent.contentTypeTriX, WebContent.contentTypeTriXxml,
+            WebContent.contentTypeN3, WebContent.contentTypeN3Alt1, WebContent.contentTypeN3Alt2 })
+    public ResponseEntity<Model> containerStatusFormData(
             @RequestParam(value = "moduleInstanceIRI", required = true) String moduleInstanceIRI,
             @RequestParam(value = "experimentIRI", required = true) String experimentIRI) {
         /*
@@ -116,18 +98,48 @@ public class EnexaController {
          * resource URL does not exist or cannot be downloaded. · HTTP 500: o An error
          * occurs while adding the resource.
          */
-
         Model model = enexa.containerStatus(experimentIRI, moduleInstanceIRI);
-        // serialize the model as JSON-LD
-        String content = writeModel(model, "JSON-LD");
-        if (content == null) {
-            return new ResponseEntity<String>("Couldn't serialize result model.", HttpStatus.INTERNAL_SERVER_ERROR);
-        } else {
-            return new ResponseEntity<String>(content, HttpStatus.OK);
-        }
+        return new ResponseEntity<Model>(model, HttpStatus.OK);
     }
 
-    @PostMapping("finish-experiment")
+    @GetMapping(value = "/container-status", consumes = { WebContent.contentTypeJSONLD, WebContent.contentTypeTurtle,
+            WebContent.contentTypeTurtleAlt1, WebContent.contentTypeRDFXML, WebContent.contentTypeRDFJSON,
+            WebContent.contentTypeTextPlain, WebContent.contentTypeNTriples, WebContent.contentTypeNTriplesAlt,
+            WebContent.contentTypeXML, WebContent.contentTypeXMLAlt, WebContent.contentTypeTriG,
+            WebContent.contentTypeNQuads, WebContent.contentTypeTriGAlt1, WebContent.contentTypeRDFProto,
+            WebContent.contentTypeRDFThrift, WebContent.contentTypeNQuadsAlt1, WebContent.contentTypeTriX,
+            WebContent.contentTypeTriXxml, WebContent.contentTypeN3, WebContent.contentTypeN3Alt1,
+            WebContent.contentTypeN3Alt2 }, produces = { WebContent.contentTypeJSONLD, WebContent.contentTypeTurtle,
+                    WebContent.contentTypeTurtleAlt1, WebContent.contentTypeRDFXML, WebContent.contentTypeRDFJSON,
+                    WebContent.contentTypeTextPlain, WebContent.contentTypeNTriples, WebContent.contentTypeNTriplesAlt,
+                    WebContent.contentTypeXML, WebContent.contentTypeXMLAlt, WebContent.contentTypeTriG,
+                    WebContent.contentTypeNQuads, WebContent.contentTypeTriGAlt1, WebContent.contentTypeRDFProto,
+                    WebContent.contentTypeRDFThrift, WebContent.contentTypeNQuadsAlt1, WebContent.contentTypeTriX,
+                    WebContent.contentTypeTriXxml, WebContent.contentTypeN3, WebContent.contentTypeN3Alt1,
+                    WebContent.contentTypeN3Alt2 })
+    public ResponseEntity<Model> containerStatusRDF(@RequestBody Model request) {
+        /*
+         * Errors · HTTP 400: o Experiment IRI is not known / not available. o The
+         * resource URL does not exist or cannot be downloaded. · HTTP 500: o An error
+         * occurs while adding the resource.
+         */
+        Resource moduleInstance = RdfHelper.getSubjectResource(request, RDF.type, ENEXA.ModuleInstance);
+        if ((moduleInstance == null) || (!moduleInstance.isURIResource())) {
+            LOGGER.warn("Request model did not contain a module instance IRI. Returning HTTP 400. Model: "
+                    + request.toString());
+            return new ResponseEntity<Model>((Model) null, HttpStatus.BAD_REQUEST);
+        }
+        Resource experiment = RdfHelper.getObjectResource(request, moduleInstance, ENEXA.experiment);
+        if ((experiment == null) || (!experiment.isURIResource())) {
+            LOGGER.warn("Request model did not contain an experiment IRI. Returning HTTP 400. Model: "
+                    + request.toString());
+            return new ResponseEntity<Model>((Model) null, HttpStatus.BAD_REQUEST);
+        }
+        Model model = enexa.containerStatus(experiment.getURI(), moduleInstance.getURI());
+        return new ResponseEntity<Model>(model, HttpStatus.OK);
+    }
+
+    @PostMapping("/finish-experiment")
     public ResponseEntity<String> finishExperiment() {
         /*
          * Errors · HTTP 400: o Experiment IRI is not known / not available. · HTTP 500:
@@ -138,125 +150,116 @@ public class EnexaController {
         return new ResponseEntity<String>(content, HttpStatus.OK);
     }
 
-    // @PostMapping("start-container")
-    // public ResponseEntity<String> startContainer(@RequestBody StartContainerModel
-    // startContainerModel) {
-    @PostMapping("start-container")
-    public ResponseEntity<String> startContainer(@RequestBody String body,
-            @RequestHeader(HttpHeaders.CONTENT_TYPE) String contentType,
-            @RequestHeader(HttpHeaders.ACCEPT) String acceptHeader) {
+    @PostMapping(value = "/start-container", consumes = { WebContent.contentTypeJSONLD, WebContent.contentTypeTurtle,
+            WebContent.contentTypeTurtleAlt1, WebContent.contentTypeRDFXML, WebContent.contentTypeRDFJSON,
+            WebContent.contentTypeTextPlain, WebContent.contentTypeNTriples, WebContent.contentTypeNTriplesAlt,
+            WebContent.contentTypeXML, WebContent.contentTypeXMLAlt, WebContent.contentTypeTriG,
+            WebContent.contentTypeNQuads, WebContent.contentTypeTriGAlt1, WebContent.contentTypeRDFProto,
+            WebContent.contentTypeRDFThrift, WebContent.contentTypeNQuadsAlt1, WebContent.contentTypeTriX,
+            WebContent.contentTypeTriXxml, WebContent.contentTypeN3, WebContent.contentTypeN3Alt1,
+            WebContent.contentTypeN3Alt2 }, produces = { WebContent.contentTypeJSONLD, WebContent.contentTypeTurtle,
+                    WebContent.contentTypeTurtleAlt1, WebContent.contentTypeRDFXML, WebContent.contentTypeRDFJSON,
+                    WebContent.contentTypeTextPlain, WebContent.contentTypeNTriples, WebContent.contentTypeNTriplesAlt,
+                    WebContent.contentTypeXML, WebContent.contentTypeXMLAlt, WebContent.contentTypeTriG,
+                    WebContent.contentTypeNQuads, WebContent.contentTypeTriGAlt1, WebContent.contentTypeRDFProto,
+                    WebContent.contentTypeRDFThrift, WebContent.contentTypeNQuadsAlt1, WebContent.contentTypeTriX,
+                    WebContent.contentTypeTriXxml, WebContent.contentTypeN3, WebContent.contentTypeN3Alt1,
+                    WebContent.contentTypeN3Alt2 })
+    public ResponseEntity<Model> startContainer(@RequestBody Model request) {
         /*
          * Errors · HTTP 400: o Experiment IRI is not known / not available. o The image
          * does not exist or cannot be found. · HTTP 500: o An error occurs while
          * communicating with the Kubernetes service.
          */
-        Model request = readModel(body, contentType);
         StartContainerModel scModel = StartContainerModel.parse(request);
-        Lang lang = RDFLanguages.contentTypeToLang(acceptHeader);
-        Model resultModel;
+        Model resultModel = null;
         try {
             resultModel = enexa.startContainer(scModel);
         } catch (ModuleNotFoundException e) {
             LOGGER.error("Requested module couldn't be started.", e);
-            return new ResponseEntity<String>("Couldn't find module with the given IRI.", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<Model>((Model) null, HttpStatus.BAD_REQUEST);
         }
-        StringWriter writer = new StringWriter();
-        resultModel.write(writer, lang.getName());
-        return new ResponseEntity<String>(writer.toString(), HttpStatus.OK);
+        return new ResponseEntity<Model>(resultModel, HttpStatus.OK);
     }
 
-    @PostMapping("start-experiment")
-    public ResponseEntity<String> startExperiment() {
+    @PostMapping(value = "/start-experiment", produces = { WebContent.contentTypeJSONLD, WebContent.contentTypeTurtle,
+            WebContent.contentTypeTurtleAlt1, WebContent.contentTypeRDFXML, WebContent.contentTypeRDFJSON,
+            WebContent.contentTypeTextPlain, WebContent.contentTypeNTriples, WebContent.contentTypeNTriplesAlt,
+            WebContent.contentTypeXML, WebContent.contentTypeXMLAlt, WebContent.contentTypeTriG,
+            WebContent.contentTypeNQuads, WebContent.contentTypeTriGAlt1, WebContent.contentTypeRDFProto,
+            WebContent.contentTypeRDFThrift, WebContent.contentTypeNQuadsAlt1, WebContent.contentTypeTriX,
+            WebContent.contentTypeTriXxml, WebContent.contentTypeN3, WebContent.contentTypeN3Alt1,
+            WebContent.contentTypeN3Alt2 })
+    public Model startExperiment() {
         /*
-         * Errors · HTTP 400: o Experiment IRI is not known / not available. · HTTP 500:
-         * o There is no such SPARQL endpoint available.
-         *
+         * HTTP 500: There is no such SPARQL endpoint available.
          */
-
         Model model = enexa.startExperiment(); // Get RDF model from service as result of operation
-        // serialize the model as JSON-LD
-        StringWriter writer = new StringWriter();
-        model.write(writer, "JSON-LD");
-        return new ResponseEntity<String>(writer.toString(), HttpStatus.OK);
+        return model;
     }
 
     // This method finishes the experiment with the given IRI by stopping all its
     // remaining containers.
-    @PostMapping("stop-container")
-    public ResponseEntity<String> stopContainer(@RequestBody String body) {
+    @PostMapping(value = "/stop-container", consumes = { WebContent.contentTypeJSONLD, WebContent.contentTypeTurtle,
+            WebContent.contentTypeTurtleAlt1, WebContent.contentTypeRDFXML, WebContent.contentTypeRDFJSON,
+            WebContent.contentTypeTextPlain, WebContent.contentTypeNTriples, WebContent.contentTypeNTriplesAlt,
+            WebContent.contentTypeXML, WebContent.contentTypeXMLAlt, WebContent.contentTypeTriG,
+            WebContent.contentTypeNQuads, WebContent.contentTypeTriGAlt1, WebContent.contentTypeRDFProto,
+            WebContent.contentTypeRDFThrift, WebContent.contentTypeNQuadsAlt1, WebContent.contentTypeTriX,
+            WebContent.contentTypeTriXxml, WebContent.contentTypeN3, WebContent.contentTypeN3Alt1,
+            WebContent.contentTypeN3Alt2 }, produces = { WebContent.contentTypeJSONLD, WebContent.contentTypeTurtle,
+                    WebContent.contentTypeTurtleAlt1, WebContent.contentTypeRDFXML, WebContent.contentTypeRDFJSON,
+                    WebContent.contentTypeTextPlain, WebContent.contentTypeNTriples, WebContent.contentTypeNTriplesAlt,
+                    WebContent.contentTypeXML, WebContent.contentTypeXMLAlt, WebContent.contentTypeTriG,
+                    WebContent.contentTypeNQuads, WebContent.contentTypeTriGAlt1, WebContent.contentTypeRDFProto,
+                    WebContent.contentTypeRDFThrift, WebContent.contentTypeNQuadsAlt1, WebContent.contentTypeTriX,
+                    WebContent.contentTypeTriXxml, WebContent.contentTypeN3, WebContent.contentTypeN3Alt1,
+                    WebContent.contentTypeN3Alt2 })
+    public ResponseEntity<Model> stopContainer(@RequestBody Model request) {
         /*
          * Errors · HTTP 400: o Experiment IRI is not known / not available. o The image
          * does not exist or cannot be found. · HTTP 500: o An error occurs while
          * communicating with the Kubernetes service.
          */
 
-        Model model = ModelFactory.createDefaultModel();
-        model.read(new StringReader(body), "", "JSON-LD");
-
-        StmtIterator iterator = model.listStatements(null, Algorithm.instanceOf, (RDFNode) null);
-        if (!iterator.hasNext()) {
-            throw new IllegalArgumentException("Couldn't find a module instance in the provided RDF model.");
-        }
-
-        Statement s = iterator.next();
-        // If there is more than one hobbit:instanceOf triple
-        if (iterator.hasNext()) {
-            LOGGER.warn("Found multiple module instanceOf definitions. They will be ignored. Model dump: "
-                    + model.toString());
-        }
-
         // Get the instance representation
-        Resource instance = s.getSubject();
-        if (!s.getObject().isURIResource()) {
+        Resource instance = RdfHelper.getSubjectResource(request, Algorithm.instanceOf, null);
+        if (instance == null || !instance.isURIResource()) {
             throw new IllegalArgumentException("Got a module without an IRI.");
         }
 
         // Get the experiment IRI
-        Resource experimentResource = RdfHelper.getObjectResource(model, instance, ENEXA.experiment);
+        Resource experimentResource = RdfHelper.getObjectResource(request, instance, ENEXA.experiment);
         if ((experimentResource == null) || !experimentResource.isURIResource()) {
             throw new IllegalArgumentException("Got a Request without an experiment IRI.");
         }
 
         // Get RDF model from service as result of operation
-        Model stopModel = enexa.stopContainer(experimentResource.getURI(), null);
+        Model stopModel = enexa.stopContainer(experimentResource.getURI(), null); // TODO get container IRI
 
-        StringWriter writer = new StringWriter();
-        stopModel.write(writer, "JSON-LD");
-        return new ResponseEntity<String>(writer.toString(), HttpStatus.OK);
+        return new ResponseEntity<Model>(stopModel, HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/meta", produces = { "application/json",
-            "application/ld+json" }, method = RequestMethod.GET)
-    public ResponseEntity<String> meta(@RequestBody String body,
-            @RequestHeader(HttpHeaders.CONTENT_TYPE) String contentType) {
+    @RequestMapping(value = "/meta", method = RequestMethod.GET)
+    public ResponseEntity<Model> meta(@RequestBody Model request) {
         /*
          * Errors · HTTP 400: o Experiment IRI is not known / not available. o The
          * resource URL does not exist or cannot be downloaded. · HTTP 500: o An error
          * occurs while adding the resource.
          */
-        Model request = readModel(body, contentType);
-        if (request == null) {
-            return new ResponseEntity<String>("Couldn't read provided RDF model.", HttpStatus.BAD_REQUEST);
-        }
         Resource experiment = RdfHelper.getSubjectResource(request, RDF.type, ENEXA.Experiment);
         if (experiment == null) {
-            return new ResponseEntity<String>("Got a request with an RDF model without an experiment IRI.",
-                    HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<Model>((Model) null, HttpStatus.BAD_REQUEST);
         }
         // Get RDF model from service as result of operation
-        Model metadata = enexa.getMetadataEndpoint(contentType);
+        Model metadata = enexa.getMetadataEndpoint(experiment.getURI());
         if (metadata == null) {
-            return new ResponseEntity<String>(
-                    "Couldn't retrieve the metadata endpoint for " + experiment.getURI() + ".", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<Model>((Model) null, HttpStatus.BAD_REQUEST);
         }
-        // serialize the model as JSON-LD
-        String content = writeModel(metadata, "JSON-LD");
-        if (content == null) {
-            return new ResponseEntity<String>("Couldn't serialize result model.", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        return new ResponseEntity<String>(content, HttpStatus.OK);
+        return new ResponseEntity<Model>(metadata, HttpStatus.OK);
     }
 
+    @Deprecated
     protected String writeModel(Model model, String language) {
         try (StringWriter writer = new StringWriter()) {
             model.write(writer, language);
@@ -267,8 +270,8 @@ public class EnexaController {
         }
     }
 
+    @Deprecated
     protected Model readModel(String body, String contentType) {
-        // TODO We could also make use of the RDFDataMgr class here
         Lang lang = Lang.JSONLD;
         if (contentType != null) {
             ContentType ct = WebContent.determineCT(contentType, null, null);
