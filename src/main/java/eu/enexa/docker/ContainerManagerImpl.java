@@ -87,12 +87,23 @@ public class ContainerManagerImpl implements ContainerManager {
             List<Bind> allBinds = new ArrayList<>();
             //allBinds.add(new Bind(HOST_PATH, new Volume(VOLUME_PATH+"/"+expIRI.replace("http://",""))));
             //allBinds.add(new Bind(HOST_PATH+"/output", new Volume("/output")));
-            allBinds.add(new Bind(HOST_PATH, new Volume("/enexa")));
+            allBinds.add(new Bind(HOST_PATH, new Volume("/home/shared")));
 
             HostConfig hostConfig = HostConfig
                 .newHostConfig()
                 .withNetworkMode(NETWORK_NAME)
                 .withBinds(allBinds);
+
+            if(image.contains("enexa-dice-embeddings")){
+                // increase the size of shared memory for this module
+                LOGGER.info("### increase the shared memory to 32 GB ####");
+                hostConfig = HostConfig
+                    .newHostConfig()
+                    .withNetworkMode(NETWORK_NAME)
+                    .withBinds(allBinds)
+                    .withShmSize(32L * 1024 * 1024 * 1024) ; // 32 GB
+            }
+
 
             String testImage = "";
             CreateContainerResponse container = dockerClient.createContainerCmd(image)
