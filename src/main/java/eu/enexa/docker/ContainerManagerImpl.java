@@ -2,14 +2,11 @@ package eu.enexa.docker;
 
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.exception.DockerException;
-import com.github.dockerjava.api.model.Bind;
-import com.github.dockerjava.api.model.HostConfig;
-import com.github.dockerjava.api.model.Volume;
+import com.github.dockerjava.api.model.*;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.httpclient5.*;
-import com.github.dockerjava.api.model.Container;
 
 
 import com.github.dockerjava.core.DockerClientImpl;
@@ -89,6 +86,12 @@ public class ContainerManagerImpl implements ContainerManager {
             //allBinds.add(new Bind(HOST_PATH+"/output", new Volume("/output")));
             allBinds.add(new Bind(HOST_PATH, new Volume("/home/shared")));
 
+            /*if(image.contains("enexa-cel-train-module")){
+                allBinds = new ArrayList<>();
+                LOGGER.info("in enexa-cel-train-module will use diffrent bindings");
+                allBinds.add(new Bind(HOST_PATH, new Volume("/home/shared"),AccessMode.rw));
+            }*/
+
             HostConfig hostConfig = HostConfig
                 .newHostConfig()
                 .withNetworkMode(NETWORK_NAME)
@@ -104,6 +107,15 @@ public class ContainerManagerImpl implements ContainerManager {
                     .withShmSize(32L * 1024 * 1024 * 1024) ; // 32 GB
             }
 
+            if(image.contains("enexa-cel-train-module")){
+                // increase the size of shared memory for this module
+                LOGGER.info("### increase the shared memory to 8 GB ####");
+                hostConfig = HostConfig
+                    .newHostConfig()
+                    .withNetworkMode(NETWORK_NAME)
+                    .withBinds(allBinds)
+                    .withShmSize(8L * 1024 * 1024 * 1024) ; // 8 GB
+            }
 
             String testImage = "";
             CreateContainerResponse container = dockerClient.createContainerCmd(image)
