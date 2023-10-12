@@ -1,20 +1,50 @@
-version: "2"
-
+version: "3.0"
 services:
-
-  fuseki:
-    image: atomgraph/fuseki:4.6.1
+  fuseki-devwd:
+    image: stain/jena-fuseki
+    container_name: fuseki-devwd
+    networks:
+      - enexaNet
     ports:
       - "3030:3030"
-
-  enexa-service:
-    image: enexa-service
     environment:
-      - ENEXA_SERVICE_URL=http://enexa-service:8080
-      - ENEXA_SHARED_DIRECTORY=/enexa
-      - ENEXA_MODULE_DIRECTORY=/modules
-    ports:
-      - "8080:8081"
+      ADMIN_PASSWORD: pw123
     volumes:
-      - /home/micha/data/enexa/shared:/enexa
-      - /home/micha/data/enexa/modules:/modules
+      - /data/fusekiData:/fuseki
+  enexaservice:
+    image: hub.cs.upb.de/enexa/images/enexa-service-demo:1.0.0
+    container_name: enexaservice
+    networks:
+      - enexaNet
+    volumes:
+      - /data/enexa/shared:/home/shared
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /data/enexa/metadata:/home/metadata
+    environment:
+      - ENEXA_META_DATA_ENDPOINT=http://fuseki-devwd:3030/mydataset
+      - ENEXA_META_DATA_GRAPH=http://example.org/meta-data
+      - ENEXA_MODULE_DIRECTORY=/home/metadata
+      - ENEXA_RESOURCE_NAMESPACE=http://example.org/enexa/
+      - ENEXA_SERVICE_URL=http://enexaservice:8080/
+      - ENEXA_SHARED_DIRECTORY=/data/enexa/shared
+      - DOCKER_NET_NAME=enexaNet
+  demo:
+    image: hub.cs.upb.de/enexa/images/enexa-ui-demo:1.0.0-tentris-demo
+    ports:
+      - "8080:8501"
+    volumes:
+      - type: bind
+        source: /data/enexa/shared
+        target: /home/shared
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - SERVER_ENDPOINT=http://enexaservice:8080
+      - META_DATA_ENDPOINT=http://fuseki-devwd:3030/mydataset
+      - ENEXA_SHARED_DIRECTORY=/home/shared
+      - DATASET_NAME_TENTRIS=wikidata5M.nt
+    networks:
+      - enexaNet
+
+networks:
+  enexaNet:
+    driver: bridge
