@@ -10,16 +10,16 @@ services:
     environment:
       ADMIN_PASSWORD: pw123
     volumes:
-      - /data/fusekiData:/fuseki
+      - ./fusekiData:/fuseki
   enexaservice:
     image: hub.cs.upb.de/enexa/images/enexa-service-demo:1.0.0
     container_name: enexaservice
     networks:
       - enexaNet
     volumes:
-      - /data/enexa/shared:/home/shared
+      - ./shared:/home/shared
       - /var/run/docker.sock:/var/run/docker.sock
-      - /data/enexa/metadata:/home/metadata
+      - ./metadata:/home/metadata
     environment:
       - ENEXA_META_DATA_ENDPOINT=http://fuseki-devwd:3030/mydataset
       - ENEXA_META_DATA_GRAPH=http://example.org/meta-data
@@ -28,22 +28,6 @@ services:
       - ENEXA_SERVICE_URL=http://enexaservice:8080/
       - ENEXA_SHARED_DIRECTORY=/data/enexa/shared
       - DOCKER_NET_NAME=enexaNet
-  demo:
-    image: hub.cs.upb.de/enexa/images/enexa-ui-demo:1.0.0-tentris-demo
-    ports:
-      - "8080:8501"
-    volumes:
-      - type: bind
-        source: /data/enexa/shared
-        target: /home/shared
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - SERVER_ENDPOINT=http://enexaservice:8080
-      - META_DATA_ENDPOINT=http://fuseki-devwd:3030/mydataset
-      - ENEXA_SHARED_DIRECTORY=/home/shared
-      - DATASET_NAME_TENTRIS=wikidata5M.nt
-    networks:
-      - enexaNet
 
 networks:
   enexaNet:
