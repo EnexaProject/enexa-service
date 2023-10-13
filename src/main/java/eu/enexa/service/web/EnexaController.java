@@ -39,6 +39,21 @@ import eu.enexa.model.StartContainerModel;
 import eu.enexa.service.EnexaService;
 
 @RestController
+@RequestMapping(value = "/", consumes = { WebContent.contentTypeJSONLD, WebContent.contentTypeTurtle,
+        WebContent.contentTypeTurtleAlt1, WebContent.contentTypeRDFXML, WebContent.contentTypeRDFJSON,
+        WebContent.contentTypeTextPlain, WebContent.contentTypeNTriples, WebContent.contentTypeNTriplesAlt,
+        WebContent.contentTypeXML, WebContent.contentTypeXMLAlt, WebContent.contentTypeTriG,
+        WebContent.contentTypeNQuads, WebContent.contentTypeTriGAlt1, WebContent.contentTypeRDFProto,
+        WebContent.contentTypeRDFThrift, WebContent.contentTypeNQuadsAlt1, WebContent.contentTypeTriX,
+        WebContent.contentTypeTriXxml, WebContent.contentTypeN3, WebContent.contentTypeN3Alt1,
+        WebContent.contentTypeN3Alt2 }, produces = { WebContent.contentTypeJSONLD, WebContent.contentTypeTurtle,
+                WebContent.contentTypeTurtleAlt1, WebContent.contentTypeRDFXML, WebContent.contentTypeRDFJSON,
+                WebContent.contentTypeTextPlain, WebContent.contentTypeNTriples, WebContent.contentTypeNTriplesAlt,
+                WebContent.contentTypeXML, WebContent.contentTypeXMLAlt, WebContent.contentTypeTriG,
+                WebContent.contentTypeNQuads, WebContent.contentTypeTriGAlt1, WebContent.contentTypeRDFProto,
+                WebContent.contentTypeRDFThrift, WebContent.contentTypeNQuadsAlt1, WebContent.contentTypeTriX,
+                WebContent.contentTypeTriXxml, WebContent.contentTypeN3, WebContent.contentTypeN3Alt1,
+                WebContent.contentTypeN3Alt2 })
 public class EnexaController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EnexaController.class);
@@ -51,21 +66,7 @@ public class EnexaController {
     @Autowired
     private EnexaService enexa;
 
-    @PostMapping(value = "/add-resource", consumes = { WebContent.contentTypeJSONLD, WebContent.contentTypeTurtle,
-            WebContent.contentTypeTurtleAlt1, WebContent.contentTypeRDFXML, WebContent.contentTypeRDFJSON,
-            WebContent.contentTypeTextPlain, WebContent.contentTypeNTriples, WebContent.contentTypeNTriplesAlt,
-            WebContent.contentTypeXML, WebContent.contentTypeXMLAlt, WebContent.contentTypeTriG,
-            WebContent.contentTypeNQuads, WebContent.contentTypeTriGAlt1, WebContent.contentTypeRDFProto,
-            WebContent.contentTypeRDFThrift, WebContent.contentTypeNQuadsAlt1, WebContent.contentTypeTriX,
-            WebContent.contentTypeTriXxml, WebContent.contentTypeN3, WebContent.contentTypeN3Alt1,
-            WebContent.contentTypeN3Alt2 }, produces = { WebContent.contentTypeJSONLD, WebContent.contentTypeTurtle,
-                    WebContent.contentTypeTurtleAlt1, WebContent.contentTypeRDFXML, WebContent.contentTypeRDFJSON,
-                    WebContent.contentTypeTextPlain, WebContent.contentTypeNTriples, WebContent.contentTypeNTriplesAlt,
-                    WebContent.contentTypeXML, WebContent.contentTypeXMLAlt, WebContent.contentTypeTriG,
-                    WebContent.contentTypeNQuads, WebContent.contentTypeTriGAlt1, WebContent.contentTypeRDFProto,
-                    WebContent.contentTypeRDFThrift, WebContent.contentTypeNQuadsAlt1, WebContent.contentTypeTriX,
-                    WebContent.contentTypeTriXxml, WebContent.contentTypeN3, WebContent.contentTypeN3Alt1,
-                    WebContent.contentTypeN3Alt2 })
+    @PostMapping(value = "/add-resource")
     public ResponseEntity<Model> addResource(@RequestBody Model request) {
         /*
          * Errors · HTTP 400: o Experiment IRI is not known / not available. o The
@@ -82,14 +83,7 @@ public class EnexaController {
         return new ResponseEntity<Model>(addedResource.getModel(), headers, HttpStatus.OK);
     }
 
-    @GetMapping(value = "/container-status", consumes = "application/x-www-form-urlencoded", produces = {
-            WebContent.contentTypeJSONLD, WebContent.contentTypeTurtle, WebContent.contentTypeTurtleAlt1,
-            WebContent.contentTypeRDFXML, WebContent.contentTypeRDFJSON, WebContent.contentTypeTextPlain,
-            WebContent.contentTypeNTriples, WebContent.contentTypeNTriplesAlt, WebContent.contentTypeXML,
-            WebContent.contentTypeXMLAlt, WebContent.contentTypeTriG, WebContent.contentTypeNQuads,
-            WebContent.contentTypeTriGAlt1, WebContent.contentTypeRDFProto, WebContent.contentTypeRDFThrift,
-            WebContent.contentTypeNQuadsAlt1, WebContent.contentTypeTriX, WebContent.contentTypeTriXxml,
-            WebContent.contentTypeN3, WebContent.contentTypeN3Alt1, WebContent.contentTypeN3Alt2 })
+    @GetMapping(value = "/container-status", consumes = "application/x-www-form-urlencoded")
     public ResponseEntity<Model> containerStatusFormData(
             @RequestParam(value = "moduleInstanceIRI", required = true) String moduleInstanceIRI,
             @RequestParam(value = "experimentIRI", required = true) String experimentIRI) {
@@ -102,21 +96,7 @@ public class EnexaController {
         return new ResponseEntity<Model>(model, HttpStatus.OK);
     }
 
-    @GetMapping(value = "/container-status", consumes = { WebContent.contentTypeJSONLD, WebContent.contentTypeTurtle,
-            WebContent.contentTypeTurtleAlt1, WebContent.contentTypeRDFXML, WebContent.contentTypeRDFJSON,
-            WebContent.contentTypeTextPlain, WebContent.contentTypeNTriples, WebContent.contentTypeNTriplesAlt,
-            WebContent.contentTypeXML, WebContent.contentTypeXMLAlt, WebContent.contentTypeTriG,
-            WebContent.contentTypeNQuads, WebContent.contentTypeTriGAlt1, WebContent.contentTypeRDFProto,
-            WebContent.contentTypeRDFThrift, WebContent.contentTypeNQuadsAlt1, WebContent.contentTypeTriX,
-            WebContent.contentTypeTriXxml, WebContent.contentTypeN3, WebContent.contentTypeN3Alt1,
-            WebContent.contentTypeN3Alt2 }, produces = { WebContent.contentTypeJSONLD, WebContent.contentTypeTurtle,
-                    WebContent.contentTypeTurtleAlt1, WebContent.contentTypeRDFXML, WebContent.contentTypeRDFJSON,
-                    WebContent.contentTypeTextPlain, WebContent.contentTypeNTriples, WebContent.contentTypeNTriplesAlt,
-                    WebContent.contentTypeXML, WebContent.contentTypeXMLAlt, WebContent.contentTypeTriG,
-                    WebContent.contentTypeNQuads, WebContent.contentTypeTriGAlt1, WebContent.contentTypeRDFProto,
-                    WebContent.contentTypeRDFThrift, WebContent.contentTypeNQuadsAlt1, WebContent.contentTypeTriX,
-                    WebContent.contentTypeTriXxml, WebContent.contentTypeN3, WebContent.contentTypeN3Alt1,
-                    WebContent.contentTypeN3Alt2 })
+    @GetMapping(value = "/container-status")
     public ResponseEntity<Model> containerStatusRDF(@RequestBody Model request) {
         /*
          * Errors · HTTP 400: o Experiment IRI is not known / not available. o The
@@ -150,21 +130,7 @@ public class EnexaController {
         return new ResponseEntity<String>(content, HttpStatus.OK);
     }
 
-    @PostMapping(value = "/start-container", consumes = { WebContent.contentTypeJSONLD, WebContent.contentTypeTurtle,
-            WebContent.contentTypeTurtleAlt1, WebContent.contentTypeRDFXML, WebContent.contentTypeRDFJSON,
-            WebContent.contentTypeTextPlain, WebContent.contentTypeNTriples, WebContent.contentTypeNTriplesAlt,
-            WebContent.contentTypeXML, WebContent.contentTypeXMLAlt, WebContent.contentTypeTriG,
-            WebContent.contentTypeNQuads, WebContent.contentTypeTriGAlt1, WebContent.contentTypeRDFProto,
-            WebContent.contentTypeRDFThrift, WebContent.contentTypeNQuadsAlt1, WebContent.contentTypeTriX,
-            WebContent.contentTypeTriXxml, WebContent.contentTypeN3, WebContent.contentTypeN3Alt1,
-            WebContent.contentTypeN3Alt2 }, produces = { WebContent.contentTypeJSONLD, WebContent.contentTypeTurtle,
-                    WebContent.contentTypeTurtleAlt1, WebContent.contentTypeRDFXML, WebContent.contentTypeRDFJSON,
-                    WebContent.contentTypeTextPlain, WebContent.contentTypeNTriples, WebContent.contentTypeNTriplesAlt,
-                    WebContent.contentTypeXML, WebContent.contentTypeXMLAlt, WebContent.contentTypeTriG,
-                    WebContent.contentTypeNQuads, WebContent.contentTypeTriGAlt1, WebContent.contentTypeRDFProto,
-                    WebContent.contentTypeRDFThrift, WebContent.contentTypeNQuadsAlt1, WebContent.contentTypeTriX,
-                    WebContent.contentTypeTriXxml, WebContent.contentTypeN3, WebContent.contentTypeN3Alt1,
-                    WebContent.contentTypeN3Alt2 })
+    @PostMapping(value = "/start-container")
     public ResponseEntity<Model> startContainer(@RequestBody Model request) {
         /*
          * Errors · HTTP 400: o Experiment IRI is not known / not available. o The image
@@ -182,14 +148,7 @@ public class EnexaController {
         return new ResponseEntity<Model>(resultModel, HttpStatus.OK);
     }
 
-    @PostMapping(value = "/start-experiment", produces = { WebContent.contentTypeJSONLD, WebContent.contentTypeTurtle,
-            WebContent.contentTypeTurtleAlt1, WebContent.contentTypeRDFXML, WebContent.contentTypeRDFJSON,
-            WebContent.contentTypeTextPlain, WebContent.contentTypeNTriples, WebContent.contentTypeNTriplesAlt,
-            WebContent.contentTypeXML, WebContent.contentTypeXMLAlt, WebContent.contentTypeTriG,
-            WebContent.contentTypeNQuads, WebContent.contentTypeTriGAlt1, WebContent.contentTypeRDFProto,
-            WebContent.contentTypeRDFThrift, WebContent.contentTypeNQuadsAlt1, WebContent.contentTypeTriX,
-            WebContent.contentTypeTriXxml, WebContent.contentTypeN3, WebContent.contentTypeN3Alt1,
-            WebContent.contentTypeN3Alt2 })
+    @PostMapping(value = "/start-experiment")
     public Model startExperiment() {
         /*
          * HTTP 500: There is no such SPARQL endpoint available.
@@ -200,21 +159,7 @@ public class EnexaController {
 
     // This method finishes the experiment with the given IRI by stopping all its
     // remaining containers.
-    @PostMapping(value = "/stop-container", consumes = { WebContent.contentTypeJSONLD, WebContent.contentTypeTurtle,
-            WebContent.contentTypeTurtleAlt1, WebContent.contentTypeRDFXML, WebContent.contentTypeRDFJSON,
-            WebContent.contentTypeTextPlain, WebContent.contentTypeNTriples, WebContent.contentTypeNTriplesAlt,
-            WebContent.contentTypeXML, WebContent.contentTypeXMLAlt, WebContent.contentTypeTriG,
-            WebContent.contentTypeNQuads, WebContent.contentTypeTriGAlt1, WebContent.contentTypeRDFProto,
-            WebContent.contentTypeRDFThrift, WebContent.contentTypeNQuadsAlt1, WebContent.contentTypeTriX,
-            WebContent.contentTypeTriXxml, WebContent.contentTypeN3, WebContent.contentTypeN3Alt1,
-            WebContent.contentTypeN3Alt2 }, produces = { WebContent.contentTypeJSONLD, WebContent.contentTypeTurtle,
-                    WebContent.contentTypeTurtleAlt1, WebContent.contentTypeRDFXML, WebContent.contentTypeRDFJSON,
-                    WebContent.contentTypeTextPlain, WebContent.contentTypeNTriples, WebContent.contentTypeNTriplesAlt,
-                    WebContent.contentTypeXML, WebContent.contentTypeXMLAlt, WebContent.contentTypeTriG,
-                    WebContent.contentTypeNQuads, WebContent.contentTypeTriGAlt1, WebContent.contentTypeRDFProto,
-                    WebContent.contentTypeRDFThrift, WebContent.contentTypeNQuadsAlt1, WebContent.contentTypeTriX,
-                    WebContent.contentTypeTriXxml, WebContent.contentTypeN3, WebContent.contentTypeN3Alt1,
-                    WebContent.contentTypeN3Alt2 })
+    @PostMapping(value = "/stop-container")
     public ResponseEntity<Model> stopContainer(@RequestBody Model request) {
         /*
          * Errors · HTTP 400: o Experiment IRI is not known / not available. o The image
