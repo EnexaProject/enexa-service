@@ -66,6 +66,11 @@ public class EnexaController {
     @Autowired
     private EnexaService enexa;
 
+
+    @GetMapping(value = "/test")
+    public ResponseEntity<String> test(){
+        return new ResponseEntity<String>("OK!",HttpStatus.OK);
+    }
     @PostMapping(value = "/add-resource")
     public ResponseEntity<Model> addResource(@RequestBody Model request) {
         /*
