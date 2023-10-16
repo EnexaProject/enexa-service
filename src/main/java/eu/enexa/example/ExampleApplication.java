@@ -182,10 +182,10 @@ public class ExampleApplication implements AutoCloseable {
 
     protected Model requestRDF(String url, Model data) {
         HttpPost request = new HttpPost(url);
-        request.addHeader("Accept", "application/ld+json");
+        request.setHeader("Accept", "application/ld+json");
+        request.setHeader("Content-type", "application/ld+json");
         if (data != null) {
             try (StringWriter writer = new StringWriter()) {
-                request.addHeader("Content-type", "application/ld+json");
                 data.write(writer, "JSON-LD");
                 request.setEntity(new StringEntity(writer.toString()));
             } catch (IOException e) {
