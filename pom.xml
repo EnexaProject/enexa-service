@@ -71,7 +71,7 @@
         <dependency>
             <groupId>org.apache.httpcomponents.client5</groupId>
             <artifactId>httpclient5</artifactId>
-            <version>5.2.1</version>
+            <!--<version>5.2.1</version>-->
         </dependency>
         <!-- Kubernetes client -->
         <dependency>
@@ -110,6 +110,12 @@
         <dependency>
             <groupId>org.dice-research</groupId>
             <artifactId>enexa.java-utils</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <!-- Spring Jena -->
+        <dependency>
+            <groupId>org.dice-research</groupId>
+            <artifactId>rdf-tools.spring-jena</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
         <!-- SPARQL API library -->
@@ -159,7 +165,7 @@
         <dependency>
             <groupId>org.junit.vintage</groupId>
             <artifactId>junit-vintage-engine</artifactId>
-            <version>5.9.3</version>
+            <!--<version>5.9.3</version>-->
             <scope>test</scope>
         </dependency>
         <!-- Spring Boot test -->
@@ -198,7 +204,26 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
             </plugin>
-
+            <!-- JaCoCo plugin for test coverage reports -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.7</version>
+                <executions>
+                    <execution>
+                        <id>default-prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>default-report</id>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 </project>
