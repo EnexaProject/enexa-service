@@ -39,6 +39,10 @@ public class EnexaServiceImpl implements EnexaService {
     private ModuleManager moduleManager;
 
     private static final String metaDataEndpoint = System.getenv("ENEXA_META_DATA_ENDPOINT");
+    private static final String appName = "app1";
+    private static final String sharedDirectory = System.getenv("ENEXA_SHARED_DIRECTORY");
+    //private static final String writeableDirectory = System.getenv("ENEXA_WRITEABLE_DIRECTORY");
+    //private static final String moduleInstanceDirectory = System.getenv("ENEXA_MODULE_INSTANCE_DIRECTORY");
 
     @Override
     public Model startExperiment() {
@@ -54,13 +58,15 @@ public class EnexaServiceImpl implements EnexaService {
         }
         // do not use experiment.getLocalName() it will remove the first character !
 
-        sharedDirLocalPath = sharedDirLocalPath + File.separator + experiment.getURI().replace("http://", "");
+        sharedDirLocalPath = sharedDirLocalPath +File.separator+appName+ File.separator + experiment.getURI().split("/")[experiment.getURI().split("/").length -1];
         // TODO create directory
-        /*
-         * File theDir = new File(sharedDirLocalPath); if (!theDir.exists()){ boolean
-         * isCreated = theDir.mkdirs(); if(!isCreated){
-         * LOGGER.warn("the directory can not created at :"+sharedDirLocalPath); } }
-         */
+          File theDir = new File(sharedDirLocalPath);
+          if (!theDir.exists()){
+              boolean isCreated = theDir.mkdirs();
+              if(!isCreated){
+                  LOGGER.warn("the directory can not created at :"+sharedDirLocalPath);
+              }
+          }
         // 3. Start default containers
         // TODO : implement this
 
@@ -157,13 +163,49 @@ public class EnexaServiceImpl implements EnexaService {
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_META_DATA_GRAPH",
                 metadataManager.getMetadataEndpointInfo(scModel.getExperiment())[1]));
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_IRI", instanceIri));
-        // TODO : after demo replace the hardcoded strings
-        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SHARED_DIRECTORY", "/home/shared"));
-        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_WRITEABLE_DIRECTORY", "/home/shared"));
+
+        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SHARED_DIRECTORY", sharedDirectory));
+        String appPath =sharedDirectory + File.separator + appName;
+        if(sharedDirectory.endsWith(File.separator)){
+            appPath = sharedDirectory+appName;
+        }
+
+        File appPathDirectory = new File(appPath);
+        if(!appPathDirectory.exists()){
+            appPathDirectory.mkdirs();
+        }
+
+        String writeableDirectory =scModel.getExperiment().split("/")[scModel.getExperiment().split("/").length - 1];
+
+        String exprimentWriteablePath = appPath + File.separator + writeableDirectory;
+        if(appPath.endsWith(File.separator)){
+            exprimentWriteablePath = appPath+writeableDirectory;
+        }
+
+        File exprimentWriteablePathDirectory = new File(exprimentWriteablePath);
+        if(!exprimentWriteablePathDirectory.exists()){
+            exprimentWriteablePathDirectory.mkdirs();
+        }
+
+        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_WRITEABLE_DIRECTORY", exprimentWriteablePath));
 
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_INSTANCE_IRI", scModel.getInstanceIri()));
-        // TODO : should be specific
-        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_INSTANCE_DIRECTORY", "/home/shared"));
+
+
+        //TODO : this should replace with better solution , maybe add module name to model to use it here
+        String moduleInstanceDirectory =  scModel.getModuleIri().split("/")[scModel.getModuleIri().split("/").length - 2];
+
+        String modulePath = exprimentWriteablePath + File.separator + moduleInstanceDirectory;
+        if(exprimentWriteablePath.endsWith(File.separator)){
+            modulePath = exprimentWriteablePath+moduleInstanceDirectory;
+        }
+
+        File modulePathDirectory = new File(modulePath);
+        if(!modulePathDirectory.exists()){
+            modulePathDirectory.mkdirs();
+        }
+
+        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_INSTANCE_DIRECTORY", modulePath));
 
         // TODO: update this
         if (System.getenv("ENEXA_SERVICE_URL").equals("")) {

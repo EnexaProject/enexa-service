@@ -27,6 +27,8 @@ public class ContainerManagerImpl implements ContainerManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(ContainerManagerImpl.class);
     private static final String VOLUME_PATH = System.getenv("ENEXA_SHARED_DIRECTORY");
     private static final String HOST_BASE_PATH = System.getenv("ENEXA_SHARED_DIRECTORY");
+/*    private static final String HOST_WRITEABLE_PATH = System.getenv("ENEXA_WRITEABLE_DIRECTORY");
+    private static final String HOST_MODULE_INSTANCE_PATH = System.getenv("ENEXA_MODULE_INSTANCE_DIRECTORY");*/
 
     //private static final String NETWORK_NAME = "enexaNet";
     private static final String NETWORK_NAME = System.getenv("DOCKER_NET_NAME");
@@ -66,9 +68,17 @@ public class ContainerManagerImpl implements ContainerManager {
 
             List<Volume> volumes = new ArrayList<>();
             String expIRI="";
+            String hostWritablePath ="";
+            String HostModuleInstancePath ="";
             for(AbstractMap.SimpleEntry v:variables){
                 if(v.getKey().toString().equals("ENEXA_EXPERIMENT_IRI")){
                     expIRI = v.getValue().toString();
+                }
+                if(v.getKey().toString().equals("ENEXA_WRITEABLE_DIRECTORY")){
+                    hostWritablePath = v.getValue().toString();
+                }
+                if(v.getKey().toString().equals("ENEXA_MODULE_INSTANCE_DIRECTORY")){
+                    HostModuleInstancePath = v.getValue().toString();
                 }
             }
             if(expIRI.equals("")||expIRI.length()<10){
@@ -76,7 +86,6 @@ public class ContainerManagerImpl implements ContainerManager {
             }
 
             //String HOST_PATH = HOST_Base_PATH.concat(expIRI.replace("http://",""));
-            String HOST_PATH = HOST_BASE_PATH;
             /*if(!HOST_Base_PATH.endsWith(File.separator)){
                 HOST_PATH = HOST_Base_PATH.concat(File.separator.concat(expIRI.replace("http://","")));
             }*/
@@ -84,7 +93,9 @@ public class ContainerManagerImpl implements ContainerManager {
             List<Bind> allBinds = new ArrayList<>();
             //allBinds.add(new Bind(HOST_PATH, new Volume(VOLUME_PATH+"/"+expIRI.replace("http://",""))));
             //allBinds.add(new Bind(HOST_PATH+"/output", new Volume("/output")));
-            allBinds.add(new Bind(HOST_PATH, new Volume("/home/shared")));
+            allBinds.add(new Bind(HOST_BASE_PATH, new Volume("/home/shared"),AccessMode.ro));
+            //allBinds.add(new Bind(hostWritablePath, new Volume("/writable"),AccessMode.rw));
+            allBinds.add(new Bind(HostModuleInstancePath, new Volume("/home/module"),AccessMode.rw));
 
             /*if(image.contains("enexa-cel-train-module")){
                 allBinds = new ArrayList<>();
