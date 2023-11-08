@@ -11,6 +11,7 @@ import com.github.dockerjava.httpclient5.*;
 
 import com.github.dockerjava.core.DockerClientImpl;
 import eu.enexa.service.ContainerManager;
+import org.dice_research.enexa.utils.EnexaPathUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Primary;
@@ -27,8 +28,8 @@ public class ContainerManagerImpl implements ContainerManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(ContainerManagerImpl.class);
     private static final String VOLUME_PATH = System.getenv("ENEXA_SHARED_DIRECTORY");
     private static final String HOST_BASE_PATH = System.getenv("ENEXA_SHARED_DIRECTORY");
-/*    private static final String HOST_WRITEABLE_PATH = System.getenv("ENEXA_WRITEABLE_DIRECTORY");
-    private static final String HOST_MODULE_INSTANCE_PATH = System.getenv("ENEXA_MODULE_INSTANCE_DIRECTORY");*/
+    private static final String HOST_WRITEABLE_PATH = System.getenv("ENEXA_WRITEABLE_DIRECTORY");
+    private static final String HOST_MODULE_INSTANCE_PATH = System.getenv("ENEXA_MODULE_INSTANCE_DIRECTORY");
 
     //private static final String NETWORK_NAME = "enexaNet";
     private static final String NETWORK_NAME = System.getenv("DOCKER_NET_NAME");
@@ -94,8 +95,12 @@ public class ContainerManagerImpl implements ContainerManager {
             //allBinds.add(new Bind(HOST_PATH, new Volume(VOLUME_PATH+"/"+expIRI.replace("http://",""))));
             //allBinds.add(new Bind(HOST_PATH+"/output", new Volume("/output")));
             allBinds.add(new Bind(HOST_BASE_PATH, new Volume("/home/shared"),AccessMode.ro));
-            //allBinds.add(new Bind(hostWritablePath, new Volume("/writable"),AccessMode.rw));
-            allBinds.add(new Bind(HostModuleInstancePath, new Volume("/home/module"),AccessMode.rw));
+            allBinds.add(new Bind(hostWritablePath, new Volume("/home/writeable"),AccessMode.rw));
+            allBinds.add(new Bind(HostModuleInstancePath, new Volume("/tmp"),AccessMode.rw));
+
+            LOGGER.info("this path from host :"+HOST_BASE_PATH+"mapped to this path in container"+"/home/shared");
+            LOGGER.info("this path from host :"+hostWritablePath+"mapped to this path in container"+"/home/writeable");
+            LOGGER.info("this path from host :"+HostModuleInstancePath+"mapped to this path in container"+"HostModuleInstancePath");
 
             /*if(image.contains("enexa-cel-train-module")){
                 allBinds = new ArrayList<>();

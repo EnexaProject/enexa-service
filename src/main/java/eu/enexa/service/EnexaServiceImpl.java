@@ -28,6 +28,7 @@ import eu.enexa.model.StartContainerModel;
 @Service
 public class EnexaServiceImpl implements EnexaService {
     private static final Logger LOGGER = LoggerFactory.getLogger(EnexaServiceImpl.class);
+    private static final String DEFAULT_SHARED_DIRECTORY_FOR_RUNNING_CONTAINERS = "/home/shared";
 
     @Autowired
     private ContainerManager containerManager;
@@ -164,7 +165,12 @@ public class EnexaServiceImpl implements EnexaService {
                 metadataManager.getMetadataEndpointInfo(scModel.getExperiment())[1]));
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_IRI", instanceIri));
 
-        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SHARED_DIRECTORY", sharedDirectory));
+        //TODO : change the java util which in case of equal return enexa-dir:// not null
+        // here is the shared directory of a starting container not host
+        //variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SHARED_DIRECTORY", EnexaPathUtils.translateLocal2EnexaPath(sharedDirectory, System.getenv("ENEXA_SHARED_DIRECTORY"))));
+        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SHARED_DIRECTORY", DEFAULT_SHARED_DIRECTORY_FOR_RUNNING_CONTAINERS));
+        //variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SHARED_DIRECTORY",  System.getenv("ENEXA_SHARED_DIRECTORY")));
+
         String appPath =sharedDirectory + File.separator + appName;
         if(sharedDirectory.endsWith(File.separator)){
             appPath = sharedDirectory+appName;
@@ -187,7 +193,11 @@ public class EnexaServiceImpl implements EnexaService {
             exprimentWriteablePathDirectory.mkdirs();
         }
 
+        //variables.add(new AbstractMap.SimpleEntry<>("ENEXA_WRITEABLE_DIRECTORY",DEFAULT_SHARED_DIRECTORY_FOR_RUNNING_CONTAINERS+File.separator+appName));
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_WRITEABLE_DIRECTORY", exprimentWriteablePath));
+        //private static final String writeableDirectory = System.getenv("ENEXA_WRITEABLE_DIRECTORY");
+        //private static final String moduleInstanceDirectory = System.getenv("ENEXA_MODULE_INSTANCE_DIRECTORY");
+
 
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_INSTANCE_IRI", scModel.getInstanceIri()));
 
@@ -205,7 +215,9 @@ public class EnexaServiceImpl implements EnexaService {
             modulePathDirectory.mkdirs();
         }
 
+        //variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_INSTANCE_DIRECTORY",DEFAULT_SHARED_DIRECTORY_FOR_RUNNING_CONTAINERS+File.separator+appName+File.separator+moduleInstanceDirectory ));
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_INSTANCE_DIRECTORY", modulePath));
+
 
         // TODO: update this
         if (System.getenv("ENEXA_SERVICE_URL").equals("")) {
