@@ -29,7 +29,7 @@ import eu.enexa.model.StartContainerModel;
 public class EnexaServiceImpl implements EnexaService {
     private static final Logger LOGGER = LoggerFactory.getLogger(EnexaServiceImpl.class);
     private static final String DEFAULT_SHARED_DIRECTORY_FOR_RUNNING_CONTAINERS = "/home/shared";
-    private static final String DEFAULT_WRITEABLE_DIRECTORY_FOR_RUNNING_CONTAINERS = "/home/writeable";
+    //private static final String DEFAULT_WRITEABLE_DIRECTORY_FOR_RUNNING_CONTAINERS = "/home/writeable";
     //private static final String DEFAULT_MODULE_DIRECTORY_FOR_RUNNING_CONTAINERS = "/tmp/output";
 
 
@@ -196,7 +196,9 @@ public class EnexaServiceImpl implements EnexaService {
             exprimentWriteablePathDirectory.mkdirs();
         }
 
-        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_WRITEABLE_DIRECTORY",DEFAULT_WRITEABLE_DIRECTORY_FOR_RUNNING_CONTAINERS));
+        //variables.add(new AbstractMap.SimpleEntry<>("ENEXA_WRITEABLE_DIRECTORY",DEFAULT_WRITEABLE_DIRECTORY_FOR_RUNNING_CONTAINERS));
+        String tmpWriteablePathInsideContainer = DEFAULT_SHARED_DIRECTORY_FOR_RUNNING_CONTAINERS+File.separator+appName+File.separator+writeableDirectory;
+        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_WRITEABLE_DIRECTORY",tmpWriteablePathInsideContainer));
         //variables.add(new AbstractMap.SimpleEntry<>("ENEXA_WRITEABLE_DIRECTORY", exprimentWriteablePath));
         //private static final String writeableDirectory = System.getenv("ENEXA_WRITEABLE_DIRECTORY");
         //private static final String moduleInstanceDirectory = System.getenv("ENEXA_MODULE_INSTANCE_DIRECTORY");
