@@ -126,6 +126,10 @@ public class ContainerManagerImpl implements ContainerManager {
     }
 
     @Override
+    public void setParameters(String hostBasePath,String hostWritablePath,String hostModuleInstancePath){
+    }
+
+    @Override
     public String stopContainer(String containerId) {
         // TODO Auto-generated method stub
         return null;

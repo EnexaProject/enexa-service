@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,13 +28,21 @@ import java.util.List;
 public class ContainerManagerImpl implements ContainerManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(ContainerManagerImpl.class);
     private static final String VOLUME_PATH = System.getenv("ENEXA_SHARED_DIRECTORY");
-    private static final String HOST_BASE_PATH = System.getenv("ENEXA_SHARED_DIRECTORY");
-    private static final String HOST_WRITEABLE_PATH = System.getenv("ENEXA_WRITEABLE_DIRECTORY");
-    private static final String HOST_MODULE_INSTANCE_PATH = System.getenv("ENEXA_MODULE_INSTANCE_DIRECTORY");
+    private String hostBasePath ;
+    private String hostWritablePath ;
+    private String hostModuleInstancePath ;
 
     //private static final String NETWORK_NAME = "enexaNet";
     private static final String NETWORK_NAME = System.getenv("DOCKER_NET_NAME");
     private DockerClient dockerClient;
+
+
+    @Override
+    public void setParameters(String hostBasePath,String hostWritablePath,String hostModuleInstancePath){
+        this.hostBasePath = hostBasePath;
+        this.hostWritablePath = hostWritablePath;
+        this.hostModuleInstancePath = hostModuleInstancePath;
+    }
 
     public ContainerManagerImpl(){
         LOGGER.info("start initiating the ContainerManagerImpl");
@@ -69,17 +78,17 @@ public class ContainerManagerImpl implements ContainerManager {
 
             List<Volume> volumes = new ArrayList<>();
             String expIRI="";
-            String hostWritablePath ="";
-            String HostModuleInstancePath ="";
+            String ContainerWritablePath ="";
+            String ContainerModuleInstancePath ="";
             for(AbstractMap.SimpleEntry v:variables){
                 if(v.getKey().toString().equals("ENEXA_EXPERIMENT_IRI")){
                     expIRI = v.getValue().toString();
                 }
                 if(v.getKey().toString().equals("ENEXA_WRITEABLE_DIRECTORY")){
-                    hostWritablePath = v.getValue().toString();
+                    ContainerWritablePath = v.getValue().toString();
                 }
                 if(v.getKey().toString().equals("ENEXA_MODULE_INSTANCE_DIRECTORY")){
-                    HostModuleInstancePath = v.getValue().toString();
+                    ContainerModuleInstancePath = v.getValue().toString();
                 }
             }
             if(expIRI.equals("")||expIRI.length()<10){
@@ -94,13 +103,15 @@ public class ContainerManagerImpl implements ContainerManager {
             List<Bind> allBinds = new ArrayList<>();
             //allBinds.add(new Bind(HOST_PATH, new Volume(VOLUME_PATH+"/"+expIRI.replace("http://",""))));
             //allBinds.add(new Bind(HOST_PATH+"/output", new Volume("/output")));
-            allBinds.add(new Bind(HOST_BASE_PATH, new Volume("/home/shared"),AccessMode.ro));
-            allBinds.add(new Bind(hostWritablePath, new Volume("/home/writeable"),AccessMode.rw));
-            allBinds.add(new Bind(HostModuleInstancePath, new Volume("/tmp"),AccessMode.rw));
+            allBinds.add(new Bind(hostBasePath, new Volume("/home/shared"),AccessMode.ro));
+            //allBinds.add(new Bind(hostWritablePath, new Volume("/home/writeable"),AccessMode.rw));
+            allBinds.add(new Bind(hostWritablePath, new Volume(ContainerWritablePath),AccessMode.rw));
+            //allBinds.add(new Bind(hostModuleInstancePath, new Volume("/tmp"),AccessMode.rw));
+            allBinds.add(new Bind(hostModuleInstancePath, new Volume(ContainerModuleInstancePath),AccessMode.rw));
 
-            LOGGER.info("this path from host :"+HOST_BASE_PATH+"mapped to this path in container"+"/home/shared");
+            LOGGER.info("this path from host :"+hostBasePath+"mapped to this path in container"+"/home/shared");
             LOGGER.info("this path from host :"+hostWritablePath+"mapped to this path in container"+"/home/writeable");
-            LOGGER.info("this path from host :"+HostModuleInstancePath+"mapped to this path in container"+"HostModuleInstancePath");
+            LOGGER.info("this path from host :"+hostModuleInstancePath+"mapped to this path in container"+"HostModuleInstancePath");
 
             /*if(image.contains("enexa-cel-train-module")){
                 allBinds = new ArrayList<>();
@@ -194,6 +205,8 @@ public class ContainerManagerImpl implements ContainerManager {
             return null;
         }
     }
+
+
 
     private Container searchContainerByName(String containerName){
         List<Container> containers = this.dockerClient.listContainersCmd()
