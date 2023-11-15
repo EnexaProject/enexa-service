@@ -1,6 +1,5 @@
 package eu.enexa.service;
 
-import java.io.File;
 import java.util.AbstractMap;
 import java.util.List;
 
@@ -37,10 +36,10 @@ public interface ContainerManager {
     /**
      * this test method will rewritten , this set the host paths
      * @param sharedDirectory
-     * @param exprimentWriteablePathDirectory
+     * @param experimentWriteablePathDirectory
      * @param modulePathDirectory
      */
-    void setParameters(String sharedDirectory, String exprimentWriteablePathDirectory, String modulePathDirectory);
+    void setHostPaths(String sharedDirectory, String experimentWriteablePathDirectory, String modulePathDirectory);
 
     /**
      * Get the name of the container with the given ID. It should be possible to

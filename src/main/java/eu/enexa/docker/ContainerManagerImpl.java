@@ -7,17 +7,12 @@ import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.httpclient5.*;
-
-
 import com.github.dockerjava.core.DockerClientImpl;
 import eu.enexa.service.ContainerManager;
-import org.dice_research.enexa.utils.EnexaPathUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
-
-import java.io.File;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,24 +22,17 @@ import java.util.List;
 @Component("dockerContainerManager")
 public class ContainerManagerImpl implements ContainerManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(ContainerManagerImpl.class);
-    private static final String VOLUME_PATH = System.getenv("ENEXA_SHARED_DIRECTORY");
     private String hostBasePath ;
     private String hostWritablePath ;
     private String hostModuleInstancePath ;
-
-    //private static final String NETWORK_NAME = "enexaNet";
     private static final String NETWORK_NAME = System.getenv("DOCKER_NET_NAME");
     private DockerClient dockerClient;
 
-
-    @Override
-    public void setParameters(String hostBasePath,String hostWritablePath,String hostModuleInstancePath){
-        this.hostBasePath = hostBasePath;
-        this.hostWritablePath = hostWritablePath;
-        this.hostModuleInstancePath = hostModuleInstancePath;
+    public ContainerManagerImpl(){
+        initiate();
     }
 
-    public ContainerManagerImpl(){
+    private void initiate() {
         LOGGER.info("start initiating the ContainerManagerImpl");
         DockerClientConfig standard = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
         LOGGER.info("standards are defined");
@@ -66,6 +54,13 @@ public class ContainerManagerImpl implements ContainerManager {
             LOGGER.info("standard.getSSLConfig()"+standard.getSSLConfig().toString());
         }
         LOGGER.info("docker client is pinged");
+    }
+
+    public ContainerManagerImpl(String sharedDirectory, String experimentWriteablePathDirectory, String modulePathDirectory){
+        this.hostBasePath  = sharedDirectory;
+        this.hostWritablePath = experimentWriteablePathDirectory;
+        this.hostModuleInstancePath  = modulePathDirectory;
+        initiate();
     }
 
     @Override
@@ -206,6 +201,12 @@ public class ContainerManagerImpl implements ContainerManager {
         }
     }
 
+    @Override
+    public void setHostPaths(String sharedDirectory, String experimentWriteablePathDirectory, String modulePathDirectory) {
+         this.hostBasePath = sharedDirectory;
+         this.hostWritablePath  = experimentWriteablePathDirectory;
+         this.hostModuleInstancePath  = modulePathDirectory;
+    }
 
 
     private Container searchContainerByName(String containerName){

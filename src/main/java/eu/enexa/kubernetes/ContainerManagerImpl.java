@@ -126,7 +126,7 @@ public class ContainerManagerImpl implements ContainerManager {
     }
 
     @Override
-    public void setParameters(String hostBasePath,String hostWritablePath,String hostModuleInstancePath){
+    public void setHostPaths(String hostBasePath, String experimentWriteablePathDirectory, String hostModuleInstancePath){
     }
 
     @Override

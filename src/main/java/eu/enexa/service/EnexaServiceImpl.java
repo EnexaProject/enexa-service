@@ -233,7 +233,7 @@ public class EnexaServiceImpl implements EnexaService {
             LOGGER.info("ENEXA_SERVICE_URL is : " + System.getenv("ENEXA_SERVICE_URL"));
         }
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SERVICE_URL", System.getenv("ENEXA_SERVICE_URL")));
-        containerManager.setParameters(sharedDirectory, exprimentWriteablePath, modulePath);
+        containerManager.setHostPaths(sharedDirectory, exprimentWriteablePath, modulePath);
         String containerName = generatePodName(module.getModuleIri());
         String containerId = containerManager.startContainer(module.getImage(), containerName, variables);
         // TODO take point in time
