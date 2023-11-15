@@ -90,11 +90,6 @@ public class ContainerManagerImpl implements ContainerManager {
                 LOGGER.warn("ENEXA_EXPERIMENT_IRI is null or less than 10 character");
             }
 
-            //String HOST_PATH = HOST_Base_PATH.concat(expIRI.replace("http://",""));
-            /*if(!HOST_Base_PATH.endsWith(File.separator)){
-                HOST_PATH = HOST_Base_PATH.concat(File.separator.concat(expIRI.replace("http://","")));
-            }*/
-
             List<Bind> allBinds = new ArrayList<>();
             //allBinds.add(new Bind(HOST_PATH, new Volume(VOLUME_PATH+"/"+expIRI.replace("http://",""))));
             //allBinds.add(new Bind(HOST_PATH+"/output", new Volume("/output")));

@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -206,9 +207,7 @@ public class EnexaServiceImpl implements EnexaService {
 
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_INSTANCE_IRI", scModel.getInstanceIri()));
 
-
-        //TODO : this should replace with better solution , maybe add module name to model to use it here
-        String moduleInstanceDirectory =  scModel.getModuleIri().split("/")[scModel.getModuleIri().split("/").length - 2];
+        String moduleInstanceDirectory =  UUID.randomUUID().toString();
 
         String modulePath = exprimentWriteablePath + File.separator + moduleInstanceDirectory;
         if(exprimentWriteablePath.endsWith(File.separator)){
