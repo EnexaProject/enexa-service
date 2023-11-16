@@ -128,7 +128,7 @@ public class EnexaServiceImpl implements EnexaService {
          * contains more than one module, the "latest" (i.e., the one with the latest
          * publication date) is used.
          */
-        ModuleModel module = null;
+        ModuleModel module;
         try {
             module = moduleManager.deriveModule(scModel.getModuleIri(), scModel.getModuleUrl());
         } catch (Exception e) {
@@ -159,71 +159,29 @@ public class EnexaServiceImpl implements EnexaService {
 
         List<AbstractMap.SimpleEntry<String, String>> variables = new ArrayList<>();
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_EXPERIMENT_IRI", scModel.getExperiment()));
-        /*
-         * variables.add(new AbstractMap.SimpleEntry<>("ENEXA_META_DATA_ENDPOINT",
-         * metadataManager.getMetadataEndpointInfo(scModel.getExperiment())[0]));
-         */
+
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_META_DATA_ENDPOINT", metaDataEndpoint));
 
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_META_DATA_GRAPH",
                 metadataManager.getMetadataEndpointInfo(scModel.getExperiment())[1]));
+
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_IRI", instanceIri));
-
-        //TODO : change the java util which in case of equal return enexa-dir:// not null
-        // here is the shared directory of a starting container not host
-        //variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SHARED_DIRECTORY", EnexaPathUtils.translateLocal2EnexaPath(sharedDirectory, System.getenv("ENEXA_SHARED_DIRECTORY"))));
-        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SHARED_DIRECTORY", DEFAULT_SHARED_DIRECTORY_FOR_RUNNING_CONTAINERS));
-        //variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SHARED_DIRECTORY",  System.getenv("ENEXA_SHARED_DIRECTORY")));
-
-        String appPath =sharedDirectory + File.separator + appName;
-        if(sharedDirectory.endsWith(File.separator)){
-            appPath = sharedDirectory+appName;
-        }
-
-        File appPathDirectory = new File(appPath);
-        if(!appPathDirectory.exists()){
-            appPathDirectory.mkdirs();
-        }
-
-        String writeableDirectory =scModel.getExperiment().split("/")[scModel.getExperiment().split("/").length - 1];
-
-        String exprimentWriteablePath = appPath + File.separator + writeableDirectory;
-        if(appPath.endsWith(File.separator)){
-            exprimentWriteablePath = appPath+writeableDirectory;
-        }
-
-        File exprimentWriteablePathDirectory = new File(exprimentWriteablePath);
-        if(!exprimentWriteablePathDirectory.exists()){
-            exprimentWriteablePathDirectory.mkdirs();
-        }
-
-        //variables.add(new AbstractMap.SimpleEntry<>("ENEXA_WRITEABLE_DIRECTORY",DEFAULT_WRITEABLE_DIRECTORY_FOR_RUNNING_CONTAINERS));
-        String tmpWriteablePathInsideContainer = DEFAULT_SHARED_DIRECTORY_FOR_RUNNING_CONTAINERS+File.separator+appName+File.separator+writeableDirectory;
-        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_WRITEABLE_DIRECTORY",tmpWriteablePathInsideContainer));
-        //variables.add(new AbstractMap.SimpleEntry<>("ENEXA_WRITEABLE_DIRECTORY", exprimentWriteablePath));
-        //private static final String writeableDirectory = System.getenv("ENEXA_WRITEABLE_DIRECTORY");
-        //private static final String moduleInstanceDirectory = System.getenv("ENEXA_MODULE_INSTANCE_DIRECTORY");
-
 
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_INSTANCE_IRI", scModel.getInstanceIri()));
 
-        String moduleInstanceDirectory =  UUID.randomUUID().toString();
+        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SHARED_DIRECTORY", DEFAULT_SHARED_DIRECTORY_FOR_RUNNING_CONTAINERS));
 
-        String modulePath = exprimentWriteablePath + File.separator + moduleInstanceDirectory;
-        if(exprimentWriteablePath.endsWith(File.separator)){
-            modulePath = exprimentWriteablePath+moduleInstanceDirectory;
-        }
+        String writeableDirectory =scModel.getExperiment().split("/")[scModel.getExperiment().split("/").length - 1];
 
-        File modulePathDirectory = new File(modulePath);
-        if(!modulePathDirectory.exists()){
-            modulePathDirectory.mkdirs();
-        }
+        String tmpWriteablePathInsideContainer = DEFAULT_SHARED_DIRECTORY_FOR_RUNNING_CONTAINERS+File.separator+appName+File.separator+writeableDirectory;
+
+        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_WRITEABLE_DIRECTORY",tmpWriteablePathInsideContainer));
+
+        String moduleInstanceDirectory = UUID.randomUUID().toString();
 
         String tmpModulePathInsideContainer = DEFAULT_SHARED_DIRECTORY_FOR_RUNNING_CONTAINERS+File.separator+appName+File.separator+writeableDirectory+File.separator+moduleInstanceDirectory;
-        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_INSTANCE_DIRECTORY", tmpModulePathInsideContainer));
-        //variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_INSTANCE_DIRECTORY", modulePath));
-        //variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_INSTANCE_DIRECTORY", ));
 
+        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_INSTANCE_DIRECTORY", tmpModulePathInsideContainer));
 
         // TODO: update this
         if (System.getenv("ENEXA_SERVICE_URL").equals("")) {
@@ -231,8 +189,16 @@ public class EnexaServiceImpl implements EnexaService {
         } else {
             LOGGER.info("ENEXA_SERVICE_URL is : " + System.getenv("ENEXA_SERVICE_URL"));
         }
+
+
+        String appPath = makeTheDirectoryInThisPath(sharedDirectory,appName);
+
+        String experimentWriteablePath  = makeTheDirectoryInThisPath(appPath,writeableDirectory);
+
+        String modulePath = makeTheDirectoryInThisPath(experimentWriteablePath, moduleInstanceDirectory) ;
+
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SERVICE_URL", System.getenv("ENEXA_SERVICE_URL")));
-        containerManager.setHostPaths(sharedDirectory, exprimentWriteablePath, modulePath);
+        containerManager.setHostPaths(sharedDirectory, experimentWriteablePath, modulePath);
         String containerName = generatePodName(module.getModuleIri());
         String containerId = containerManager.startContainer(module.getImage(), containerName, variables);
         // TODO take point in time
@@ -254,6 +220,19 @@ public class EnexaServiceImpl implements EnexaService {
          * name)
          */
         return scModel.getModel();
+    }
+
+    private String makeTheDirectoryInThisPath(String part_one_of_path, String part_two_of_path) {
+        String path = part_one_of_path + File.separator + part_two_of_path;
+        if(part_one_of_path.endsWith(File.separator)){
+            path = part_one_of_path+part_two_of_path;
+        }
+
+        File appPathDirectory = new File(path);
+        if(!appPathDirectory.exists()){
+            appPathDirectory.mkdirs();
+        }
+        return path;
     }
 
     public String generatePodName(String moduleIri) {
