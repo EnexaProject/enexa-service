@@ -13,7 +13,7 @@ import java.util.List;
 public interface ContainerManager {
 
     // containerName is the podName for kubernetes
-    String startContainer(String image, String containerName, List<AbstractMap.SimpleEntry<String, String>> variables);
+    String startContainer(String image, String containerName, List<AbstractMap.SimpleEntry<String, String>> variables,String sharedDirectory, String experimentWriteablePathDirectory, String modulePathDirectory);
 
     /**
      * Stop the container with the given ID.
@@ -32,14 +32,6 @@ public interface ContainerManager {
      *         container does not exist
      */
     String getContainerStatus(String containerId);
-
-    /**
-     * this test method will rewritten , this set the host paths
-     * @param sharedDirectory
-     * @param experimentWriteablePathDirectory
-     * @param modulePathDirectory
-     */
-    void setHostPaths(String sharedDirectory, String experimentWriteablePathDirectory, String modulePathDirectory);
 
     /**
      * Get the name of the container with the given ID. It should be possible to

@@ -64,7 +64,11 @@ public class ContainerManagerImpl implements ContainerManager {
     }
 
     @Override
-    public String startContainer(String image, String containerName, List<AbstractMap.SimpleEntry<String, String>> variables) {
+    public String startContainer(String image, String containerName, List<AbstractMap.SimpleEntry<String, String>> variables, String sharedDirectory, String experimentWriteablePathDirectory, String modulePathDirectory) {
+        this.hostBasePath = sharedDirectory;
+        this.hostWritablePath  = experimentWriteablePathDirectory;
+        this.hostModuleInstancePath  = modulePathDirectory;
+
         if (variables == null ){
             variables = new ArrayList<>();
         }
@@ -195,14 +199,6 @@ public class ContainerManagerImpl implements ContainerManager {
             return null;
         }
     }
-
-    @Override
-    public void setHostPaths(String sharedDirectory, String experimentWriteablePathDirectory, String modulePathDirectory) {
-         this.hostBasePath = sharedDirectory;
-         this.hostWritablePath  = experimentWriteablePathDirectory;
-         this.hostModuleInstancePath  = modulePathDirectory;
-    }
-
 
     private Container searchContainerByName(String containerName){
         List<Container> containers = this.dockerClient.listContainersCmd()
