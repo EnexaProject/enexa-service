@@ -26,10 +26,6 @@ public class ContainerManagerImpl implements ContainerManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ContainerManagerImpl.class);
 
-    private String hostBasePath ;
-    private String hostWritablePath ;
-    private String hostModuleInstancePath ;
-
     private ApiClient client;
 
     protected ContainerManagerImpl() {
@@ -42,10 +38,7 @@ public class ContainerManagerImpl implements ContainerManager {
 
     @Override
     public String startContainer(String image, String podName,
-            List<AbstractMap.SimpleEntry<String, String>> variables, String sharedDirectory, String experimentWriteablePathDirectory, String modulePathDirectory) {
-        this.hostBasePath = sharedDirectory;
-        this.hostWritablePath  = experimentWriteablePathDirectory;
-        this.hostModuleInstancePath  = modulePathDirectory;
+            List<AbstractMap.SimpleEntry<String, String>> variables) {
         return startContainer(image, podName, variables, null);
     }
 
@@ -130,6 +123,10 @@ public class ContainerManagerImpl implements ContainerManager {
                     e);
             return null;
         }
+    }
+
+    @Override
+    public void setHostPaths(String hostBasePath, String experimentWriteablePathDirectory, String hostModuleInstancePath){
     }
 
     @Override
