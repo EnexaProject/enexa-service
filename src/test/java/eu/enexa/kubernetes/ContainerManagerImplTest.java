@@ -27,7 +27,7 @@ public class ContainerManagerImplTest {
         Configuration.setDefaultApiClient(client);
         ContainerManagerImpl cm = new ContainerManagerImpl(client);
         String name = "test"+ UUID.randomUUID().toString();
-        String posName = cm.startContainer(imageName,name,null);
+        String posName = cm.startContainer(imageName,name,null,null,null,null);
         Assert.assertEquals(posName, name);
         //TODO : need this pod removed after test
     }
@@ -42,7 +42,7 @@ public class ContainerManagerImplTest {
         List<AbstractMap.SimpleEntry<String,String>> variables = new ArrayList<>();
         variables.add(new AbstractMap.SimpleEntry<>("FIRST_VARIABLE","FIRST_VARIABLE_VALUE"));
         variables.add(new AbstractMap.SimpleEntry<>("SECOND_VARIABLE","SECOND_VARIABLE_VALUE"));
-        String posName = cm.startContainer(imageName, name, variables);
+        String posName = cm.startContainer(imageName, name, variables, null, null, null);
         Assert.assertEquals(posName, name);
         //TODO : need this pod removed after test
     }

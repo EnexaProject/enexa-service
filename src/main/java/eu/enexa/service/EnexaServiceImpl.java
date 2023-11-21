@@ -198,9 +198,8 @@ public class EnexaServiceImpl implements EnexaService {
         String modulePath = makeTheDirectoryInThisPath(experimentWriteablePath, moduleInstanceDirectory) ;
 
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SERVICE_URL", System.getenv("ENEXA_SERVICE_URL")));
-        containerManager.setHostPaths(sharedDirectory, experimentWriteablePath, modulePath);
         String containerName = generatePodName(module.getModuleIri());
-        String containerId = containerManager.startContainer(module.getImage(), containerName, variables);
+        String containerId = containerManager.startContainer(module.getImage(), containerName, variables,sharedDirectory, experimentWriteablePath, modulePath);
         // TODO take point in time
 
         /*

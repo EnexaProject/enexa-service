@@ -33,7 +33,7 @@ public class ContainerManagerImplTest {
         List<AbstractMap.SimpleEntry<String,String>> variables = new ArrayList<>();
         variables.add(new AbstractMap.SimpleEntry<>("FIRST_VARIABLE","FIRST_VARIABLE_VALUE"));
         variables.add(new AbstractMap.SimpleEntry<>("SECOND_VARIABLE","SECOND_VARIABLE_VALUE"));
-        String containerId = cm.startContainer(imageName, name, variables);
+        String containerId = cm.startContainer(imageName, name, variables,null,null,null);
         Assert.assertTrue(containerId.length() > 5);
         //TODO : need removed after test
     }
@@ -64,7 +64,7 @@ public class ContainerManagerImplTest {
             //if there is no containers then we create one first then wait it to exit and do assertion
             String imageName = "hello-world";
             String name = "test"+ UUID.randomUUID().toString();
-            String containerId = cm.startContainer(imageName, name, null);
+            String containerId = cm.startContainer(imageName, name, null,null,null,null);
             // wait to container exit
             TimeUnit.SECONDS.sleep(1);
             String status = cm.getContainerStatus(containerId);

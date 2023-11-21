@@ -38,7 +38,7 @@ public class ContainerManagerImpl implements ContainerManager {
 
     @Override
     public String startContainer(String image, String podName,
-            List<AbstractMap.SimpleEntry<String, String>> variables) {
+            List<AbstractMap.SimpleEntry<String, String>> variables, String hostSharedDirectory, String experimentWriteablePathDirectory, String modulePathDirectory) {
         return startContainer(image, podName, variables, null);
     }
 
@@ -125,9 +125,6 @@ public class ContainerManagerImpl implements ContainerManager {
         }
     }
 
-    @Override
-    public void setHostPaths(String hostBasePath, String experimentWriteablePathDirectory, String hostModuleInstancePath){
-    }
 
     @Override
     public String stopContainer(String containerId) {
