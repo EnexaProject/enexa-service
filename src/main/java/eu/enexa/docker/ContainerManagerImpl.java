@@ -184,7 +184,7 @@ public class ContainerManagerImpl implements ContainerManager {
     @Override
     public String stopContainer(String containerName) {
         try{
-            Container c = searchContainerByName(containerName);
+            Container c = searchContainerByNameOrId(containerName);
             if(c==null){
                 return null;
             }
@@ -196,21 +196,21 @@ public class ContainerManagerImpl implements ContainerManager {
     }
 
     @Override
-    public String getContainerStatus(String containerId) {
+    public String getContainerStatus(String containerNameOrId) {
         try{
-            Container c = searchContainerByName(containerId);
+            Container c = searchContainerByNameOrId(containerNameOrId);
             if(c==null){
-                LOGGER.error("there is no container for this id:"+containerId);
+                LOGGER.error("there is no container for this Name:"+containerNameOrId);
                 return null;
             }
             return c.getState();
         } catch (Exception e) {
-            LOGGER.error("Got an exception while trying to get the status of \"" + containerId + "\". Returning null.", e);
+            LOGGER.error("Got an exception while trying to get the status of \"" + containerNameOrId + "\". Returning null.", e);
             return null;
         }
     }
 
-    private Container searchContainerByName(String containerName){
+    private Container searchContainerByNameOrId(String containerNameOrId){
         List<Container> containers = this.dockerClient.listContainersCmd()
             .withShowAll(true)
             .exec();
@@ -218,9 +218,12 @@ public class ContainerManagerImpl implements ContainerManager {
         boolean containerExists = false;
         for (Container container : containers) {
             for(String name :container.getNames()) {
-                if (name.contains(containerName)) {
+                if (name.contains(containerNameOrId)) {
                     return container;
                 }
+            }
+            if (container.getId().equals(containerNameOrId)) {
+                return container;
             }
         }
         return null;

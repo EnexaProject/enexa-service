@@ -6,7 +6,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
-import org.dice_research.enexa.vocab.HOBBIT;
+import org.dice_research.enexa.vocab.Algorithm;
 import org.dice_research.rdf.RdfHelper;
 import org.dice_research.rdf.test.ModelComparisonHelper;
 import org.junit.Assert;
@@ -16,10 +16,9 @@ public class StartContainerModelTest {
 
     @Test
     public void parseAndReplaceTest() {
-        String requestString = "@prefix hobbit: <http://w3id.org/hobbit/vocab#> . "
-                + "@prefix enexa:  <http://w3id.org/dice-research/enexa/ontology#> ."
+        String requestString =  "@prefix enexa:  <http://w3id.org/dice-research/enexa/ontology#> ."
                 + "@prefix xsd:    <http://www.w3.org/2000/10/XMLSchema#> ."
-                + " [] hobbit:instanceOf <http://dice-research.org/DICE-framework/v1.0> ;"
+                + " [] <http://www.w3id.org/dice-research/ontologies/algorithm/2023/06/instanceOf> <http://dice-research.org/DICE-framework/v1.0> ;"
                 + " enexa:experiment <http://example.org/experiment1> ; "
                 + " <http://dice-research.org/DICE-framework/parameters/algorithm> <http://dice-research.org/DICE-framework/algorithms/ConEx> ;"
                 + " <http://dice-research.org/DICE-framework/parameters/dimensions> \"25\"^^xsd:nonNegativeInteger ;"
@@ -41,10 +40,9 @@ public class StartContainerModelTest {
         // Set the instance IRI
         scModel.setInstanceIri("http://example.org/RandomIRI");
 
-        String expectedString = "@prefix hobbit: <http://w3id.org/hobbit/vocab#> . "
-                + "@prefix enexa:  <http://w3id.org/dice-research/enexa/ontology#> ."
+        String expectedString =  "@prefix enexa:  <http://w3id.org/dice-research/enexa/ontology#> ."
                 + "@prefix xsd:    <http://www.w3.org/2000/10/XMLSchema#> ."
-                + " <http://example.org/RandomIRI> hobbit:instanceOf <http://dice-research.org/DICE-framework/v1.0> ;"
+                + " <http://example.org/RandomIRI> <http://www.w3id.org/dice-research/ontologies/algorithm/2023/06/instanceOf> <http://dice-research.org/DICE-framework/v1.0> ;"
                 + " enexa:experiment <http://example.org/experiment1> ; "
                 + " <http://dice-research.org/DICE-framework/parameters/algorithm> <http://dice-research.org/DICE-framework/algorithms/ConEx> ;"
                 + " <http://dice-research.org/DICE-framework/parameters/dimensions> \"25\"^^xsd:nonNegativeInteger ;"
@@ -59,10 +57,9 @@ public class StartContainerModelTest {
     // in this test , call the replaceIRI several times and it should work
     @Test
     public void setInstanceIriWorks() {
-        String requestString = "@prefix hobbit: <http://w3id.org/hobbit/vocab#> . "
-                + "@prefix enexa:  <http://w3id.org/dice-research/enexa/ontology#> ."
+        String requestString = "@prefix enexa:  <http://w3id.org/dice-research/enexa/ontology#> ."
                 + "@prefix xsd:    <http://www.w3.org/2000/10/XMLSchema#> ."
-                + " [] hobbit:instanceOf <http://dice-research.org/DICE-framework/v1.0> ;"
+                + " [] <http://www.w3id.org/dice-research/ontologies/algorithm/2023/06/instanceOf> <http://dice-research.org/DICE-framework/v1.0> ;"
                 + " enexa:experiment <http://example.org/experiment1> ; "
                 + " <http://dice-research.org/DICE-framework/parameters/algorithm> <http://dice-research.org/DICE-framework/algorithms/ConEx> ;"
                 + " <http://dice-research.org/DICE-framework/parameters/dimensions> \"25\"^^xsd:nonNegativeInteger ;"
@@ -77,24 +74,23 @@ public class StartContainerModelTest {
         Model tmpModel = scModel.getModel();
 
         scModel.setInstanceIri("http://example.org/testIRI1");
-        Resource actuallInstance = RdfHelper.getSubjectResource(tmpModel, HOBBIT.instanceOf,
+        Resource actuallInstance = RdfHelper.getSubjectResource(tmpModel, Algorithm.instanceOf,
                 ResourceFactory.createResource("http://dice-research.org/DICE-framework/v1.0"));
         Assert.assertEquals(actuallInstance.getURI(), "http://example.org/testIRI1");
 
         scModel.setInstanceIri("http://example.org/zzz");
-        actuallInstance = RdfHelper.getSubjectResource(tmpModel, HOBBIT.instanceOf,
+        actuallInstance = RdfHelper.getSubjectResource(tmpModel, Algorithm.instanceOf,
                 ResourceFactory.createResource("http://dice-research.org/DICE-framework/v1.0"));
         Assert.assertEquals(actuallInstance.getURI(), "http://example.org/zzz");
 
         scModel.setInstanceIri("http://example.org/aaa");
-        actuallInstance = RdfHelper.getSubjectResource(tmpModel, HOBBIT.instanceOf,
+        actuallInstance = RdfHelper.getSubjectResource(tmpModel, Algorithm.instanceOf,
                 ResourceFactory.createResource("http://dice-research.org/DICE-framework/v1.0"));
         Assert.assertEquals(actuallInstance.getURI(), "http://example.org/aaa");
 
-        String expectedString = "@prefix hobbit: <http://w3id.org/hobbit/vocab#> . "
-                + "@prefix enexa:  <http://w3id.org/dice-research/enexa/ontology#> ."
+        String expectedString = "@prefix enexa:  <http://w3id.org/dice-research/enexa/ontology#> ."
                 + "@prefix xsd:    <http://www.w3.org/2000/10/XMLSchema#> ."
-                + " <http://example.org/aaa> hobbit:instanceOf <http://dice-research.org/DICE-framework/v1.0> ;"
+                + " <http://example.org/aaa> <http://www.w3id.org/dice-research/ontologies/algorithm/2023/06/instanceOf> <http://dice-research.org/DICE-framework/v1.0> ;"
                 + " enexa:experiment <http://example.org/experiment1> ; "
                 + " <http://dice-research.org/DICE-framework/parameters/algorithm> <http://dice-research.org/DICE-framework/algorithms/ConEx> ;"
                 + " <http://dice-research.org/DICE-framework/parameters/dimensions> \"25\"^^xsd:nonNegativeInteger ;"
