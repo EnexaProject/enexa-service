@@ -13,7 +13,7 @@ import java.util.List;
 public interface ContainerManager {
 
     // containerName is the podName for kubernetes
-    String startContainer(String image, String containerName, List<AbstractMap.SimpleEntry<String, String>> variables, String hostSharedDirectory, String experimentWriteablePathDirectory, String modulePathDirectory);
+    String startContainer(String image, String containerName, List<AbstractMap.SimpleEntry<String, String>> variables, String hostSharedDirectory, String appName);
 
     /**
      * Stop the container with the given ID.

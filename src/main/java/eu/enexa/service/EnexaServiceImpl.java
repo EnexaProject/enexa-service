@@ -4,7 +4,6 @@ import java.io.File;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -29,10 +28,6 @@ import eu.enexa.model.StartContainerModel;
 @Service
 public class EnexaServiceImpl implements EnexaService {
     private static final Logger LOGGER = LoggerFactory.getLogger(EnexaServiceImpl.class);
-    private static final String DEFAULT_SHARED_DIRECTORY_FOR_RUNNING_CONTAINERS = "/home/shared";
-    //private static final String DEFAULT_WRITEABLE_DIRECTORY_FOR_RUNNING_CONTAINERS = "/home/writeable";
-    //private static final String DEFAULT_MODULE_DIRECTORY_FOR_RUNNING_CONTAINERS = "/tmp/output";
-
 
     @Autowired
     private ContainerManager containerManager;
@@ -46,8 +41,6 @@ public class EnexaServiceImpl implements EnexaService {
     private static final String metaDataEndpoint = System.getenv("ENEXA_META_DATA_ENDPOINT");
     private static final String appName = "app1";
     private static final String sharedDirectory = System.getenv("ENEXA_SHARED_DIRECTORY");
-    //private static final String writeableDirectory = System.getenv("ENEXA_WRITEABLE_DIRECTORY");
-    //private static final String moduleInstanceDirectory = System.getenv("ENEXA_MODULE_INSTANCE_DIRECTORY");
 
     @Override
     public Model startExperiment() {
@@ -169,20 +162,6 @@ public class EnexaServiceImpl implements EnexaService {
 
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_INSTANCE_IRI", scModel.getInstanceIri()));
 
-        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SHARED_DIRECTORY", DEFAULT_SHARED_DIRECTORY_FOR_RUNNING_CONTAINERS));
-
-        String writeableDirectory =scModel.getExperiment().split("/")[scModel.getExperiment().split("/").length - 1];
-
-        String tmpWriteablePathInsideContainer = DEFAULT_SHARED_DIRECTORY_FOR_RUNNING_CONTAINERS+File.separator+appName+File.separator+writeableDirectory;
-
-        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_WRITEABLE_DIRECTORY",tmpWriteablePathInsideContainer));
-
-        String moduleInstanceDirectory = UUID.randomUUID().toString();
-
-        String tmpModulePathInsideContainer = DEFAULT_SHARED_DIRECTORY_FOR_RUNNING_CONTAINERS+File.separator+appName+File.separator+writeableDirectory+File.separator+moduleInstanceDirectory;
-
-        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_INSTANCE_DIRECTORY", tmpModulePathInsideContainer));
-
         // TODO: update this
         if (System.getenv("ENEXA_SERVICE_URL").equals("")) {
             LOGGER.error("ENEXA_SERVICE_URL environment is null");
@@ -190,16 +169,9 @@ public class EnexaServiceImpl implements EnexaService {
             LOGGER.info("ENEXA_SERVICE_URL is : " + System.getenv("ENEXA_SERVICE_URL"));
         }
 
-
-        String appPath = makeTheDirectoryInThisPath(sharedDirectory,appName);
-
-        String experimentWriteablePath  = makeTheDirectoryInThisPath(appPath,writeableDirectory);
-
-        String modulePath = makeTheDirectoryInThisPath(experimentWriteablePath, moduleInstanceDirectory) ;
-
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SERVICE_URL", System.getenv("ENEXA_SERVICE_URL")));
         String containerName = generatePodName(module.getModuleIri());
-        String containerId = containerManager.startContainer(module.getImage(), containerName, variables,sharedDirectory, experimentWriteablePath, modulePath);
+        String containerId = containerManager.startContainer(module.getImage(), containerName, variables, sharedDirectory, appName);
         // TODO take point in time
 
         /*

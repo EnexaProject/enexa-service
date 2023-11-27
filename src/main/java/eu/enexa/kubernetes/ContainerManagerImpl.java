@@ -38,13 +38,12 @@ public class ContainerManagerImpl implements ContainerManager {
 
     @Override
     public String startContainer(String image, String podName,
-            List<AbstractMap.SimpleEntry<String, String>> variables, String hostSharedDirectory, String experimentWriteablePathDirectory, String modulePathDirectory) {
-        return startContainer(image, podName, variables, null);
+            List<AbstractMap.SimpleEntry<String, String>> variables, String hostSharedDirectory, String appName) {
+        return startContainerKub(image, podName, variables, null, null);
     }
 
     // podName is the containerName for kubernetes
-    public String startContainer(String image, String podName, List<AbstractMap.SimpleEntry<String, String>> variables,
-            String[] command) {
+    public String startContainerKub(String image, String podName, List<AbstractMap.SimpleEntry<String, String>> variables,String hostSharedDirectory ,String[] command) {
 
         List<V1EnvVar> env = new ArrayList<>();
         if (variables != null) {
@@ -158,8 +157,7 @@ public class ContainerManagerImpl implements ContainerManager {
 
     public static void main(String[] args) throws Exception {
         ContainerManagerImpl manager = ContainerManagerImpl.create();
-        String containerId = manager.startContainer("busybox", "test" + UUID.randomUUID().toString(), null,
-                new String[] { "sleep", "10000" });
+        String containerId = manager.startContainerKub("busybox", "test" + UUID.randomUUID().toString(), null, null,new String[] { "sleep", "10000" });
         System.out.println(containerId);
 
         String status = null;
