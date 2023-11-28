@@ -32,16 +32,4 @@ public interface ContainerManager {
      *         container does not exist
      */
     String getContainerStatus(String containerId);
-
-
-    /**
-     * Get the name of the container with the given ID. It should be possible to
-     * connect to the container using the name.
-     *
-     * @param containerId the ID of the container for which the name should be
-     *                    returned.
-     * @return the name of the container or {@code null} if an error occurs or the
-     *         container does not exist
-     */
-//    String getContainerName(String containerId);
 }
