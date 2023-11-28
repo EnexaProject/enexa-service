@@ -66,7 +66,6 @@ public class EnexaController {
     @Autowired
     private EnexaService enexa;
 
-
     @GetMapping(value = "/test")
     public ResponseEntity<String> test(){
         return new ResponseEntity<String>("OK!",HttpStatus.OK);

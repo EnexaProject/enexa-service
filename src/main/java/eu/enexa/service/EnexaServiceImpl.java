@@ -18,6 +18,7 @@ import org.dice_research.rdf.RdfHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import eu.enexa.model.AddedResource;
@@ -39,8 +40,12 @@ public class EnexaServiceImpl implements EnexaService {
     private ModuleManager moduleManager;
 
     private static final String metaDataEndpoint = System.getenv("ENEXA_META_DATA_ENDPOINT");
-    private static final String appName = "app1";
+
+    // If service need used by different applications then this should set from outside ( with a setter)
+    @Value("${enexa.appName}")
+    private  String appName ;
     private static final String sharedDirectory = System.getenv("ENEXA_SHARED_DIRECTORY");
+
 
     @Override
     public Model startExperiment() {
@@ -191,19 +196,6 @@ public class EnexaServiceImpl implements EnexaService {
          * name)
          */
         return scModel.getModel();
-    }
-
-    private String makeTheDirectoryInThisPath(String part_one_of_path, String part_two_of_path) {
-        String path = part_one_of_path + File.separator + part_two_of_path;
-        if(part_one_of_path.endsWith(File.separator)){
-            path = part_one_of_path+part_two_of_path;
-        }
-
-        File appPathDirectory = new File(path);
-        if(!appPathDirectory.exists()){
-            appPathDirectory.mkdirs();
-        }
-        return path;
     }
 
     public String generatePodName(String moduleIri) {
