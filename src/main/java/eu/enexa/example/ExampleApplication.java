@@ -48,7 +48,6 @@ public class ExampleApplication implements AutoCloseable {
 
     private String urlsIri;
     private String jsonIri;
-    private String urlsLocation;
     private String resultFileIri;
     private String resultFileLocation;
 
@@ -152,10 +151,11 @@ public class ExampleApplication implements AutoCloseable {
         } catch (IOException e) {
             throw new IOException("Couldn't copy the kg file into the shared directory.", e);
         }
-        urlsFile = dest.getAbsolutePath();
+
+        String destinationUrlsFile = dest.getAbsolutePath();
 
         // Get relative path in the shared directory
-        jsonFileLocation = SHARED_DIR_PREFIX + urlsFile.substring(appPath.length());
+        jsonFileLocation = SHARED_DIR_PREFIX + destinationUrlsFile.substring(appPath.length());
 
         // Create a model with the meta data of our file
         Model fileDescription = ModelFactory.createDefaultModel();
@@ -195,10 +195,10 @@ public class ExampleApplication implements AutoCloseable {
             throw new IOException("Couldn't copy the kg file into the shared directory.", e);
         }
 
-        jsonFile = dest.getAbsolutePath();
+        String jsonFileDestination = dest.getAbsolutePath();
 
         // Get relative path in the shared directory
-        jsonFileLocation = SHARED_DIR_PREFIX + jsonFile.substring(appPath.length());
+        jsonFileLocation = SHARED_DIR_PREFIX + jsonFileDestination.substring(appPath.length());
 
         // Create a model with the meta data of our file
         Model fileDescription = ModelFactory.createDefaultModel();
@@ -401,11 +401,11 @@ public class ExampleApplication implements AutoCloseable {
             app.addUrls("/home/farshad/test/enexa/shared/wikipedia_company_urls_short.json", moduleName);
             app.startExtraction();
             // 4. Start the embedding generation
-           // app.startEmbeddingGeneration();
+            //app.startEmbeddingGeneration();
             // 5. Wait for the embedding module to be finish
-           // app.waitForEmbeddings();
+            //app.waitForEmbeddings();
             // 6. Get the output of the embedding algorithm
-           // app.queryFilePath();
+            // app.queryFilePath();
             // 7. Cleanup
             //app.finishExperiment();
         } catch (Exception e) {

@@ -118,18 +118,18 @@ public class ContainerManagerImpl implements ContainerManager {
             LOGGER.info("this path from host :"+hostWritablePath+" mapped to this path in container "+containerWritablePath);
             //LOGGER.info("this path from host :"+hostModuleInstancePath+" mapped to this path in container "+containerModuleInstancePath);
 
-            HostConfig hostConfig = HostConfig
+            HostConfig dockerHostConfig = HostConfig
                 .newHostConfig()
                 .withNetworkMode(NETWORK_NAME)
                 .withBinds(allBinds);
 
             // add extra requirment based on the image name
-            hostConfig = addExceptionalConditions(image, allBinds, hostConfig);
+            dockerHostConfig = addExceptionalConditions(image, allBinds, dockerHostConfig);
 
             CreateContainerResponse container = dockerClient.createContainerCmd(image)
                 .withName(containerName)
                 .withEnv(mapToEnvironmentArray(variables))
-                .withHostConfig(hostConfig)
+                .withHostConfig(dockerHostConfig)
                 .exec();
 
             dockerClient.startContainerCmd(container.getId()).exec();
@@ -141,11 +141,12 @@ public class ContainerManagerImpl implements ContainerManager {
     }
 
     // If need especial requirement for an image , just  add them here
-    private HostConfig addExceptionalConditions(String image, List<Bind> allBinds, HostConfig hostConfig) {
+    private HostConfig addExceptionalConditions(String image, List<Bind> allBinds, HostConfig dockerHostConfig) {
+        HostConfig changedDockerHostConfig = dockerHostConfig;
         if(image.contains("enexa-dice-embeddings")){
             // increase the size of shared memory for this module
             LOGGER.info("### increase the shared memory to 32 GB ####");
-            hostConfig = HostConfig
+            changedDockerHostConfig = HostConfig
                 .newHostConfig()
                 .withNetworkMode(NETWORK_NAME)
                 .withBinds(allBinds)
@@ -155,14 +156,14 @@ public class ContainerManagerImpl implements ContainerManager {
         if(image.contains("enexa-cel-train-module")){
             // increase the size of shared memory for this module
             LOGGER.info("### increase the shared memory to 8 GB ####");
-            hostConfig = HostConfig
+            changedDockerHostConfig = HostConfig
                 .newHostConfig()
                 .withNetworkMode(NETWORK_NAME)
                 .withBinds(allBinds)
                 .withShmSize(8L * 1024 * 1024 * 1024) ; // 8 GB
         }
 
-        return hostConfig;
+        return changedDockerHostConfig;
     }
 
     private String trimImageName(String image) {
