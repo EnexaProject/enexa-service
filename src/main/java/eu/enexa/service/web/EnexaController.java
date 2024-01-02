@@ -3,6 +3,7 @@ package eu.enexa.service.web;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.util.Map;
 
 import org.apache.hc.core5.http.HttpHeaders;
 import org.apache.jena.atlas.web.ContentType;
@@ -66,7 +67,6 @@ public class EnexaController {
     @Autowired
     private EnexaService enexa;
 
-
     @GetMapping(value = "/test")
     public ResponseEntity<String> test(){
         return new ResponseEntity<String>("OK!",HttpStatus.OK);
@@ -88,15 +88,16 @@ public class EnexaController {
         return new ResponseEntity<Model>(addedResource.getModel(), headers, HttpStatus.OK);
     }
 
-    @GetMapping(value = "/container-status", consumes = "application/x-www-form-urlencoded")
+    @PostMapping(value = "/container-status", consumes = WebContent.contentTypeJSON)
     public ResponseEntity<Model> containerStatusFormData(
-            @RequestParam(value = "moduleInstanceIRI", required = true) String moduleInstanceIRI,
-            @RequestParam(value = "experimentIRI", required = true) String experimentIRI) {
+        @RequestBody Map<String, String> requestData) {
         /*
          * Errors · HTTP 400: o Experiment IRI is not known / not available. o The
          * resource URL does not exist or cannot be downloaded. · HTTP 500: o An error
          * occurs while adding the resource.
          */
+        String moduleInstanceIRI = requestData.get("moduleInstanceIRI");
+        String experimentIRI = requestData.get("experimentIRI");
         Model model = enexa.containerStatus(experimentIRI, moduleInstanceIRI);
         return new ResponseEntity<Model>(model, HttpStatus.OK);
     }

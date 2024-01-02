@@ -44,11 +44,16 @@ public class ExampleApplication implements AutoCloseable {
     private String metaDataEndpoint;
     private String metaDataGraph;
     private String kgFileIri;
-    private String kgFileLocation;
+    private String jsonFileLocation;
+
+    private String urlsIri;
+    private String jsonIri;
     private String resultFileIri;
     private String resultFileLocation;
 
     private final String preFix = "http://w3id.org/dice-research/enexa/module/dice-embeddings/";
+
+    private final String appName = "app1";
 
     public ExampleApplication(String enexaURL, String sharedDirPath, String appPath) {
         super();
@@ -107,7 +112,7 @@ public class ExampleApplication implements AutoCloseable {
             metaFilePath = dest.getAbsolutePath();
         }
         // Get relative path in the shared directory
-        kgFileLocation = SHARED_DIR_PREFIX + metaFilePath.substring(appPath.length());
+        jsonFileLocation = SHARED_DIR_PREFIX + metaFilePath.substring(appPath.length());
 
         // Create a model with the meta data of our file
         Model fileDescription = ModelFactory.createDefaultModel();
@@ -115,7 +120,7 @@ public class ExampleApplication implements AutoCloseable {
         Resource file = fileDescription.createResource();
         fileDescription.add(file, RDF.type, fileDescription.createResource("http://www.w3.org/ns/prov#Entity"));
         fileDescription.add(file, ENEXA.experiment, fileDescription.createResource(experimentIRI));
-        fileDescription.add(file, ENEXA.location, fileDescription.createLiteral(kgFileLocation));
+        fileDescription.add(file, ENEXA.location, fileDescription.createLiteral(jsonFileLocation));
         fileDescription.add(file, fileDescription.createProperty("http://www.w3.org/ns/dcat#mediaType"),
                 fileDescription.createResource("https://www.iana.org/assignments/media-types/text/turtle"));
 
@@ -133,10 +138,125 @@ public class ExampleApplication implements AutoCloseable {
             throw new Exception("Couldn't find the file resource.");
         }
         LOGGER.info("File resource {} has been created.", fileResource.getURI());
-
+        kgFileIri = fileResource.getURI();
         //
     }
 
+    public void addUrls(String urlsFile, String moduleName) throws Exception {
+        // Move file if it is not located in the shared directory
+        File urls = new File(urlsFile);
+        File dest = new File(appPath + File.separator+ appName+File.separator+ experimentIRI.split("/")[experimentIRI.split("/").length -1] +File.separator +moduleName +File.separator+urls.getName());
+        try {
+            FileUtils.copyFile(urls, dest);
+        } catch (IOException e) {
+            throw new IOException("Couldn't copy the kg file into the shared directory.", e);
+        }
+
+        String destinationUrlsFile = dest.getAbsolutePath();
+
+        // Get relative path in the shared directory
+        jsonFileLocation = SHARED_DIR_PREFIX + destinationUrlsFile.substring(appPath.length());
+
+        // Create a model with the meta data of our file
+        Model fileDescription = ModelFactory.createDefaultModel();
+        // The file itself will be a blank node
+        String addFile = "@prefix enexa:  <http://w3id.org/dice-research/enexa/ontology#> .\n" +
+            "  @prefix prov:   <http://www.w3.org/ns/prov#> .\n" +
+            "\n" +
+            "  [] a prov:Entity ; \n" +
+            "      enexa:experiment <"+experimentIRI+"> ; \n" +
+            "      enexa:location \""+ jsonFileLocation +"\" .";
+        fileDescription.read(new java.io.StringReader(addFile),null,"TURTLE");
+
+        // Send the model
+        Model response = requestRDF(enexaURL + "/add-resource", fileDescription);
+
+        if (response == null) {
+            throw new Exception("Couldn't add a resource to the meta data.");
+        }
+
+        // Get the new IRI of the resource
+        Resource fileResource = RdfHelper.getSubjectResource(response, RDF.type,
+            response.createResource("http://www.w3.org/ns/prov#Entity"));
+        if (fileResource == null) {
+            throw new Exception("Couldn't find the file resource.");
+        }
+        LOGGER.info("File resource {} has been created.", fileResource.getURI());
+        urlsIri = fileResource.getURI();
+    }
+
+    public void addJson(String jsonFile, String moduleName) throws Exception {
+        // Move file if it is not located in the shared directory
+        File json = new File(jsonFile);
+        File dest = new File(appPath + File.separator+ appName+File.separator+experimentIRI.split("/")[experimentIRI.split("/").length -1] +File.separator +moduleName +File.separator+json.getName());
+        try {
+            FileUtils.copyFile(json, dest);
+        } catch (IOException e) {
+            throw new IOException("Couldn't copy the kg file into the shared directory.", e);
+        }
+
+        String jsonFileDestination = dest.getAbsolutePath();
+
+        // Get relative path in the shared directory
+        jsonFileLocation = SHARED_DIR_PREFIX + jsonFileDestination.substring(appPath.length());
+
+        // Create a model with the meta data of our file
+        Model fileDescription = ModelFactory.createDefaultModel();
+        // The file itself will be a blank node
+        String addFile = "@prefix enexa:  <http://w3id.org/dice-research/enexa/ontology#> .\n" +
+            "  @prefix prov:   <http://www.w3.org/ns/prov#> .\n" +
+            "\n" +
+            "  [] a prov:Entity ; \n" +
+            "      enexa:experiment <"+experimentIRI+"> ; \n" +
+            "      enexa:location \""+ jsonFileLocation +"\" .";
+        fileDescription.read(new java.io.StringReader(addFile),null,"TURTLE");
+
+        // Send the model
+        Model response = requestRDF(enexaURL + "/add-resource", fileDescription);
+
+        if (response == null) {
+            throw new Exception("Couldn't add a resource to the meta data.");
+        }
+
+        // Get the new IRI of the resource
+        Resource fileResource = RdfHelper.getSubjectResource(response, RDF.type,
+            response.createResource("http://www.w3.org/ns/prov#Entity"));
+        if (fileResource == null) {
+            throw new Exception("Couldn't find the file resource.");
+        }
+        LOGGER.info("File resource {} has been created.", fileResource.getURI());
+        jsonIri = fileResource.getURI();
+    }
+
+    private void startExtraction() throws Exception {
+        Model instanceModel = ModelFactory.createDefaultModel();
+
+        String start_module_message = "@prefix alg: <http://www.w3id.org/dice-research/ontologies/algorithm/2023/06/> .\n" +
+            "@prefix enexa:  <http://w3id.org/dice-research/enexa/ontology#> .\n" +
+            "@prefix prov:   <http://www.w3.org/ns/prov#> .\n" +
+            "@prefix hobbit: <http://w3id.org/hobbit/vocab#> . \n" +
+            "@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n" +
+            "[] rdf:type enexa:ModuleInstance ; " +
+            "enexa:experiment <"+experimentIRI+"> ; " +
+            "alg:instanceOf <http://w3id.org/dice-research/enexa/module/extraction/1.0.0> ; " +
+            "<http://w3id.org/dice-research/enexa/module/extraction/parameter/urls_to_process> <"+urlsIri+">;" +
+            "<http://w3id.org/dice-research/enexa/module/extraction/parameter/path_generation_parameters> <"+jsonIri+">.";
+
+        instanceModel.read(new java.io.StringReader(start_module_message), null, "TURTLE");
+
+        Model response = requestRDF(enexaURL + "/start-container", instanceModel);
+
+        if (response == null) {
+            throw new Exception("Couldn't start a container.");
+        }
+        // Get the new IRI of the newly created module instance
+        Resource instanceResource = RdfHelper.getSubjectResource(response, RDF.type, ENEXA.ModuleInstance);
+        if (instanceResource == null) {
+            throw new Exception("Couldn't find module instance resource.");
+        }
+        instanceIRI = instanceResource.getURI();
+        LOGGER.info("module instance {} has been created.", instanceIRI);
+    }
     private void startEmbeddingGeneration() throws Exception {
         // Create a model with the meta data of the module that we want to run
         Model instanceModel = ModelFactory.createDefaultModel();
@@ -152,9 +272,9 @@ public class ExampleApplication implements AutoCloseable {
         instanceModel.add(instance, instanceModel.createProperty(preFix+"parameter/model"),
             instanceModel.createTypedLiteral("ConEx"));
         //http://module-instance-1> <parameters/path_dataset_folder> <http://aresource> .
-        instanceModel.add(instance,instanceModel.createProperty(preFix+"parameter/path_dataset_folder"),instanceModel.createResource(kgFileLocation.replace("enexa-dir:","http:")));
+        instanceModel.add(instance,instanceModel.createProperty(preFix+"parameter/path_dataset_folder"),instanceModel.createResource(jsonFileLocation.replace("enexa-dir:","http:")));
 //<http://aresource> enexa:location "enexa-dir://something" .
-        instanceModel.add(instanceModel.createResource(kgFileLocation.replace("enexa-dir:","http:")),ENEXA.location,instanceModel.createLiteral(kgFileLocation));
+        instanceModel.add(instanceModel.createResource(jsonFileLocation.replace("enexa-dir:","http:")),ENEXA.location,instanceModel.createLiteral(jsonFileLocation));
 
         instanceModel.add(instance, instanceModel.createProperty(preFix+"parameter/num_epochs"),
                 instanceModel.createTypedLiteral(5));
@@ -276,15 +396,18 @@ public class ExampleApplication implements AutoCloseable {
             // 2. Start an experiment
             app.startExperiment();
             // 3. Add the knowledge graph file
-            app.addKGFile(kgFile);
+            String moduleName = "extraction";
+            app.addJson("/home/farshad/test/enexa/shared/generation_parameters.json", moduleName);
+            app.addUrls("/home/farshad/test/enexa/shared/wikipedia_company_urls_short.json", moduleName);
+            app.startExtraction();
             // 4. Start the embedding generation
-            app.startEmbeddingGeneration();
+            //app.startEmbeddingGeneration();
             // 5. Wait for the embedding module to be finish
-            app.waitForEmbeddings();
+            //app.waitForEmbeddings();
             // 6. Get the output of the embedding algorithm
-            app.queryFilePath();
+            // app.queryFilePath();
             // 7. Cleanup
-            app.finishExperiment();
+            //app.finishExperiment();
         } catch (Exception e) {
             LOGGER.error("Something went wrong :-( ", e);
         }

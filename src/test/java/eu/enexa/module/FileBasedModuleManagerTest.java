@@ -36,13 +36,14 @@ public class FileBasedModuleManagerTest {
                 module.getImage());
     }
 
-    @Test(expected = IOException.class)
+    // no mor exceptions , now we just log if the file is not supported
+    /*@Test(expected = IOException.class)
     public void unknownFileShouldThrowException() throws URISyntaxException, IOException {
         File temp = File.createTempFile("module", ".frs");
         FileBasedModuleManager manager = new FileBasedModuleManager();
         manager.addFileOrDirectory(temp);
         Assert.fail();
-    }
+    }*/
 
     @Test(expected = IllegalArgumentException.class)
     public void notCompletedFileShouldThrowException() throws URISyntaxException, IOException {

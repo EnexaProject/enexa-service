@@ -18,6 +18,7 @@ import org.dice_research.rdf.RdfHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import eu.enexa.model.AddedResource;
@@ -40,6 +41,12 @@ public class EnexaServiceImpl implements EnexaService {
 
     private static final String metaDataEndpoint = System.getenv("ENEXA_META_DATA_ENDPOINT");
 
+    // If service need used by different applications then this should set from outside ( with a setter)
+    @Value("${enexa.appName}")
+    private  String appName ;
+    private static final String sharedDirectory = System.getenv("ENEXA_SHARED_DIRECTORY");
+
+
     @Override
     public Model startExperiment() {
         Model model = ModelFactory.createDefaultModel();
@@ -54,13 +61,15 @@ public class EnexaServiceImpl implements EnexaService {
         }
         // do not use experiment.getLocalName() it will remove the first character !
 
-        sharedDirLocalPath = sharedDirLocalPath + File.separator + experiment.getURI().replace("http://", "");
+        sharedDirLocalPath = sharedDirLocalPath +File.separator+appName+ File.separator + experiment.getURI().split("/")[experiment.getURI().split("/").length -1];
         // TODO create directory
-        /*
-         * File theDir = new File(sharedDirLocalPath); if (!theDir.exists()){ boolean
-         * isCreated = theDir.mkdirs(); if(!isCreated){
-         * LOGGER.warn("the directory can not created at :"+sharedDirLocalPath); } }
-         */
+          File theDir = new File(sharedDirLocalPath);
+          if (!theDir.exists()){
+              boolean isCreated = theDir.mkdirs();
+              if(!isCreated){
+                  LOGGER.warn("the directory can not created at :"+sharedDirLocalPath);
+              }
+          }
         // 3. Start default containers
         // TODO : implement this
 
@@ -117,7 +126,7 @@ public class EnexaServiceImpl implements EnexaService {
          * contains more than one module, the "latest" (i.e., the one with the latest
          * publication date) is used.
          */
-        ModuleModel module = null;
+        ModuleModel module;
         try {
             module = moduleManager.deriveModule(scModel.getModuleIri(), scModel.getModuleUrl());
         } catch (Exception e) {
@@ -148,22 +157,15 @@ public class EnexaServiceImpl implements EnexaService {
 
         List<AbstractMap.SimpleEntry<String, String>> variables = new ArrayList<>();
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_EXPERIMENT_IRI", scModel.getExperiment()));
-        /*
-         * variables.add(new AbstractMap.SimpleEntry<>("ENEXA_META_DATA_ENDPOINT",
-         * metadataManager.getMetadataEndpointInfo(scModel.getExperiment())[0]));
-         */
+
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_META_DATA_ENDPOINT", metaDataEndpoint));
 
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_META_DATA_GRAPH",
                 metadataManager.getMetadataEndpointInfo(scModel.getExperiment())[1]));
+
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_IRI", instanceIri));
-        // TODO : after demo replace the hardcoded strings
-        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SHARED_DIRECTORY", "/home/shared"));
-        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_WRITEABLE_DIRECTORY", "/home/shared"));
 
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_INSTANCE_IRI", scModel.getInstanceIri()));
-        // TODO : should be specific
-        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_INSTANCE_DIRECTORY", "/home/shared"));
 
         // TODO: update this
         if (System.getenv("ENEXA_SERVICE_URL").equals("")) {
@@ -171,10 +173,10 @@ public class EnexaServiceImpl implements EnexaService {
         } else {
             LOGGER.info("ENEXA_SERVICE_URL is : " + System.getenv("ENEXA_SERVICE_URL"));
         }
-        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SERVICE_URL", System.getenv("ENEXA_SERVICE_URL")));
 
+        variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SERVICE_URL", System.getenv("ENEXA_SERVICE_URL")));
         String containerName = generatePodName(module.getModuleIri());
-        String containerId = containerManager.startContainer(module.getImage(), containerName, variables);
+        String containerId = containerManager.startContainer(module.getImage(), containerName, variables, sharedDirectory, appName);
         // TODO take point in time
 
         /*
