@@ -1,0 +1,286 @@
+{
+	"info": {
+		"_postman_id": "2ce90efb-de40-44f1-97c2-1504fefec9be",
+		"name": "ENEXA",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "1508260"
+	},
+	"item": [
+		{
+			"name": "start-experiment",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/ld+json",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "application/ld+json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{host}}/start-experiment",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"start-experiment"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/ld+json",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "application/ld+json",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "{{host}}/test",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"test"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "meta",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {
+					"content-type": true
+				}
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "text/turtle",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "application/ld+json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{host}}/meta?experimentIRI={{experimentIRI}}",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"meta"
+					],
+					"query": [
+						{
+							"key": "experimentIRI",
+							"value": "{{experimentIRI}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "add resource",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "text/turtle",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "text/turtle",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "  @prefix enexa:  <http://w3id.org/dice-research/enexa/ontology#> .\n  @prefix prov:   <http://www.w3.org/ns/prov#> .\n\n  [] a prov:Entity ; \n      enexa:experiment <{{experimentIRI}}> ; \n      enexa:location \"{{ntFile}}\" .",
+					"options": {
+						"raw": {
+							"language": "text"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}/add-resource",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"add-resource"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "start container",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "text/turtle",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "text/turtle",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "@prefix alg: <http://www.w3id.org/dice-research/ontologies/algorithm/2023/06/> .\n    @prefix enexa:  <http://w3id.org/dice-research/enexa/ontology#> .\n    @prefix prov:   <http://www.w3.org/ns/prov#> .\n    @prefix hobbit: <http://w3id.org/hobbit/vocab#> . \n    @prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n    [] rdf:type enexa:ModuleInstance ;\n    enexa:experiment <{{experimentIRI}}> ;\n    alg:instanceOf <http://w3id.org/dice-research/enexa/module/tentris/0.2.0-SNAPSHOT-1> ;\n    <http://w3id.org/dice-research/enexa/module/tentris/parameter/file> <http://example.org/enexa/7a4dab1b-586c-46b9-a617-cb0db01a8c9c>.",
+					"options": {
+						"raw": {
+							"language": "text"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}/start-container",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"start-container"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "stop container",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "text/turtle",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "text/turtle",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "@prefix enexa:  <http://w3id.org/dice-research/enexa/ontology#> .\n@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n\n<http://example.org/enexa/832cf09e-b98f-40e8-b20c-fc1ecddc9424>\n        rdf:type             enexa:ModuleInstance ;        \n        enexa:containerId    \"9a3e9c3c8b74631aad4f0ffd9c24eabfc923d7ac54d8b203363ddc0e29e36fe3\" ;        \n        enexa:experiment     <http://example.org/enexa/84b67db3-ee8f-4f47-9f81-25b3d34df09d>  .",
+					"options": {
+						"raw": {
+							"language": "text"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}/stop-container",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"stop-container"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "container status",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "text/turtle",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"moduleInstanceIRI\":\"http://example.org/enexa/832cf09e-b98f-40e8-b20c-fc1ecddc9424\",\n    \"experimentIRI\":\"{{experimentIRI}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}/container-status",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"container-status"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "host",
+			"value": "http://localhost:8081",
+			"type": "string"
+		},
+		{
+			"key": "experimentIRI",
+			"value": "http://example.org/enexa/84b67db3-ee8f-4f47-9f81-25b3d34df09d",
+			"type": "string"
+		},
+		{
+			"key": "ntFile",
+			"value": "/home/farshad/test/enexa/shared/fb_mix.nt",
+			"type": "string"
+		}
+	]
+}
