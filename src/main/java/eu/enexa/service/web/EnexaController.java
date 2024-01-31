@@ -88,6 +88,20 @@ public class EnexaController {
         return new ResponseEntity<Model>(addedResource.getModel(), headers, HttpStatus.OK);
     }
 
+/*    @PostMapping(value = "/container-status", consumes = WebContent.contentTypeJSON)
+    public ResponseEntity<Model> containerStatusFormData(
+        @RequestBody Map<String, String> requestData) {
+        *//*
+         * Errors · HTTP 400: o Experiment IRI is not known / not available. o The
+         * resource URL does not exist or cannot be downloaded. · HTTP 500: o An error
+         * occurs while adding the resource.
+         *//*
+        String moduleInstanceIRI = requestData.get("moduleInstanceIRI");
+        String experimentIRI = requestData.get("experimentIRI");
+        Model model = enexa.containerStatus(experimentIRI, moduleInstanceIRI);
+        return new ResponseEntity<Model>(model, HttpStatus.OK);
+    }*/
+
     @PostMapping(value = "/container-status", consumes = WebContent.contentTypeJSON)
     public ResponseEntity<Model> containerStatusFormData(
         @RequestBody Map<String, String> requestData) {
@@ -174,7 +188,7 @@ public class EnexaController {
          */
 
         // Get the instance representation
-        Resource instance = RdfHelper.getSubjectResource(request, Algorithm.instanceOf, null);
+        Resource instance = RdfHelper.getSubjectResource(request, RDF.type, null);
         if (instance == null || !instance.isURIResource()) {
             throw new IllegalArgumentException("Got a module without an IRI.");
         }
@@ -185,25 +199,28 @@ public class EnexaController {
             throw new IllegalArgumentException("Got a Request without an experiment IRI.");
         }
 
+        String containerIRI = RdfHelper.getLiteral(request, instance, ENEXA.containerId).toString();
+
         // Get RDF model from service as result of operation
-        Model stopModel = enexa.stopContainer(experimentResource.getURI(), null); // TODO get container IRI
+        Model stopModel = enexa.stopContainer(experimentResource.getURI(), containerIRI);
 
         return new ResponseEntity<Model>(stopModel, HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/meta", method = RequestMethod.GET)
-    public ResponseEntity<Model> meta(@RequestBody Model request) {
+
+    @GetMapping(value = "/meta")
+    public ResponseEntity<Model> meta(@RequestParam String experimentIRI) {
         /*
          * Errors · HTTP 400: o Experiment IRI is not known / not available. o The
          * resource URL does not exist or cannot be downloaded. · HTTP 500: o An error
          * occurs while adding the resource.
          */
-        Resource experiment = RdfHelper.getSubjectResource(request, RDF.type, ENEXA.Experiment);
-        if (experiment == null) {
-            return new ResponseEntity<Model>((Model) null, HttpStatus.BAD_REQUEST);
-        }
+//        Resource experiment = RdfHelper.getSubjectResource(request, RDF.type, ENEXA.Experiment);
+//        if (experiment == null) {
+//            return new ResponseEntity<Model>((Model) null, HttpStatus.BAD_REQUEST);
+//        }
         // Get RDF model from service as result of operation
-        Model metadata = enexa.getMetadataEndpoint(experiment.getURI());
+        Model metadata = enexa.getMetadataEndpoint(experimentIRI);
         if (metadata == null) {
             return new ResponseEntity<Model>((Model) null, HttpStatus.BAD_REQUEST);
         }

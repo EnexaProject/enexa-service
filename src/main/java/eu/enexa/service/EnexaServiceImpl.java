@@ -105,6 +105,7 @@ public class EnexaServiceImpl implements EnexaService {
 
     @Override
     public Model getMetadataEndpoint(String experimentIri) {
+        // todo : check if experimentIri is not valid then return error , or the check should be done on calling this method
         String[] endpointInfo = metadataManager.getMetadataEndpointInfo(experimentIri);
         Model model = ModelFactory.createDefaultModel();
         Resource experimentResource = model.createResource(experimentIri);
@@ -244,6 +245,16 @@ public class EnexaServiceImpl implements EnexaService {
     @Override
     public Model stopContainer(String experimentIri, String containerIri) {
         Model model = ModelFactory.createDefaultModel();
+        String containrID = containerManager.stopContainer(containerIri);
+        Model result = ModelFactory.createDefaultModel();
+        Resource instance = result.createResource(containerIri);
+        result.add(instance, ENEXA.experiment, result.createResource(experimentIri));
+        return result;
+    }
+
+    @Override
+    public Model finishExperiment() {
+        // TODO Auto-generated method stub
         // finishes the experiment with the given IRI by stopping all its remaining
         // containers.
 
@@ -251,12 +262,6 @@ public class EnexaServiceImpl implements EnexaService {
         // TODO : read from meta data or use labels ( we use meta data for now) get
         // module instance from it and also module instance lead to container name
         // updates and stores the meta data of the experiment in the shared directory
-        return model;
-    }
-
-    @Override
-    public Model finishExperiment() {
-        // TODO Auto-generated method stub
         return null;
     }
 
