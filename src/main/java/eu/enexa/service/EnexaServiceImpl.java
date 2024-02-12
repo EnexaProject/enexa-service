@@ -247,7 +247,7 @@ public class EnexaServiceImpl implements EnexaService {
         Model model = ModelFactory.createDefaultModel();
         String ResultOfDtoppingTheContainer = containerManager.stopContainer(containerID);
         Model result = ModelFactory.createDefaultModel();
-        // TODO : check this part we need an IRI ot ID is good
+        // TODO : check this part do we need an IRI or ID ?
         Resource instance = result.createResource(containerID);
         result.add(instance, ENEXA.experiment, result.createResource(experimentIri));
         return result;
