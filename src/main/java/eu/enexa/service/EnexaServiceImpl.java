@@ -243,26 +243,34 @@ public class EnexaServiceImpl implements EnexaService {
     }
 
     @Override
-    public Model stopContainer(String experimentIri, String containerIri) {
+    public Model stopContainer(String experimentIri, String containerID) {
         Model model = ModelFactory.createDefaultModel();
-        String containrID = containerManager.stopContainer(containerIri);
+        String ResultOfDtoppingTheContainer = containerManager.stopContainer(containerID);
         Model result = ModelFactory.createDefaultModel();
-        Resource instance = result.createResource(containerIri);
+        // TODO : check this part we need an IRI ot ID is good
+        Resource instance = result.createResource(containerID);
         result.add(instance, ENEXA.experiment, result.createResource(experimentIri));
         return result;
     }
 
     @Override
-    public Model finishExperiment() {
+    public Model finishExperiment(String experimentIri) {
         // TODO Auto-generated method stub
         // finishes the experiment with the given IRI by stopping all its remaining
         // containers.
-
         // list of all containers
         // TODO : read from meta data or use labels ( we use meta data for now) get
+        List<String> containerNames = metadataManager.getAllContainersName(experimentIri);
+        Model result = ModelFactory.createDefaultModel();
+        for(String containerName : containerNames){
+            String resultOfStop = containerManager.stopContainer(containerName);
+            LOGGER.info(containerName+ " stopped result is : "+ resultOfStop);
+            Resource instance = result.createResource(containerName);
+            result.add(instance, ENEXA.containerName, result.createResource(experimentIri));
+        }
         // module instance from it and also module instance lead to container name
         // updates and stores the meta data of the experiment in the shared directory
-        return null;
+        return result;
     }
 
 }

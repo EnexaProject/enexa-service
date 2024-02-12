@@ -116,13 +116,13 @@ public class EnexaController {
         return new ResponseEntity<Model>(model, HttpStatus.OK);
     }
 
-    @GetMapping(value = "/container-status")
+/*    @GetMapping(value = "/container-status")
     public ResponseEntity<Model> containerStatusRDF(@RequestBody Model request) {
-        /*
+        *//*
          * Errors · HTTP 400: o Experiment IRI is not known / not available. o The
          * resource URL does not exist or cannot be downloaded. · HTTP 500: o An error
          * occurs while adding the resource.
-         */
+         *//*
         Resource moduleInstance = RdfHelper.getSubjectResource(request, RDF.type, ENEXA.ModuleInstance);
         if ((moduleInstance == null) || (!moduleInstance.isURIResource())) {
             LOGGER.warn("Request model did not contain a module instance IRI. Returning HTTP 400. Model: "
@@ -137,17 +137,18 @@ public class EnexaController {
         }
         Model model = enexa.containerStatus(experiment.getURI(), moduleInstance.getURI());
         return new ResponseEntity<Model>(model, HttpStatus.OK);
-    }
+    }*/
 
-    @PostMapping("/finish-experiment")
-    public ResponseEntity<String> finishExperiment() {
+    @PostMapping(value ="/finish-experiment", consumes = WebContent.contentTypeJSON)
+    public ResponseEntity<Model> finishExperiment(@RequestBody Map<String, String> requestData) {
         /*
          * Errors · HTTP 400: o Experiment IRI is not known / not available. · HTTP 500:
          * o An error occurs while communicating with the Kubernetes service.
          */
 //        Model model = null; // Get RDF model from service as result of operation
-        String content = null; // serialize the model as JSON-LD
-        return new ResponseEntity<String>(content, HttpStatus.OK);
+        String experimentIRI = requestData.get("experimentIRI");
+        Model model = enexa.finishExperiment(experimentIRI);
+        return new ResponseEntity<Model>(model, HttpStatus.OK);
     }
 
     @PostMapping(value = "/start-container")
@@ -199,10 +200,10 @@ public class EnexaController {
             throw new IllegalArgumentException("Got a Request without an experiment IRI.");
         }
 
-        String containerIRI = RdfHelper.getLiteral(request, instance, ENEXA.containerId).toString();
+        String containerID = RdfHelper.getLiteral(request, instance, ENEXA.containerId).toString();
 
         // Get RDF model from service as result of operation
-        Model stopModel = enexa.stopContainer(experimentResource.getURI(), containerIRI);
+        Model stopModel = enexa.stopContainer(experimentResource.getURI(), containerID);
 
         return new ResponseEntity<Model>(stopModel, HttpStatus.OK);
     }
