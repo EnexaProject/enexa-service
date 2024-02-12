@@ -244,6 +244,38 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "finish experiment",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "text/turtle",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{    \n    \"experimentIRI\":\"{{experimentIRI}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}/finish-experiment",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"finish-experiment"
+					]
+				}
+			},
+			"response": []
 		}
 	],
 	"event": [
