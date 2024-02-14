@@ -209,7 +209,7 @@ public class EnexaController {
     }
 
 
-    @GetMapping(value = "/meta")
+    @GetMapping(value = "/meta",consumes = "*/*")
     public ResponseEntity<Model> meta(@RequestParam String experimentIRI) {
         /*
          * Errors · HTTP 400: o Experiment IRI is not known / not available. o The
