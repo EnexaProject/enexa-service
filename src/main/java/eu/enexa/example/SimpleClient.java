@@ -45,10 +45,17 @@ public class SimpleClient implements AutoCloseable {
 
     private final String appPath = "/home/farshad/test/enexa/shared";
 
+    /**
+     * A simple application demonstrating the development of a client that utilizes the ENEXA service.
+     */
     public SimpleClient() {
         client = HttpClients.createDefault();
 
     }
+
+    /**
+     *  Send a start experiment request to the service and set the experimentIRI, metaDataEndpoint, and metaDataGraph parameters.
+     */
 
     public void startExperiment() throws Exception {
         Model model = requestRDF(enexaURL + "/start-experiment", null);
@@ -76,7 +83,7 @@ public class SimpleClient implements AutoCloseable {
     }
 
 
-    protected String requestGet(String url) {
+    /*protected String requestGet(String url) {
         HttpGet request = new HttpGet(url);
         try (CloseableHttpResponse httpResponse = client.execute(request)) {
             if (httpResponse.getCode() >= 300) {
@@ -90,8 +97,13 @@ public class SimpleClient implements AutoCloseable {
             LOGGER.error("Caught an exception while running request. Returning null.");
             return null;
         }
-    }
+    }*/
 
+
+    /**
+     *  Send an HTTP GET request and return the result as a Model.
+     *  @param url  the URL to which the request is sent
+     */
     protected Model requestGetRecieveModel(String url) {
         HttpGet request = new HttpGet(url);
         Model model = null;
@@ -111,6 +123,14 @@ public class SimpleClient implements AutoCloseable {
         return model;
     }
 
+    /**
+     * Sends an HTTP POST request to the specified URL with the given request body.
+     *
+     * @param url  the URL to which the request is sent
+     * @param body the body of the HTTP POST request
+     * @return the response body of the HTTP POST request
+     * @throws IllegalStateException if the HTTP response code is greater than or equal to 300
+     */
     protected String requestPost(String url, String body) {
         HttpPost request = new HttpPost(url);
         request.setHeader("Accept", "text/turtle");
@@ -133,6 +153,14 @@ public class SimpleClient implements AutoCloseable {
         }
     }
 
+    /**
+     * Sends an HTTP POST request to the specified URL with optional RDF data, expecting RDF data in response.
+     *
+     * @param url  the URL to which the request is sent
+     * @param data the RDF data to include in the request (optional)
+     * @return a Model object containing the RDF data received in response, or null if an error occurs
+     * @throws IllegalStateException if the HTTP response code is greater than or equal to 300
+     */
     protected Model requestRDF(String url, Model data) {
         HttpPost request = new HttpPost(url);
         request.setHeader("Accept", "application/ld+json");
@@ -163,6 +191,14 @@ public class SimpleClient implements AutoCloseable {
         return model;
     }
 
+    /**
+     * Adds a file to the Enexa and returns its IRI.
+     *
+     * @param fileToAdd   the path of the file to be added
+     * @param moduleName  the name of the module to which the file belongs
+     * @return the IRI of the added file
+     * @throws Exception if an error occurs during the file addition process
+     */
     public String addFile(String fileToAdd, String moduleName) throws Exception {
         // Move file if it is not located in the shared directory
         File json = new File(fileToAdd);
@@ -206,6 +242,14 @@ public class SimpleClient implements AutoCloseable {
         return fileResource.getURI();
     }
 
+    /**
+     * Starts the extraction process in the Enexa  with the specified parameters and returns the IRI of the instance.
+     *
+     * @param iriAddedFile          the IRI of the file added for extraction
+     * @param iriGenerationParameter the IRI of the generation parameter
+     * @return the IRI of the newly created module instance
+     * @throws Exception if an error occurs during the extraction process
+     */
     private String startExtraction(String iriAddedFile , String iriGenerationParameter) throws Exception {
         Model instanceModel = ModelFactory.createDefaultModel();
 
@@ -234,6 +278,13 @@ public class SimpleClient implements AutoCloseable {
         }
         return instanceResource.getURI();
     }
+
+    /**
+     * The main method of the SimpleClient class, responsible for initiating the Enexa experiment, adding files,
+     * starting extraction, waiting for container running, retrieving metadata, and finding the result path.
+     *
+     * @param args the command-line arguments (not used)
+     */
     public static void main(String[] args) {
 
         try (SimpleClient app = new SimpleClient()) {
@@ -251,6 +302,13 @@ public class SimpleClient implements AutoCloseable {
         }
     }
 
+    /**
+     * Finds the result path of the extraction instance from the metadata endpoint.
+     *
+     * @param metaDataEndPoint the metadata endpoint URL
+     * @param instanceIRI      the IRI of the extraction instance
+     * @return the path of the result file
+     */
     private String findResultPath(String metaDataEndPoint, String instanceIRI) {
 
         DatasetDescription desc = new DatasetDescription();
@@ -275,16 +333,23 @@ public class SimpleClient implements AutoCloseable {
         return null;
     }
 
-
+    /**
+     * Retrieves the metadata endpoint URI based on the experiment IRI.
+     *
+     * @return the URI of the metadata endpoint
+     */
     private String getMeta() {
-        if(experimentIRI==null){
-            experimentIRI = "http://example.org/enexa/4864f1b6-33bc-436d-8a04-4eff47e3887c";
-        }
         Model model =  requestGetRecieveModel(enexaURL + "/meta?experimentIRI="+experimentIRI);
         Resource expResource = RdfHelper.getObjectResource(model,null, ENEXA.metaDataEndpoint);
         return expResource.getURI();
     }
 
+    /**
+     * Waits until the container associated with the specified module instance IRI is running.
+     *
+     * @param instanceIRI the IRI of the module instance
+     * @throws Exception if an error occurs while waiting for the container to run
+     */
     private void waitContainerRunning(String instanceIRI) throws Exception {
         String body = " {\n" +
             "    \"moduleInstanceIRI\":\""+instanceIRI+"\",\n" +
