@@ -145,7 +145,6 @@ public class EnexaController {
          * Errors · HTTP 400: o Experiment IRI is not known / not available. · HTTP 500:
          * o An error occurs while communicating with the Kubernetes service.
          */
-//        Model model = null; // Get RDF model from service as result of operation
         String experimentIRI = requestData.get("experimentIRI");
         Model model = enexa.finishExperiment(experimentIRI);
         return new ResponseEntity<Model>(model, HttpStatus.OK);
