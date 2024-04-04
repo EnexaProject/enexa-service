@@ -27,7 +27,7 @@ spec:
       containers:
         - name: enexa-service
           imagePullPolicy: IfNotPresent
-          image: enexa-service:0.0.1
+          image: hub.cs.upb.de/enexa/images/enexa-service-dev:0.0.1
           env:
             - name: ENEXA_MODULE_DIRECTORY
               value: /modules
@@ -59,7 +59,7 @@ spec:
         - name: enexa-module-dir
           hostPath:
             # directory location on host
-            path: /home/micha/data/enexa/modules
+            path: /home/farshad/test/enexa/shared
             # this field is optional
             type: DirectoryOrCreate
 status: {}

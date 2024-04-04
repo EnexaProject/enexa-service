@@ -24,7 +24,7 @@ import java.util.List;
  */
 
 //TODO: remove primary after using config for beans
-@Primary
+//@Primary
 @Component("dockerContainerManager")
 public class ContainerManagerImpl implements ContainerManager {
     /**

@@ -311,6 +311,8 @@ public class SimpleClient implements AutoCloseable {
      */
     private String findResultPath(String metaDataEndPoint, String instanceIRI) {
 
+
+        LOGGER.info("METADATA endpoint is :"+metaDataEndPoint);
         DatasetDescription desc = new DatasetDescription();
         queryExecFactory = new QueryExecutionFactoryHttp(metaDataEndPoint, new DatasetDescription(), HttpClient.newHttpClient());
         queryExecFactory = new QueryExecutionFactoryPaginated(queryExecFactory, 10);
@@ -321,6 +323,7 @@ public class SimpleClient implements AutoCloseable {
             "\t ?tmp <http://w3id.org/dice-research/enexa/ontology#location> ?path.\n" +
             "}";
         // Create a SPARQL query object
+        LOGGER.info("query  is :"+queryStr);
         QueryExecution qe = queryExecFactory.createQueryExecution(queryStr);
 
         ResultSet rs = qe.execSelect();

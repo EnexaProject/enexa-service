@@ -1,19 +1,29 @@
-apiVersion: v1
-kind: Service
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  annotations:
-    kompose.cmd: kompose convert
-    kompose.version: 1.26.0 (40646f47)
-  creationTimestamp: null
-  labels:
-    io.kompose.service: fuseki
-  name: fuseki
+    name: fuseki-devwd # Match your container name
 spec:
-  ports:
-    - name: "3030"
-      port: 3030
-      targetPort: 3030
-  selector:
-    io.kompose.service: fuseki
-status:
-  loadBalancer: {}
+    replicas: 1 # Number of pods to run
+    selector:
+        matchLabels:
+            app: fuseki-devwd # Label for pods
+    template:
+        metadata:
+            labels:
+                app: fuseki-devwd
+        spec:
+            containers:
+                - name: fuseki-devwd
+                  image: stain/jena-fuseki # Your container image
+                  ports:
+                      - containerPort: 3030
+                        name: http # Optional name for the port
+                  env:
+                      - name: ADMIN_PASSWORD
+                        value: "pw123" # Environment variable
+                  volumeMounts:
+                      - name: fuseki-data # Volume name
+                        mountPath: /fuseki # Path to mount volume in container
+            volumes:
+                - name: fuseki-data # Persistent volume claim (PVC) needed later
+                  emptyDir: {} # EmptyDir volume for data (consider Persistent Volume for persistence)

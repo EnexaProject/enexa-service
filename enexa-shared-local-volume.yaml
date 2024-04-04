@@ -11,7 +11,7 @@ spec:
   persistentVolumeReclaimPolicy: Delete
   storageClassName: local-storage
   local:
-    path: /home/mroeder/data/enexa/shared
+    path: /home/farshad/test/enexa/shared
   nodeAffinity:
     required:
       nodeSelectorTerms:

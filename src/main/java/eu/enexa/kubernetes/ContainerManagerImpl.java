@@ -1,5 +1,6 @@
 package eu.enexa.kubernetes;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -9,8 +10,11 @@ import java.util.Map;
 import java.util.UUID;
 
 import io.kubernetes.client.openapi.models.*;
+import io.kubernetes.client.util.ClientBuilder;
+import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import eu.enexa.service.ContainerManager;
@@ -21,6 +25,10 @@ import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.util.Config;
 import io.kubernetes.client.util.generic.GenericKubernetesApi;
 
+import static org.apache.jena.atlas.lib.RandomLib.random;
+
+@Primary
+
 @Component("kubernetesContainerManager")
 public class ContainerManagerImpl implements ContainerManager {
 
@@ -29,7 +37,11 @@ public class ContainerManagerImpl implements ContainerManager {
     private ApiClient client;
 
     protected ContainerManagerImpl() {
-
+        try {
+            client = Config.defaultClient();
+        }catch (Exception ex){
+            LOGGER.error(ex.getMessage());
+        }
     }
 
     protected ContainerManagerImpl(ApiClient client) {
@@ -39,11 +51,20 @@ public class ContainerManagerImpl implements ContainerManager {
     @Override
     public String startContainer(String image, String podName,
             List<AbstractMap.SimpleEntry<String, String>> variables, String hostSharedDirectory, String appName) {
-        return startContainerKub(image, podName, variables, null, null);
+        return startContainerKub(image, podName, variables, hostSharedDirectory, null, appName);
     }
 
     // podName is the containerName for kubernetes
-    public String startContainerKub(String image, String podName, List<AbstractMap.SimpleEntry<String, String>> variables,String hostSharedDirectory ,String[] command) {
+    public String startContainerKub(String image, String podName, List<AbstractMap.SimpleEntry<String, String>> variables,String hostSharedDirectory ,String[] command, String appName) {
+        try {
+            if (client == null) {
+                client = ClientBuilder.standard().build();
+            }
+        }catch (Exception ex){
+
+        }
+        // TODO : make this part not hardcoded if there is chance of changing the "urn:container:docker:image:"
+        image = image.replace("urn:container:docker:image:","");
 
         List<V1EnvVar> env = new ArrayList<>();
         if (variables != null) {
@@ -55,6 +76,40 @@ public class ContainerManagerImpl implements ContainerManager {
             }
         }
 
+        String expIRI="";
+
+        for(AbstractMap.SimpleEntry v:variables){
+            if(v.getKey().toString().equals("ENEXA_EXPERIMENT_IRI")){
+                expIRI = v.getValue().toString();
+            }
+        }
+        if(expIRI.equals("")||expIRI.length()<10){
+            LOGGER.warn("ENEXA_EXPERIMENT_IRI is null or less than 10 character");
+        }
+
+        String containerSharedDirectory = "/home/shared";
+        String containerBasePath = makeTheDirectoryInThisPath(containerSharedDirectory,appName);
+        String hostBasePath = makeTheDirectoryInThisPath(hostSharedDirectory,appName);
+
+        String writeableDirectory =expIRI.split("/")[expIRI.split("/").length - 1];
+        String hostWritablePath = makeTheDirectoryInThisPath(hostBasePath,writeableDirectory);
+        String containerWritablePath = combinePaths(containerBasePath,writeableDirectory);
+        String moduleInstanceIRI = UUID.randomUUID().toString();
+        //String hostModuleInstancePath = makeTheDirectoryInThisPath(hostWritablePath,moduleInstanceIRI);
+        String containerModuleInstancePath = combinePaths(containerWritablePath, moduleInstanceIRI);
+
+        env.add(new V1EnvVar()
+            .name("ENEXA_SHARED_DIRECTORY")
+            .value(containerSharedDirectory));
+
+        env.add(new V1EnvVar()
+            .name("ENEXA_MODULE_INSTANCE_DIRECTORY")
+            .value(containerModuleInstancePath));
+
+        env.add(new V1EnvVar()
+            .name("ENEXA_WRITEABLE_DIRECTORY")
+            .value(containerWritablePath));
+
         /*
          * // Create a shared volume V1Volume sharedVolume = new V1Volume();
          * sharedVolume.setName("shared-volume");
@@ -65,17 +120,21 @@ public class ContainerManagerImpl implements ContainerManager {
          */
 
         // Create a VolumeClaim
-        V1PersistentVolumeClaimVolumeSource persistentVolumeClaim = new V1PersistentVolumeClaimVolumeSource();
-        persistentVolumeClaim.setClaimName("enexa-shared-dir-claim");
+        /*V1PersistentVolumeClaimVolumeSource persistentVolumeClaim = new V1PersistentVolumeClaimVolumeSource();
+        persistentVolumeClaim.setClaimName("enexa-shared-dir-claim");*/
+
 
         V1Volume volume = new V1Volume();
         volume.setName("enexa-volume");
-        volume.setPersistentVolumeClaim(persistentVolumeClaim);
+        volume.setHostPath(new V1HostPathVolumeSource().path(hostBasePath));
+        //volume.setPersistentVolumeClaim(persistentVolumeClaim);
 
         // Create a container and set the volume mount
         V1Container container = new V1Container();
-        container.setName("b");
+        container.setName(image.replace("/","-").replace(".","").replace(":",""));
         container.setImage(image);
+        //container.setImage("hub.cs.upb.de/enexa/images/enexa-extraction-module:1.0.0");
+
         if (command != null) {
             for (int i = 0; i < command.length; ++i) {
                 container.addCommandItem(command[i]);
@@ -84,7 +143,8 @@ public class ContainerManagerImpl implements ContainerManager {
 
         V1VolumeMount volumeMount = new V1VolumeMount();
         volumeMount.setName("enexa-volume");
-        volumeMount.setMountPath("/enexa");
+        volumeMount.setMountPath("/home/shared");
+
         container.setVolumeMounts(Arrays.asList(volumeMount));
 
         // Create a PodSpec and add the shared volume and container
@@ -111,10 +171,16 @@ public class ContainerManagerImpl implements ContainerManager {
 //        V1Pod pod = new V1Pod().metadata(new V1ObjectMeta().name(podName).namespace("default")).spec(new V1PodSpec()
 //                .restartPolicy("Never").containers(Arrays.asList(new V1Container().name("b").image(image).env(env).addCommandItem("sleep").addCommandItem("20"))));
 
-        GenericKubernetesApi<V1Pod, V1PodList> podClient = new GenericKubernetesApi<>(V1Pod.class, V1PodList.class, "",
-                "v1", "pods", client);
+
 
         try {
+
+            GenericKubernetesApi<V1Pod, V1PodList> podClient = new GenericKubernetesApi<>(V1Pod.class, V1PodList.class, "",
+                "v1", "pods", client);
+
+
+            pod.getSpec().getContainers().get(0).setEnv(env);  // add to the first container because we assume runnig one container in each pod
+
             V1Pod latestPod = podClient.create(pod).throwsApiException().getObject();
             return latestPod.getMetadata().getName();
         } catch (ApiException e) {
@@ -123,7 +189,39 @@ public class ContainerManagerImpl implements ContainerManager {
             return null;
         }
     }
+    //TODO : move following two method in a utility class shared between docker and kubernetes
+    /**
+     * Combines two path components to create a valid path.
+     * the directory will create if not exist
+     *
+     * @param partOneOfPath   The first part of the path.
+     * @param partTwoOfPath   The second part of the path.
+     * @return                The combined path.
+     */
+    private String makeTheDirectoryInThisPath(String partOneOfPath, String partTwoOfPath) {
+        if(partOneOfPath ==null && partTwoOfPath == null) return "";
+        String path = combinePaths(partOneOfPath, partTwoOfPath);
+        File appPathDirectory = new File(path);
+        if(!appPathDirectory.exists()){
+            appPathDirectory.mkdirs();
+        }
+        return path;
+    }
 
+    /**
+     * Combines two path components to create a valid path, taking into account trailing separators.
+     *
+     * @param partOne   The first part of the path.
+     * @param partTwo   The second part of the path.
+     * @return          The combined path.
+     */
+    public static String combinePaths(String partOne, String partTwo) {
+        String path = partOne + File.separator + partTwo;
+        if (partOne.endsWith(File.separator)) {
+            path = partOne + partTwo;
+        }
+        return path;
+    }
 
     @Override
     public String stopContainer(String containerId) {
@@ -157,7 +255,7 @@ public class ContainerManagerImpl implements ContainerManager {
 
     public static void main(String[] args) throws Exception {
         ContainerManagerImpl manager = ContainerManagerImpl.create();
-        String containerId = manager.startContainerKub("busybox", "test" + UUID.randomUUID().toString(), null, null,new String[] { "sleep", "10000" });
+        String containerId = manager.startContainerKub("busybox", "test" + UUID.randomUUID().toString(), null, null,new String[] { "sleep", "10000" },null);
         System.out.println(containerId);
 
         String status = null;
