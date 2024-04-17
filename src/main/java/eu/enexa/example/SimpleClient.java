@@ -38,7 +38,7 @@ public class SimpleClient implements AutoCloseable {
     private String metaDataEndpoint;
     private String metaDataGraph;
     private QueryExecutionFactory queryExecFactory;
-    private String enexaURL = "http://localhost:8081";
+    private String enexaURL = "http://192.168.49.2:30479"; // "http://localhost:8081";
     private static final String STATUS_PENDING = "Pending";
     private static final String STATUS_RUNNING = "Running";
     private final String appName = "app3";

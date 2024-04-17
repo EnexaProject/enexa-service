@@ -8,7 +8,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
 import io.kubernetes.client.openapi.models.*;
 import io.kubernetes.client.util.ClientBuilder;
 import io.reactivex.rxjava3.core.Single;
@@ -28,13 +27,14 @@ import io.kubernetes.client.util.generic.GenericKubernetesApi;
 import static org.apache.jena.atlas.lib.RandomLib.random;
 
 @Primary
-
 @Component("kubernetesContainerManager")
 public class ContainerManagerImpl implements ContainerManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ContainerManagerImpl.class);
 
     private ApiClient client;
+
+    private String nameSpace = "default";
 
     protected ContainerManagerImpl() {
         try {
@@ -56,15 +56,17 @@ public class ContainerManagerImpl implements ContainerManager {
 
     // podName is the containerName for kubernetes
     public String startContainerKub(String image, String podName, List<AbstractMap.SimpleEntry<String, String>> variables,String hostSharedDirectory ,String[] command, String appName) {
+        LOGGER.info("Starting a container image is "+ image+" podName is :"+ podName+" variable size is : "+ variables.size()+" hostSharedDirectory : "+hostSharedDirectory+" appName is :"+appName);
         try {
             if (client == null) {
                 client = ClientBuilder.standard().build();
             }
         }catch (Exception ex){
-
+            ex.printStackTrace();
         }
         // TODO : make this part not hardcoded if there is chance of changing the "urn:container:docker:image:"
         image = image.replace("urn:container:docker:image:","");
+        LOGGER.info("image name is : "+ image);
 
         List<V1EnvVar> env = new ArrayList<>();
         if (variables != null) {
@@ -83,6 +85,9 @@ public class ContainerManagerImpl implements ContainerManager {
                 expIRI = v.getValue().toString();
             }
         }
+
+        LOGGER.info("ENEXA_EXPERIMENT_IRI is : "+expIRI);
+
         if(expIRI.equals("")||expIRI.length()<10){
             LOGGER.warn("ENEXA_EXPERIMENT_IRI is null or less than 10 character");
         }
@@ -101,14 +106,17 @@ public class ContainerManagerImpl implements ContainerManager {
         env.add(new V1EnvVar()
             .name("ENEXA_SHARED_DIRECTORY")
             .value(containerSharedDirectory));
+        LOGGER.info("ENEXA_SHARED_DIRECTORY :" + containerSharedDirectory);
 
         env.add(new V1EnvVar()
             .name("ENEXA_MODULE_INSTANCE_DIRECTORY")
             .value(containerModuleInstancePath));
+        LOGGER.info("ENEXA_MODULE_INSTANCE_DIRECTORY :" + containerModuleInstancePath);
 
         env.add(new V1EnvVar()
             .name("ENEXA_WRITEABLE_DIRECTORY")
             .value(containerWritablePath));
+        LOGGER.info("ENEXA_WRITEABLE_DIRECTORY :" + containerWritablePath);
 
         /*
          * // Create a shared volume V1Volume sharedVolume = new V1Volume();
@@ -129,9 +137,13 @@ public class ContainerManagerImpl implements ContainerManager {
         volume.setHostPath(new V1HostPathVolumeSource().path(hostBasePath));
         //volume.setPersistentVolumeClaim(persistentVolumeClaim);
 
+        LOGGER.info("hostBasePath : "+hostBasePath);
+
         // Create a container and set the volume mount
         V1Container container = new V1Container();
-        container.setName(image.replace("/","-").replace(".","").replace(":",""));
+        String containerName = image.replace("/","-").replace(".","").replace(":","");
+        LOGGER.info("containerName : "+containerName);
+        container.setName(containerName);
         container.setImage(image);
         //container.setImage("hub.cs.upb.de/enexa/images/enexa-extraction-module:1.0.0");
 
@@ -145,6 +157,8 @@ public class ContainerManagerImpl implements ContainerManager {
         volumeMount.setName("enexa-volume");
         volumeMount.setMountPath("/home/shared");
 
+        LOGGER.info("mounth path is /home/shared");
+
         container.setVolumeMounts(Arrays.asList(volumeMount));
 
         // Create a PodSpec and add the shared volume and container
@@ -156,7 +170,7 @@ public class ContainerManagerImpl implements ContainerManager {
 
         // Create a Pod with the PodSpec
         V1Pod pod = new V1Pod();
-        pod.setMetadata(new V1ObjectMeta().name(podName).namespace("default"));
+        pod.setMetadata(new V1ObjectMeta().name(podName).namespace(nameSpace));
         pod.setSpec(podSpec);
 
         // TODO : maybe need change container name "b" to variable
@@ -182,8 +196,11 @@ public class ContainerManagerImpl implements ContainerManager {
             pod.getSpec().getContainers().get(0).setEnv(env);  // add to the first container because we assume runnig one container in each pod
 
             V1Pod latestPod = podClient.create(pod).throwsApiException().getObject();
-            return latestPod.getMetadata().getName();
+            String latestPodName = latestPod.getMetadata().getName();
+            LOGGER.info("latestPodName : "+latestPodName);
+            return latestPodName;
         } catch (ApiException e) {
+            e.printStackTrace();
             LOGGER.error("Got an exception while trying to create an instance of \"" + image + "\". Returning null.",
                     e);
             return null;
@@ -233,7 +250,7 @@ public class ContainerManagerImpl implements ContainerManager {
     public String getContainerStatus(String podName) {
         CoreV1Api api = new CoreV1Api(client);
         try {
-            V1PodList list = api.listNamespacedPod("default", "false", null, null, null, null, null, null, null, null,
+            V1PodList list = api.listNamespacedPod(nameSpace, "false", null, null, null, null, null, null, null, null,
                     null);
             for (V1Pod pod : list.getItems()) {
                 if (pod.getMetadata().getName().equals(podName)) {

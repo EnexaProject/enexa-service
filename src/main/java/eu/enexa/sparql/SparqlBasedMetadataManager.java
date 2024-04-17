@@ -104,7 +104,8 @@ public class SparqlBasedMetadataManager implements MetadataManager, AutoCloseabl
                 //todo what happened if update can not find a triple to update !
             }
         }catch (Exception ex){
-            LOGGER.error(ex.getMessage());
+            ex.printStackTrace();
+            LOGGER.error("error happened",ex);
         }
     }
 

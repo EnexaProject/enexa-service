@@ -27,7 +27,7 @@ spec:
       containers:
         - name: enexa-service
           imagePullPolicy: IfNotPresent
-          image: hub.cs.upb.de/enexa/images/enexa-service-dev:0.0.1
+          image: hub.cs.upb.de/enexa/images/enexa-service-dev:0.0.7
           env:
             - name: ENEXA_MODULE_DIRECTORY
               value: /modules
@@ -38,7 +38,7 @@ spec:
             - name: ENEXA_SHARED_VOLUME
               value: enexa-shared-dir-claim
             - name: ENEXA_META_DATA_ENDPOINT
-              value: http://localhost:3030/enexa/
+              value: http://fuseki-devwd-service:3030/
             - name: ENEXA_META_DATA_GRAPH
               value: http://example.org/meta-data
             - name: ENEXA_RESOURCE_NAMESPACE
@@ -59,7 +59,7 @@ spec:
         - name: enexa-module-dir
           hostPath:
             # directory location on host
-            path: /home/farshad/test/enexa/shared
+            path: /modules
             # this field is optional
             type: DirectoryOrCreate
 status: {}

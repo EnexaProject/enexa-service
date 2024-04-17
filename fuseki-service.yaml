@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: Deployment #TODO should it be service !
 metadata:
     name: fuseki-devwd # Match your container name
 spec:
@@ -27,3 +27,5 @@ spec:
             volumes:
                 - name: fuseki-data # Persistent volume claim (PVC) needed later
                   emptyDir: {} # EmptyDir volume for data (consider Persistent Volume for persistence)
+
+

@@ -1,3 +1,4 @@
+/*
 package eu.enexa.docker;
 
 import com.github.dockerjava.api.command.CreateContainerResponse;
@@ -19,31 +20,41 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 
+*/
 /**
  * Manages Docker containers, providing functionality to start, stop, and get the status of containers.
- */
+ *//*
+
 
 //TODO: remove primary after using config for beans
 //@Primary
 @Component("dockerContainerManager")
 public class ContainerManagerImpl implements ContainerManager {
-    /**
+    */
+/**
      * Logger for ContainerManagerImpl class.
-     */
+     *//*
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ContainerManagerImpl.class);
-    /**
+    */
+/**
      * Name of the Docker network to which containers are attached.
-     */
+     *//*
+
     private static final String NETWORK_NAME = System.getenv("DOCKER_NET_NAME");
-    /**
+    */
+/**
      * Docker client used for interacting with the Docker daemon.
-     */
+     *//*
+
     private DockerClient dockerClient;
 
 
-    /**
+    */
+/**
      * Constructs a new ContainerManagerImpl and initializes the Docker client.
-     */
+     *//*
+
     public ContainerManagerImpl(){
         LOGGER.info("start initiating the ContainerManagerImpl");
         DockerClientConfig standard = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
@@ -68,14 +79,16 @@ public class ContainerManagerImpl implements ContainerManager {
         LOGGER.info("docker client is pinged");
     }
 
-    /**
+    */
+/**
      * Combines two path components to create a valid path.
      * the directory will create if not exist
      *
      * @param partOneOfPath   The first part of the path.
      * @param partTwoOfPath   The second part of the path.
      * @return                The combined path.
-     */
+     *//*
+
     private String makeTheDirectoryInThisPath(String partOneOfPath, String partTwoOfPath) {
         String path = combinePaths(partOneOfPath, partTwoOfPath);
         File appPathDirectory = new File(path);
@@ -85,13 +98,15 @@ public class ContainerManagerImpl implements ContainerManager {
         return path;
     }
 
-    /**
+    */
+/**
      * Combines two path components to create a valid path, taking into account trailing separators.
      *
      * @param partOne   The first part of the path.
      * @param partTwo   The second part of the path.
      * @return          The combined path.
-     */
+     *//*
+
     public static String combinePaths(String partOne, String partTwo) {
         String path = partOne + File.separator + partTwo;
         if (partOne.endsWith(File.separator)) {
@@ -170,7 +185,8 @@ public class ContainerManagerImpl implements ContainerManager {
         }
     }
 
-    /**
+    */
+/**
      * Adds exceptional conditions to the Docker host configuration based on the specified Docker image.
      * If need especial requirement for an image , just  add them here
      *
@@ -178,7 +194,8 @@ public class ContainerManagerImpl implements ContainerManager {
      * @param allBinds            List of binds for shared directories.
      * @param dockerHostConfig    The original Docker host configuration.
      * @return                    The modified Docker host configuration.
-     */
+     *//*
+
 
     private HostConfig addExceptionalConditions(String image, List<Bind> allBinds, HostConfig dockerHostConfig) {
         HostConfig changedDockerHostConfig = dockerHostConfig;
@@ -205,24 +222,28 @@ public class ContainerManagerImpl implements ContainerManager {
         return changedDockerHostConfig;
     }
 
-    /**
+    */
+/**
      * Trims the Docker image name to remove the "docker:image:" prefix.
      *
      * @param image   The Docker image name.
      * @return        The trimmed image name.
-     */
+     *//*
+
     private String trimImageName(String image) {
         String[] parts = image.split("docker:image:");
         if(parts.length<2){return image;}
         return parts[1];
     }
 
-    /**
+    */
+/**
      * Converts a list of environment variable entries into an array of strings.
      *
      * @param environmentVariables   List of environment variable entries.
      * @return                       Array of environment variable strings.
-     */
+     *//*
+
     private String[] mapToEnvironmentArray(List<AbstractMap.SimpleEntry<String, String>> environmentVariables) {
         if (environmentVariables == null || environmentVariables.isEmpty()) {
             return new String[0];
@@ -262,12 +283,14 @@ public class ContainerManagerImpl implements ContainerManager {
         }
     }
 
-    /**
+    */
+/**
      * Searches for a Docker container by name or ID and returns the corresponding Container object.
      *
      * @param containerNameOrId   The name or ID of the container.
      * @return                    The Container object representing the container.
-     */
+     *//*
+
     private Container searchContainerByNameOrId(String containerNameOrId){
         List<Container> containers = this.dockerClient.listContainersCmd()
             .withShowAll(true)
@@ -287,3 +310,4 @@ public class ContainerManagerImpl implements ContainerManager {
         return null;
     }
 }
+*/

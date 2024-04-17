@@ -1,3 +1,4 @@
+/*
 package eu.enexa.config;
 
 import eu.enexa.service.ContainerManager;
@@ -13,3 +14,4 @@ public class Config {
             return new eu.enexa.docker.ContainerManagerImpl();
     }
 }
+*/
