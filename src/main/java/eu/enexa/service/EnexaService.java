@@ -85,7 +85,7 @@ public interface EnexaService {
      */
     public Model containerStatus(String experimentIri, String containerIri);
 
-    public Model stopContainer(String experimentIri, String containerIri);
+    public Model stopContainer(String experimentIri, String containerID);
 
     /**
      * 1. Iterate over the experiment’s container and stop them. 2. Update the
@@ -93,6 +93,6 @@ public interface EnexaService {
      *
      * @return
      */
-    public Model finishExperiment();
+    public Model finishExperiment(String experimentIri);
 
 }

@@ -13,11 +13,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
-import java.util.UUID;
+
+import java.util.*;
 import java.io.File;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Manages Docker containers, providing functionality to start, stop, and get the status of containers.
@@ -156,10 +154,27 @@ public class ContainerManagerImpl implements ContainerManager {
             // add extra requirment based on the image name
             dockerHostConfig = addExceptionalConditions(image, allBinds, dockerHostConfig);
 
+            Map<String, String> labels = new HashMap<>();
+            labels.put("traefik.enable","true");
+            labels.put("traefik.http.routers."+containerName+".rule","Host(\"enexa-demo.cs.uni-paderborn.de\") && PathPrefix(\"/"+containerName+"\")");
+            labels.put("traefik.http.routers."+containerName+".service",containerName);
+            labels.put("traefik.http.routers."+containerName+".entrypoints","web");
+
+            labels.put("traefik.http.middlewares."+containerName+"-prefix.stripprefix.prefixes","/"+containerName);
+            labels.put("traefik.http.middlewares."+containerName+"-prefix.stripprefix.forceSlash","true");
+
+            labels.put("traefik.http.routers."+containerName+".middlewares",containerName+"-prefix");
+
+
+//            LOGGER.info("traefik.http.routers."+containerName+".entrypoints:web");
+            labels.put("traefik.http.services."+containerName+".loadbalancer.server.port","8501");
+            LOGGER.info("traefik.http.services."+containerName+".loadbalancer.server.port:8501");
+
             CreateContainerResponse container = dockerClient.createContainerCmd(image)
                 .withName(containerName)
                 .withEnv(mapToEnvironmentArray(variables))
                 .withHostConfig(dockerHostConfig)
+                .withLabels(labels)
                 .exec();
 
             dockerClient.startContainerCmd(container.getId()).exec();

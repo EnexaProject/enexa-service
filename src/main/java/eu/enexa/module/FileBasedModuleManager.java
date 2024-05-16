@@ -46,6 +46,12 @@ public class FileBasedModuleManager implements ModuleManager {
                 LOGGER.info(enexaModuleDirectory.getAbsolutePath() + " exist");
                 addFileOrDirectory(enexaModuleDirectory);
                 LOGGER.info("modules size is : "+ modules.size());
+                for (Map.Entry<String, ModuleModel> entry : modules.entrySet()) {
+                    String key = entry.getKey();
+                    ModuleModel module = entry.getValue();
+                    System.out.println("Key: " + key + ", Value: " + module.toString());
+                }
+
             }
         }
     }
@@ -56,9 +62,12 @@ public class FileBasedModuleManager implements ModuleManager {
         // Lookup the model based on its IRI. The URL is ignored in this implementation
         // TODO possible extension: check whether the URL is a File URL; if that is the
         // case, read the module from this file.
+        LOGGER.info("derive module for moduleIri: "+moduleIri + " moduleUrl : "+moduleUrl);
         if (modules.containsKey(moduleIri)) {
+            LOGGER.info("it exist");
             return modules.get(moduleIri);
         } else {
+            LOGGER.info("it was not exist !");
             return null;
         }
     }

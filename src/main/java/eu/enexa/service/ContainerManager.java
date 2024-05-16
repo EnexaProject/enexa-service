@@ -18,10 +18,10 @@ public interface ContainerManager {
     /**
      * Stop the container with the given ID.
      *
-     * @param containerId
+     * @param containerIdOrName
      * @return TODO what should be returned, here?
      */
-    String stopContainer(String containerId);
+    String stopContainer(String containerIdOrName);
 
     /**
      * Get the status of the container with the given ID as String.
