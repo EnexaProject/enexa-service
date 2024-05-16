@@ -205,7 +205,7 @@ public class EnexaServiceImpl implements EnexaService {
          * messageDigest.update(moduleIri.getBytes()); String stringHash = new
          * String(messageDigest.digest());
          */
-        return "enexa-" + Integer.toString(moduleIri.hashCode() * 31 + (int) (System.currentTimeMillis()));
+        return "enexa_" + Integer.toString(moduleIri.hashCode() * 31 + (int) (System.currentTimeMillis()));
     }
 
     @Override
