@@ -7,8 +7,8 @@ metadata:
   name: enexa-shared-dir-claim
 spec:
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   resources:
     requests:
-      storage: 100Mi
+      storage: 25000Mi
 status: {}

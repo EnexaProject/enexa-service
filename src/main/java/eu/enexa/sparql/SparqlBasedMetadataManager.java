@@ -10,9 +10,7 @@ import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.pagination.core.QueryExecutionFactoryPaginated;
 import org.aksw.jenax.arq.connection.core.QueryExecutionFactory;
 import org.aksw.jenax.arq.connection.core.UpdateExecutionFactory;
-import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.QuerySolution;
-import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.update.UpdateProcessor;
@@ -68,7 +66,10 @@ public class SparqlBasedMetadataManager implements MetadataManager, AutoCloseabl
         this.sparqlEndpointUrl = sparqlEndpointUrl;
         this.defaultMetaDataGraphIRI = defaultMetaDataGraphIRI;
         this.resourceNamespace = resourceNamespace;
-
+        LOGGER.info("initiate query execute");
+        LOGGER.info(" sparqlEndpointUrl is : "+sparqlEndpointUrl);
+        LOGGER.info(" defaultMetaDataGraphIRI is : "+defaultMetaDataGraphIRI);
+        LOGGER.info(" resourceNamespace is : "+resourceNamespace);
         HttpClient client = HttpClient.newHttpClient();
         DatasetDescription desc = new DatasetDescription();
         desc.addNamedGraphURI(defaultMetaDataGraphIRI);
@@ -99,9 +100,16 @@ public class SparqlBasedMetadataManager implements MetadataManager, AutoCloseabl
                 LOGGER.info("query is :"+query);
                 //query = query.replace("INSERT","INSERT DATA").replace("WHERE","").replace("{}","");
                 //LOGGER.info("after replacing the query where clause :"+query);
-                update = updateExecFactory.createUpdateProcessor(query);
-                update.execute();
-                //todo what happened if update can not find a triple to update !
+                try {
+                    update = updateExecFactory.createUpdateProcessor(query);
+                    update.execute();
+                    //todo what happened if update can not find a triple to update !
+                    LOGGER.info("  DONE  ");
+                    LOGGER.info("  --------------------------------------  ");
+                }catch (Exception ex){
+                    ex.printStackTrace();
+                    LOGGER.error("Error executing query: {}", query, ex);
+                }
             }
         }catch (Exception ex){
             ex.printStackTrace();
@@ -125,8 +133,12 @@ public class SparqlBasedMetadataManager implements MetadataManager, AutoCloseabl
 
     @Override
     public String getContainerName(String experimentIri, String instanceIRI) {
-        QueryExecution qe = queryExecFactory.createQueryExecution("SELECT ?name FROM <"+defaultMetaDataGraphIRI+"> WHERE {" + "<" + instanceIRI
-                + "> <http://w3id.org/dice-research/enexa/ontology#containerName> ?name }");
+        LOGGER.info("getting container name ");
+        String query = "SELECT ?name FROM <"+defaultMetaDataGraphIRI+"> WHERE {" + "<" + instanceIRI
+            + "> <http://w3id.org/dice-research/enexa/ontology#containerName> ?name }";
+        LOGGER.info(" - query is : "+query);
+        QueryExecution qe = queryExecFactory.createQueryExecution(query);
+
         ResultSet rs = qe.execSelect();
         if (rs.hasNext()) {
             QuerySolution qs = rs.next();

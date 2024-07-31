@@ -9,4 +9,3 @@ spec:
         - protocol: TCP
           port: 3030  # Match container port
           targetPort: 3030  # Target the container port
-    type: ClusterIP  # For internal communication within the cluster (default)

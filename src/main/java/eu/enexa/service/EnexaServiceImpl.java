@@ -227,10 +227,14 @@ public class EnexaServiceImpl implements EnexaService {
 
     @Override
     public Model containerStatus(String experimentIri, String instanceIRI) {
+        LOGGER.info(">> get container status");
         LOGGER.info("experimentIri is : "+ experimentIri);
         LOGGER.info("instanceIRI is : "+ instanceIRI);
         // Query container / pod name
         String podName = metadataManager.getContainerName(experimentIri, instanceIRI);
+        if(podName == null){
+            LOGGER.error(" could not find the pod name !!!");
+        }
         LOGGER.info("pod/container name is : "+ podName);
         // Get status
         String status = containerManager.getContainerStatus(podName);

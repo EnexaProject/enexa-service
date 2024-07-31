@@ -2,14 +2,12 @@ package eu.enexa.kubernetes;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+
+import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.models.*;
 import io.kubernetes.client.util.ClientBuilder;
+import io.kubernetes.client.util.generic.KubernetesApiResponse;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +20,7 @@ import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.Configuration;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.util.Config;
+import io.kubernetes.client.openapi.models.*;
 import io.kubernetes.client.util.generic.GenericKubernetesApi;
 
 import static org.apache.jena.atlas.lib.RandomLib.random;
@@ -38,10 +37,23 @@ public class ContainerManagerImpl implements ContainerManager {
 
     protected ContainerManagerImpl() {
         try {
-            client = Config.defaultClient();
+            client = initiateClient();
         }catch (Exception ex){
             LOGGER.error(ex.getMessage());
         }
+    }
+
+    protected ApiClient initiateClient() throws IOException {
+        //Config.defaultClient();
+        //ClientBuilder.standard().build();
+        LOGGER.info("initiating Kubernetes client");
+        ApiClient client = Config.defaultClient();
+        client.setConnectTimeout(60000); // 60 seconds
+        client.setReadTimeout(60000);
+        client.setWriteTimeout(60000);
+        Configuration.setDefaultApiClient(client);
+        LOGGER.info("Kubernetes API client initiated with default configuration.");
+        return client;
     }
 
     protected ContainerManagerImpl(ApiClient client) {
@@ -59,7 +71,7 @@ public class ContainerManagerImpl implements ContainerManager {
         LOGGER.info("Starting a container image is "+ image+" podName is :"+ podName+" variable size is : "+ variables.size()+" hostSharedDirectory : "+hostSharedDirectory+" appName is :"+appName);
         try {
             if (client == null) {
-                client = ClientBuilder.standard().build();
+                client = initiateClient();
             }
         }catch (Exception ex){
             ex.printStackTrace();
@@ -92,7 +104,7 @@ public class ContainerManagerImpl implements ContainerManager {
             LOGGER.warn("ENEXA_EXPERIMENT_IRI is null or less than 10 character");
         }
 
-        String containerSharedDirectory = "/home/shared";
+        String containerSharedDirectory = "/enexa";
         String containerBasePath = makeTheDirectoryInThisPath(containerSharedDirectory,appName);
         String hostBasePath = makeTheDirectoryInThisPath(hostSharedDirectory,appName);
 
@@ -128,16 +140,27 @@ public class ContainerManagerImpl implements ContainerManager {
          */
 
         // Create a VolumeClaim
-        /*V1PersistentVolumeClaimVolumeSource persistentVolumeClaim = new V1PersistentVolumeClaimVolumeSource();
-        persistentVolumeClaim.setClaimName("enexa-shared-dir-claim");*/
+        V1PersistentVolumeClaimVolumeSource persistentVolumeClaim = new V1PersistentVolumeClaimVolumeSource();
+        persistentVolumeClaim.setClaimName("enexa-shared-dir-claim");
 
 
         V1Volume volume = new V1Volume();
-        volume.setName("enexa-volume");
-        volume.setHostPath(new V1HostPathVolumeSource().path(hostBasePath));
-        //volume.setPersistentVolumeClaim(persistentVolumeClaim);
+        volume.setName("enexa-shared-dir");
+        //volume.setHostPath(new V1HostPathVolumeSource().path(hostBasePath));
+        volume.setPersistentVolumeClaim(persistentVolumeClaim);
 
         LOGGER.info("hostBasePath : "+hostBasePath);
+
+        // Set resource limits
+        V1ResourceRequirements resourceRequirements = new V1ResourceRequirements();
+//        Map<String, Quantity> limits = new HashMap<>();
+//        limits.put("memory", new Quantity("28Gi"));
+//        resourceRequirements.setLimits(limits);
+
+        Map<String, Quantity> requests = new HashMap<>();
+        requests.put("memory", new Quantity("8Gi"));
+        resourceRequirements.setRequests(requests);
+
 
         // Create a container and set the volume mount
         V1Container container = new V1Container();
@@ -146,7 +169,7 @@ public class ContainerManagerImpl implements ContainerManager {
         container.setName(containerName);
         container.setImage(image);
         //container.setImage("hub.cs.upb.de/enexa/images/enexa-extraction-module:1.0.0");
-
+        container.setResources(resourceRequirements);
         if (command != null) {
             for (int i = 0; i < command.length; ++i) {
                 container.addCommandItem(command[i]);
@@ -154,10 +177,10 @@ public class ContainerManagerImpl implements ContainerManager {
         }
 
         V1VolumeMount volumeMount = new V1VolumeMount();
-        volumeMount.setName("enexa-volume");
-        volumeMount.setMountPath("/home/shared");
+        volumeMount.setName("enexa-shared-dir");
+        volumeMount.setMountPath("/enexa");
 
-        LOGGER.info("mounth path is /home/shared");
+        LOGGER.info("mounth path is /enexa");
 
         container.setVolumeMounts(Arrays.asList(volumeMount));
 
@@ -246,18 +269,55 @@ public class ContainerManagerImpl implements ContainerManager {
         return null;
     }
 
+//    @Override
+//    public String getContainerStatus(String podName) {
+//        LOGGER.info("client is base path:"+client.getBasePath()+" timeout : "+client.getConnectTimeout());
+//        CoreV1Api api = new CoreV1Api(client);
+//        LOGGER.info(" CoreV1Api initiated ");
+//        try {
+//            V1PodList list = api.listNamespacedPod(nameSpace, "false", null, null, null, null, null, null, null, null,
+//                    null);
+//            LOGGER.info("the list of pods size is "+list.getItems().size());
+//            LOGGER.info("looking for "+podName);
+//            for (V1Pod pod : list.getItems()) {
+//                LOGGER.info("podName : "+pod.getMetadata().getName());
+//                if (pod.getMetadata().getName().equals(podName)) {
+//                    return pod.getStatus().getPhase();
+//                }
+//            }
+//        } catch (ApiException e) {
+//            LOGGER.error("Got an exception while trying to get the status of \"" + podName + "\". Returning null.", e);
+//            LOGGER.error(e.getMessage());
+//            e.printStackTrace();
+//            return null;
+//        }
+//        return null;
+//    }
+
     @Override
     public String getContainerStatus(String podName) {
-        CoreV1Api api = new CoreV1Api(client);
+        LOGGER.info("client is base path:" + client.getBasePath() + " timeout : " + client.getConnectTimeout());
+        GenericKubernetesApi<V1Pod, V1PodList> podClient = new GenericKubernetesApi<>(
+            V1Pod.class, V1PodList.class, "", "v1", "pods", client);
+        LOGGER.info("GenericKubernetesApi for Pods initiated ");
         try {
-            V1PodList list = api.listNamespacedPod(nameSpace, "false", null, null, null, null, null, null, null, null,
-                    null);
-            for (V1Pod pod : list.getItems()) {
-                if (pod.getMetadata().getName().equals(podName)) {
-                    return pod.getStatus().getPhase();
+            // List all pods in the specified namespace
+            KubernetesApiResponse<V1PodList> response = podClient.list(nameSpace);
+            if (response.isSuccess()) {
+                V1PodList podList = response.getObject();
+                LOGGER.info("the list of pods size is " + podList.getItems().size());
+                LOGGER.info("looking for " + podName);
+                for (V1Pod pod : podList.getItems()) {
+                    LOGGER.info("podName : " + pod.getMetadata().getName());
+                    if (pod.getMetadata().getName().equals(podName)) {
+                        return pod.getStatus().getPhase();
+                    }
                 }
+            } else {
+                LOGGER.error("Failed to list pods. Status code: " + response.getHttpStatusCode());
+                return null;
             }
-        } catch (ApiException e) {
+        } catch (Exception e) {
             LOGGER.error("Got an exception while trying to get the status of \"" + podName + "\". Returning null.", e);
             return null;
         }
