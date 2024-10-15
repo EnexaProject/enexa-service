@@ -187,7 +187,16 @@ public class EnexaServiceImpl implements EnexaService {
         Model createdContainerModel = scModel.getModel();
         Resource instanceRes = createdContainerModel.getResource(instanceIri);
         createdContainerModel.add(instanceRes, ENEXA.containerId, containerId);
-        createdContainerModel.add(instanceRes, ENEXA.containerName, containerName);
+
+        // IF it is kubernetes use IP as container name
+        String containerIP = containerManager.resolveContainerEndpoint(containerId);
+        if(containerIP==null){
+            LOGGER.error("containerIP is null");
+        }else{
+            LOGGER.info("containerIP is : " + containerIP);
+            createdContainerModel.add(instanceRes, ENEXA.containerName, containerIP);
+        }
+
         // TODO add start time
 
         metadataManager.addMetaData(createdContainerModel);
@@ -198,6 +207,8 @@ public class EnexaServiceImpl implements EnexaService {
          */
         return scModel.getModel();
     }
+
+
 
     public String generatePodName(String moduleIri) {
         /*

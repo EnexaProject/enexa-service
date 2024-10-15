@@ -164,7 +164,7 @@ public class ContainerManagerImpl implements ContainerManager {
 
         // Create a container and set the volume mount
         V1Container container = new V1Container();
-        String containerName = image.replace("/","-").replace(".","").replace(":","");
+        String containerName = image.replace("/","-").replace(".","").replace(":","").toLowerCase();
         LOGGER.info("containerName : "+containerName);
         container.setName(containerName);
         container.setImage(image);
@@ -190,24 +190,12 @@ public class ContainerManagerImpl implements ContainerManager {
         // podSpec.setVolumes(Arrays.asList(sharedVolume));
         podSpec.setVolumes(Arrays.asList(volume));
         podSpec.setContainers(Arrays.asList(container));
-
-        // Create a Pod with the PodSpec
         V1Pod pod = new V1Pod();
-        pod.setMetadata(new V1ObjectMeta().name(podName).namespace(nameSpace));
-        pod.setSpec(podSpec);
-
-        // TODO : maybe need change container name "b" to variable
-        /*
-         * V1Pod pod = new V1Pod().metadata(new
-         * V1ObjectMeta().name(podName).namespace("default")).spec(new V1PodSpec()
-         * .restartPolicy("Never") .containers(Arrays.asList(new
-         * V1Container().name("b").image(image).env(env).setVolumeMounts(Arrays.asList(
-         * volumeMount)))));
-         */
-
-//        V1Pod pod = new V1Pod().metadata(new V1ObjectMeta().name(podName).namespace("default")).spec(new V1PodSpec()
-//                .restartPolicy("Never").containers(Arrays.asList(new V1Container().name("b").image(image).env(env).addCommandItem("sleep").addCommandItem("20"))));
-
+        // Create a Pod with the PodSpec
+        pod.setMetadata(new V1ObjectMeta().name(podName).namespace(nameSpace).labels(new HashMap<String,String>(){{
+                put("app",containerName);
+            }}));
+            pod.setSpec(podSpec);
 
 
         try {
@@ -219,9 +207,9 @@ public class ContainerManagerImpl implements ContainerManager {
             pod.getSpec().getContainers().get(0).setEnv(env);  // add to the first container because we assume runnig one container in each pod
 
             V1Pod latestPod = podClient.create(pod).throwsApiException().getObject();
-            String latestPodName = latestPod.getMetadata().getName();
-            LOGGER.info("latestPodName : "+latestPodName);
-            return latestPodName;
+            String latestPodUid = latestPod.getMetadata().getUid();
+            LOGGER.info("latestPodUID : "+latestPodUid);
+            return latestPodUid;
         } catch (ApiException e) {
             e.printStackTrace();
             LOGGER.error("Got an exception while trying to create an instance of \"" + image + "\". Returning null.",
@@ -323,6 +311,62 @@ public class ContainerManagerImpl implements ContainerManager {
         }
         return null;
     }
+
+
+@Override
+public String resolveContainerEndpoint(String containerId){
+        LOGGER.info("start resolving the IP from ID" +containerId);
+    GenericKubernetesApi<V1Pod, V1PodList> podClient = new GenericKubernetesApi<>(
+        V1Pod.class, V1PodList.class, "", "v1", "pods", client);
+try {
+    // List all pods (you can filter by namespace if needed, e.g., "default" namespace)
+    V1PodList podList = podClient.list("default").getObject();
+    LOGGER.info("the list of all pods size is " + podList.getItems().size());
+    V1Pod targetPod = null;
+    // Iterate over the pods to find the one with the matching UID
+    for (V1Pod pod : podList.getItems()) {
+        LOGGER.info("podName : " + pod.getMetadata().getName() + " podUID"+ pod.getMetadata().getUid()+" POD IP :"+pod.getStatus().getPodIP());
+        if (pod.getMetadata().getUid().equals(containerId)) {
+            targetPod = pod;
+            LOGGER.info("POD is loaded");
+            break;
+        }
+    }
+
+    if (targetPod == null) {
+        return null;
+    }
+
+// Wait for the pod to start running (with a timeout of 60 seconds)
+    long startTime = System.currentTimeMillis();
+    while (true) {
+        // Check if the pod is in the 'Running' state
+        String podPhase = targetPod.getStatus().getPhase();
+        if ("Running".equals(podPhase)) {
+            // Return the Pod IP once it's running
+            return targetPod.getStatus().getPodIP();
+        }
+
+
+        if (System.currentTimeMillis() - startTime > 120 * 1000) {
+            LOGGER.error("Pod with UID " + containerId + " did not start running within 60 seconds");
+            return null;
+        }
+
+        // Sleep for a short interval before checking again
+        Thread.sleep(5000); // Sleep for 2 seconds
+
+        // Re-fetch the pod to update its status
+        targetPod = podClient.get("default", targetPod.getMetadata().getName())
+            .throwsApiException()
+            .getObject();
+    }
+
+}catch (Exception ex){
+    LOGGER.error("Failed to resolve endpoint" + ex.getMessage());
+    return null;
+}
+}
 
     public static ContainerManagerImpl create() throws IOException {
         ApiClient client = Config.defaultClient();

@@ -32,4 +32,6 @@ public interface ContainerManager {
      *         container does not exist
      */
     String getContainerStatus(String containerId);
+
+    String resolveContainerEndpoint(String containerId);
 }
