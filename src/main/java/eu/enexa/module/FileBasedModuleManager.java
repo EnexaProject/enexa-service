@@ -8,9 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.compress.utils.FileNameUtils;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.*;
 import org.apache.jena.util.FileUtils;
 import org.dice_research.enexa.vocab.ENEXA;
 import org.dice_research.enexa.vocab.HOBBIT;
@@ -46,6 +44,9 @@ public class FileBasedModuleManager implements ModuleManager {
                 LOGGER.info(enexaModuleDirectory.getAbsolutePath() + " exist");
                 addFileOrDirectory(enexaModuleDirectory);
                 LOGGER.info("modules size is : "+ modules.size());
+                for (ModuleModel module : modules.values()) {
+                    LOGGER.info("   -"+module.toString());
+                }
             }
         }
     }
@@ -112,11 +113,20 @@ public class FileBasedModuleManager implements ModuleManager {
                     }
                 }
 
+                // expose Port ?
+                // TODO add it to ENEXA no hardcode
+                Literal port = RdfHelper.getLiteral(model, enexaModule, ResourceFactory.createProperty("http://w3id.org/dice-research/enexa/ontology#", "exposes_port"));
+
+
                 // create the module representation and add the values
                 ModuleModel moduleModel = new ModuleModel();
                 moduleModel.setModel(model);
                 moduleModel.setModuleIri(enexaModule.getURI());
                 moduleModel.setImage(image.getURI());
+
+                if(port!=null){
+                    moduleModel.setPort(port.getInt());
+                }
 
                 // Add it to the internal index
                 modules.put(moduleModel.getModuleIri(), moduleModel);

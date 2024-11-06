@@ -5,11 +5,7 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdf.model.*;
 import org.apache.jena.vocabulary.RDF;
 import org.dice_research.enexa.utils.EnexaPathUtils;
 import org.dice_research.enexa.vocab.ENEXA;
@@ -178,7 +174,8 @@ public class EnexaServiceImpl implements EnexaService {
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SERVICE_URL", System.getenv("ENEXA_SERVICE_URL")));
         String containerName = generatePodName(module.getModuleIri());
         String containerId = containerManager.startContainer(module.getImage(), containerName, variables, sharedDirectory, appName);
-        // TODO take point in time
+
+
 
         /*
          * 4. Add start time (or error code in case it couldn’t be started) to the TODO
@@ -188,13 +185,12 @@ public class EnexaServiceImpl implements EnexaService {
         Resource instanceRes = createdContainerModel.getResource(instanceIri);
         createdContainerModel.add(instanceRes, ENEXA.containerId, containerId);
 
-        // IF it is kubernetes use IP as container name
-        String containerIP = containerManager.resolveContainerEndpoint(containerId);
-        if(containerIP==null){
-            LOGGER.error("containerIP is null");
-        }else{
-            LOGGER.info("containerIP is : " + containerIP);
-            createdContainerModel.add(instanceRes, ENEXA.containerName, containerIP);
+        LOGGER.info("check if Port exist ");
+        // when port is not null it means container provide an endpoint
+        if(module.getPort()!=null){
+            LOGGER.info("the port exist for this module the map port: "+module.getPort().toString());
+            String containerProvidedEndpoint = containerManager.resolveContainerEndpoint(containerId, module.getPort());
+            createdContainerModel.add(instanceRes, ENEXA.moduleURL, containerProvidedEndpoint);
         }
 
         // TODO add start time
@@ -208,6 +204,19 @@ public class EnexaServiceImpl implements EnexaService {
         return scModel.getModel();
     }
 
+    private boolean needAnEndpointToProvide(ModuleModel module) {
+        Model model = ModelFactory.createDefaultModel();
+
+        // Create the subject, predicate, and object
+        // TODO complete this with correct s p o
+        Resource subject = model.createResource("http://example.org/subject");
+        Property predicate = model.createProperty("http://example.org/predicate");
+        RDFNode object = model.createLiteral("This is the object");
+
+        // Create a statement (triple) from subject, predicate, and object
+        Statement statement = model.createStatement(subject, predicate, object);
+        return module.getModel().contains(statement);
+    }
 
 
     public String generatePodName(String moduleIri) {

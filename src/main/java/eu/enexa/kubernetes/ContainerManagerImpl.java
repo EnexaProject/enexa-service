@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import io.kubernetes.client.custom.IntOrString;
 import io.kubernetes.client.custom.Quantity;
+import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.*;
 import io.kubernetes.client.util.ClientBuilder;
 import io.kubernetes.client.util.generic.KubernetesApiResponse;
@@ -18,7 +20,6 @@ import eu.enexa.service.ContainerManager;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.Configuration;
-import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.util.Config;
 import io.kubernetes.client.openapi.models.*;
 import io.kubernetes.client.util.generic.GenericKubernetesApi;
@@ -66,7 +67,62 @@ public class ContainerManagerImpl implements ContainerManager {
         return startContainerKub(image, podName, variables, hostSharedDirectory, null, appName);
     }
 
+// port
+    public Integer getServiceAsNodePort(String podUid, Integer podPort ,Map<String,String> labels) throws ApiException {
+        LOGGER.info("make service as nodeport");
+        try {
+            if (client == null) {
+                LOGGER.error("client is null");
+                client = initiateClient();
+            }
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+
+        String name = String.format("ser-%s-%s", podUid, UUID.randomUUID());
+        LOGGER.info("Service name is: {}", name);
+
+        // Trim the name if it exceeds 60 characters to make a valid name
+        if (name.length() > 60) {
+            // add extra S at the end because it could be - and make the name invalid
+            name = name.substring(0, 59)+"s";
+            LOGGER.info("Service name after trimming: {}", name);
+        }
+
+        V1ServicePort serviceport = new V1ServicePortBuilder().withPort(Integer.valueOf(podPort)).withTargetPort(new IntOrString(0)).build();
+        LOGGER.info("service is :"+name);
+        V1Service service = new V1ServiceBuilder()
+            .withNewMetadata().withName(name).endMetadata()
+            .withNewSpec()
+            .withSelector(labels)
+            .withType("NodePort")  // Set service type to NodePort
+            .withPorts(serviceport)          // Exposed port
+            .endSpec()
+            .build();
+
+        LOGGER.info(service.toString());
+        // Create Service in Kubernetes
+        CoreV1Api api = new CoreV1Api(client);
+        LOGGER.info("api client initiated :"+name);
+        try {
+            api.createNamespacedService("default", service, null, null, null, null);
+        } catch (NullPointerException e) {
+            System.err.println("Caught NullPointerException while creating service: " + e.getMessage());
+            e.printStackTrace();
+        } catch (ApiException e) {
+            System.err.println("API Exception: " + e.getResponseBody());
+            e.printStackTrace();
+        }
+        LOGGER.info("named service created");
+        // 3. Retrieve the NodePort assigned by Kubernetes
+        V1Service createdService = api.readNamespacedService(name, "default", null);
+        LOGGER.info("service created");
+        LOGGER.info("port is "+createdService.getSpec().getPorts().get(0).getNodePort().toString());
+        return createdService.getSpec().getPorts().get(0).getNodePort();
+    }
+
     // podName is the containerName for kubernetes
+    // here if need after creating the pod should create service and add endpoint to triple store
     public String startContainerKub(String image, String podName, List<AbstractMap.SimpleEntry<String, String>> variables,String hostSharedDirectory ,String[] command, String appName) {
         LOGGER.info("Starting a container image is "+ image+" podName is :"+ podName+" variable size is : "+ variables.size()+" hostSharedDirectory : "+hostSharedDirectory+" appName is :"+appName);
         try {
@@ -314,7 +370,7 @@ public class ContainerManagerImpl implements ContainerManager {
 
 
 @Override
-public String resolveContainerEndpoint(String containerId){
+public String resolveContainerEndpoint(String containerId, Integer port){
         LOGGER.info("start resolving the IP from ID" +containerId);
     GenericKubernetesApi<V1Pod, V1PodList> podClient = new GenericKubernetesApi<>(
         V1Pod.class, V1PodList.class, "", "v1", "pods", client);
@@ -334,22 +390,43 @@ try {
     }
 
     if (targetPod == null) {
+        LOGGER.info("targetPod is null");
         return null;
     }
 
 // Wait for the pod to start running (with a timeout of 60 seconds)
     long startTime = System.currentTimeMillis();
     while (true) {
+        LOGGER.info("checking the status of the pod");
         // Check if the pod is in the 'Running' state
         String podPhase = targetPod.getStatus().getPhase();
+        LOGGER.info("podPhase : " + podPhase);
         if ("Running".equals(podPhase)) {
-            // Return the Pod IP once it's running
-            return targetPod.getStatus().getPodIP();
+            // Create the service as a Nodeport
+            // get new port
+            // make complete endpoint and return it
+            LOGGER.info("pod is running");
+            Map<String, String> pod_labels = targetPod.getMetadata().getLabels();
+            if(pod_labels==null){
+                LOGGER.error("there is no label in a pod to make selector ! podname is "+containerId);
+            }else{
+                LOGGER.info("pod_labels size: " + pod_labels.size());
+            }
+            String ip = targetPod.getStatus().getPodIP();
+            LOGGER.info("status is {}",targetPod.getStatus().toString());
+            Integer podPortToOutsideOfPod = getServiceAsNodePort(containerId,port,pod_labels);
+            if(podPortToOutsideOfPod==null){
+                LOGGER.error("could not get a port for this");
+             return null;
+            }else {
+                LOGGER.info("return : "+ip + ":" + podPortToOutsideOfPod );
+                return ip + ":" + podPortToOutsideOfPod;
+            }
         }
 
 
-        if (System.currentTimeMillis() - startTime > 120 * 1000) {
-            LOGGER.error("Pod with UID " + containerId + " did not start running within 60 seconds");
+        if (System.currentTimeMillis() - startTime > 180 * 1000) {
+            LOGGER.error("Pod with UID " + containerId + " did not start running within 180 seconds");
             return null;
         }
 

@@ -33,5 +33,11 @@ public interface ContainerManager {
      */
     String getContainerStatus(String containerId);
 
-    String resolveContainerEndpoint(String containerId);
+    /**
+     *
+     * @param containerId
+     * @param port
+     * @return url as callable endpoint from outside of the container
+     */
+    String resolveContainerEndpoint(String containerId, Integer port);
 }
