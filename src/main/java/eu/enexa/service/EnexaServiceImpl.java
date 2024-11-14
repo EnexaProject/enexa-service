@@ -58,7 +58,6 @@ public class EnexaServiceImpl implements EnexaService {
         // do not use experiment.getLocalName() it will remove the first character !
 
         sharedDirLocalPath = sharedDirLocalPath +File.separator+appName+ File.separator + experiment.getURI().split("/")[experiment.getURI().split("/").length -1];
-        // TODO create directory
           File theDir = new File(sharedDirLocalPath);
           if (!theDir.exists()){
               boolean isCreated = theDir.mkdirs();
@@ -67,7 +66,7 @@ public class EnexaServiceImpl implements EnexaService {
               }
           }
         // 3. Start default containers
-        // TODO : implement this
+        // TODO : implement this (update: no idea what is this :D)
 
         // 4. Update experiment meta data with data from steps 2 and 3
         model.add(experiment, RDF.type, ENEXA.Experiment);
@@ -203,21 +202,6 @@ public class EnexaServiceImpl implements EnexaService {
          */
         return scModel.getModel();
     }
-
-    private boolean needAnEndpointToProvide(ModuleModel module) {
-        Model model = ModelFactory.createDefaultModel();
-
-        // Create the subject, predicate, and object
-        // TODO complete this with correct s p o
-        Resource subject = model.createResource("http://example.org/subject");
-        Property predicate = model.createProperty("http://example.org/predicate");
-        RDFNode object = model.createLiteral("This is the object");
-
-        // Create a statement (triple) from subject, predicate, and object
-        Statement statement = model.createStatement(subject, predicate, object);
-        return module.getModel().contains(statement);
-    }
-
 
     public String generatePodName(String moduleIri) {
         /*

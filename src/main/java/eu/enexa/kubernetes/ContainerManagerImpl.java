@@ -8,12 +8,11 @@ import io.kubernetes.client.custom.IntOrString;
 import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.*;
-import io.kubernetes.client.util.ClientBuilder;
 import io.kubernetes.client.util.generic.KubernetesApiResponse;
-import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Primary;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import eu.enexa.service.ContainerManager;
@@ -21,12 +20,9 @@ import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.Configuration;
 import io.kubernetes.client.util.Config;
-import io.kubernetes.client.openapi.models.*;
 import io.kubernetes.client.util.generic.GenericKubernetesApi;
 
-import static org.apache.jena.atlas.lib.RandomLib.random;
-
-@Primary
+@Profile("kubernetes")
 @Component("kubernetesContainerManager")
 public class ContainerManagerImpl implements ContainerManager {
 
@@ -34,7 +30,11 @@ public class ContainerManagerImpl implements ContainerManager {
 
     private ApiClient client;
 
-    private String nameSpace = "default";
+    @Value("${container.manager.namespace:default}")
+    private String nameSpace;
+    @Value("${container.manager.timeoutMilliSeconds:60000}")
+    private int TIMEOUT_MILLISECONDS;
+
 
     protected ContainerManagerImpl() {
         try {
@@ -44,17 +44,32 @@ public class ContainerManagerImpl implements ContainerManager {
         }
     }
 
+    /**
+     * Initializes and configures a Kubernetes API client with custom timeout settings.
+     *
+     * This method:
+     * - Creates a default Kubernetes API client using the default configuration.
+     * - Sets custom connection, read, and write timeouts.
+     * - Sets the configured client as the default client in the global Configuration class.
+     *
+     * @return ApiClient configured with specified timeouts.
+     * @throws IOException if an error occurs during client initialization.
+     */
     protected ApiClient initiateClient() throws IOException {
-        //Config.defaultClient();
-        //ClientBuilder.standard().build();
-        LOGGER.info("initiating Kubernetes client");
-        ApiClient client = Config.defaultClient();
-        client.setConnectTimeout(60000); // 60 seconds
-        client.setReadTimeout(60000);
-        client.setWriteTimeout(60000);
-        Configuration.setDefaultApiClient(client);
-        LOGGER.info("Kubernetes API client initiated with default configuration.");
-        return client;
+        try{
+            LOGGER.info("initiating Kubernetes client");
+            ApiClient client = Config.defaultClient();
+            client.setConnectTimeout(TIMEOUT_MILLISECONDS);
+            client.setReadTimeout(TIMEOUT_MILLISECONDS);
+            client.setWriteTimeout(TIMEOUT_MILLISECONDS);
+            Configuration.setDefaultApiClient(client);
+            LOGGER.info("Kubernetes API client initiated with default configuration.");
+            return client;
+        }
+        catch (Exception ex){
+            LOGGER.error("Failed to initiate Kubernetes API client", ex);
+            throw ex;
+        }
     }
 
     protected ContainerManagerImpl(ApiClient client) {
@@ -67,18 +82,27 @@ public class ContainerManagerImpl implements ContainerManager {
         return startContainerKub(image, podName, variables, hostSharedDirectory, null, appName);
     }
 
-// port
+    /**
+     * Creates a Kubernetes service of type NodePort for the given pod.
+     *
+     * @param podUid the unique identifier of the pod
+     * @param podPort the port of the pod to expose
+     * @param labels the labels for the service selector
+     * @return the NodePort assigned to the created service
+     * @throws ApiException if there's an error interacting with the Kubernetes API
+     */
     public Integer getServiceAsNodePort(String podUid, Integer podPort ,Map<String,String> labels) throws ApiException {
-        LOGGER.info("make service as nodeport");
+        LOGGER.info("Creating service as NodePort for pod UID: {}", podUid);
         try {
             if (client == null) {
                 LOGGER.error("client is null");
                 client = initiateClient();
             }
         }catch (Exception ex){
-            ex.printStackTrace();
+            LOGGER.error("Error initializing client: ", ex);
         }
 
+        // Create a unique service name using the pod UID and a random UUID
         String name = String.format("ser-%s-%s", podUid, UUID.randomUUID());
         LOGGER.info("Service name is: {}", name);
 
@@ -101,9 +125,11 @@ public class ContainerManagerImpl implements ContainerManager {
             .build();
 
         LOGGER.info(service.toString());
+
         // Create Service in Kubernetes
         CoreV1Api api = new CoreV1Api(client);
         LOGGER.info("api client initiated :"+name);
+        //TODO if need check if the service exist !
         try {
             api.createNamespacedService("default", service, null, null, null, null);
         } catch (NullPointerException e) {
@@ -113,130 +139,79 @@ public class ContainerManagerImpl implements ContainerManager {
             System.err.println("API Exception: " + e.getResponseBody());
             e.printStackTrace();
         }
-        LOGGER.info("named service created");
-        // 3. Retrieve the NodePort assigned by Kubernetes
+        // Retrieve the created service to fetch the NodePort assigned by Kubernetes
         V1Service createdService = api.readNamespacedService(name, "default", null);
-        LOGGER.info("service created");
-        LOGGER.info("port is "+createdService.getSpec().getPorts().get(0).getNodePort().toString());
+        LOGGER.info("Service created with NodePort: {}", createdService.getSpec().getPorts().get(0).getNodePort());
+
         return createdService.getSpec().getPorts().get(0).getNodePort();
     }
 
-    // podName is the containerName for kubernetes
-    // here if need after creating the pod should create service and add endpoint to triple store
+    /**
+     * Starts a container by creating a pod in Kubernetes with the specified configuration.
+     *
+     * @param image The image to use for the container.
+     * @param podName The name of the pod.
+     * @param variables Environment variables for the container.
+     * @param hostSharedDirectory Path for the host's shared directory.
+     * @param command Command to run inside the container.
+     * @param appName The application name for directory structure.
+     * @return The UID of the created pod, or null if creation failed.
+     */
     public String startContainerKub(String image, String podName, List<AbstractMap.SimpleEntry<String, String>> variables,String hostSharedDirectory ,String[] command, String appName) {
-        LOGGER.info("Starting a container image is "+ image+" podName is :"+ podName+" variable size is : "+ variables.size()+" hostSharedDirectory : "+hostSharedDirectory+" appName is :"+appName);
+        LOGGER.info("Starting container: Image = {}, Pod Name = {}, Variables Size = {}, Host Shared Directory = {}, App Name = {}",
+            image, podName, variables.size(), hostSharedDirectory, appName);
+
         try {
             if (client == null) {
                 client = initiateClient();
             }
         }catch (Exception ex){
-            ex.printStackTrace();
+            LOGGER.error("Error initializing Kubernetes client: ", ex);
+            return null;
         }
         // TODO : make this part not hardcoded if there is chance of changing the "urn:container:docker:image:"
         image = image.replace("urn:container:docker:image:","");
-        LOGGER.info("image name is : "+ image);
+        LOGGER.info("Using image: {}", image);
 
-        List<V1EnvVar> env = new ArrayList<>();
-        if (variables != null) {
-            for (Map.Entry<String, String> entry : variables) {
-                V1EnvVar v1env = new V1EnvVar();
-                v1env.setName(entry.getKey());
-                v1env.setValue(entry.getValue());
-                env.add(v1env);
-            }
-        }
+        // Create environment variables
+        List<V1EnvVar> env = createEnvVariables(variables);
 
-        String expIRI="";
+        // Process experiment IRI variable
+        String expIRI=extractExperimentIRI(variables);
+        LOGGER.info("ENEXA_EXPERIMENT_IRI: {}", expIRI);
 
-        for(AbstractMap.SimpleEntry v:variables){
-            if(v.getKey().toString().equals("ENEXA_EXPERIMENT_IRI")){
-                expIRI = v.getValue().toString();
-            }
-        }
-
-        LOGGER.info("ENEXA_EXPERIMENT_IRI is : "+expIRI);
-
+        // Validate IRI
         if(expIRI.equals("")||expIRI.length()<10){
             LOGGER.warn("ENEXA_EXPERIMENT_IRI is null or less than 10 character");
         }
 
-        String containerSharedDirectory = "/enexa";
-        String containerBasePath = makeTheDirectoryInThisPath(containerSharedDirectory,appName);
-        String hostBasePath = makeTheDirectoryInThisPath(hostSharedDirectory,appName);
+        // Set up paths for shared directories
+        String containerBasePath = "/enexa";
+        String hostBasePath = buildHostPath(hostSharedDirectory, appName);
+        String containerWritablePath = buildWritableContainerPath(expIRI, hostBasePath);
+        String containerModuleInstancePath = combinePaths(containerWritablePath, UUID.randomUUID().toString());
 
-        String writeableDirectory =expIRI.split("/")[expIRI.split("/").length - 1];
-        String hostWritablePath = makeTheDirectoryInThisPath(hostBasePath,writeableDirectory);
-        String containerWritablePath = combinePaths(containerBasePath,writeableDirectory);
-        String moduleInstanceIRI = UUID.randomUUID().toString();
+        //String hostWritablePath = makeTheDirectoryInThisPath(hostBasePath,writeableDirectory);
         //String hostModuleInstancePath = makeTheDirectoryInThisPath(hostWritablePath,moduleInstanceIRI);
-        String containerModuleInstancePath = combinePaths(containerWritablePath, moduleInstanceIRI);
 
-        env.add(new V1EnvVar()
-            .name("ENEXA_SHARED_DIRECTORY")
-            .value(containerSharedDirectory));
-        LOGGER.info("ENEXA_SHARED_DIRECTORY :" + containerSharedDirectory);
+        // Add environment variables related to shared directories
+        addSharedDirectoryEnvVars(env, containerBasePath, containerModuleInstancePath, containerWritablePath);
 
-        env.add(new V1EnvVar()
-            .name("ENEXA_MODULE_INSTANCE_DIRECTORY")
-            .value(containerModuleInstancePath));
-        LOGGER.info("ENEXA_MODULE_INSTANCE_DIRECTORY :" + containerModuleInstancePath);
+        // Set up the persistent volume claim for shared directory
+        V1Volume volume = createVolume(hostBasePath);
 
-        env.add(new V1EnvVar()
-            .name("ENEXA_WRITEABLE_DIRECTORY")
-            .value(containerWritablePath));
-        LOGGER.info("ENEXA_WRITEABLE_DIRECTORY :" + containerWritablePath);
+        // Set up resource requirements
+        V1ResourceRequirements resourceRequirements = createResourceRequirements();
 
-        /*
-         * // Create a shared volume V1Volume sharedVolume = new V1Volume();
-         * sharedVolume.setName("shared-volume");
-         *
-         * // Define the shared volume source V1EmptyDirVolumeSource
-         * emptyDirVolumeSource = new V1EmptyDirVolumeSource();
-         * sharedVolume.setEmptyDir(emptyDirVolumeSource);
-         */
+        // Create container
+        V1Container container = createContainer(image, command, env, resourceRequirements);
 
-        // Create a VolumeClaim
-        V1PersistentVolumeClaimVolumeSource persistentVolumeClaim = new V1PersistentVolumeClaimVolumeSource();
-        persistentVolumeClaim.setClaimName("enexa-shared-dir-claim");
-
-
-        V1Volume volume = new V1Volume();
-        volume.setName("enexa-shared-dir");
-        //volume.setHostPath(new V1HostPathVolumeSource().path(hostBasePath));
-        volume.setPersistentVolumeClaim(persistentVolumeClaim);
-
-        LOGGER.info("hostBasePath : "+hostBasePath);
-
-        // Set resource limits
-        V1ResourceRequirements resourceRequirements = new V1ResourceRequirements();
-//        Map<String, Quantity> limits = new HashMap<>();
-//        limits.put("memory", new Quantity("28Gi"));
-//        resourceRequirements.setLimits(limits);
-
-        Map<String, Quantity> requests = new HashMap<>();
-        requests.put("memory", new Quantity("8Gi"));
-        resourceRequirements.setRequests(requests);
-
-
-        // Create a container and set the volume mount
-        V1Container container = new V1Container();
-        String containerName = image.replace("/","-").replace(".","").replace(":","").toLowerCase();
-        LOGGER.info("containerName : "+containerName);
-        container.setName(containerName);
-        container.setImage(image);
-        //container.setImage("hub.cs.upb.de/enexa/images/enexa-extraction-module:1.0.0");
-        container.setResources(resourceRequirements);
-        if (command != null) {
-            for (int i = 0; i < command.length; ++i) {
-                container.addCommandItem(command[i]);
-            }
-        }
 
         V1VolumeMount volumeMount = new V1VolumeMount();
         volumeMount.setName("enexa-shared-dir");
         volumeMount.setMountPath("/enexa");
 
-        LOGGER.info("mounth path is /enexa");
+        LOGGER.info("mouth path is /enexa");
 
         container.setVolumeMounts(Arrays.asList(volumeMount));
 
@@ -246,19 +221,16 @@ public class ContainerManagerImpl implements ContainerManager {
         // podSpec.setVolumes(Arrays.asList(sharedVolume));
         podSpec.setVolumes(Arrays.asList(volume));
         podSpec.setContainers(Arrays.asList(container));
+
         V1Pod pod = new V1Pod();
         // Create a Pod with the PodSpec
         pod.setMetadata(new V1ObjectMeta().name(podName).namespace(nameSpace).labels(new HashMap<String,String>(){{
-                put("app",containerName);
+                put("app",container.getName());
             }}));
             pod.setSpec(podSpec);
-
-
         try {
-
             GenericKubernetesApi<V1Pod, V1PodList> podClient = new GenericKubernetesApi<>(V1Pod.class, V1PodList.class, "",
                 "v1", "pods", client);
-
 
             pod.getSpec().getContainers().get(0).setEnv(env);  // add to the first container because we assume runnig one container in each pod
 
@@ -273,6 +245,107 @@ public class ContainerManagerImpl implements ContainerManager {
             return null;
         }
     }
+
+    /**
+     * Creates environment variables from the provided list of key-value pairs.
+     */
+    private List<V1EnvVar> createEnvVariables(List<AbstractMap.SimpleEntry<String, String>> variables) {
+        List<V1EnvVar> env = new ArrayList<>();
+        if (variables != null) {
+            for (Map.Entry<String, String> entry : variables) {
+                V1EnvVar v1env = new V1EnvVar();
+                v1env.setName(entry.getKey());
+                v1env.setValue(entry.getValue());
+                env.add(v1env);
+            }
+        }
+        return env;
+    }
+
+    /**
+     * Extracts the experiment IRI from the environment variables list.
+     */
+    private String extractExperimentIRI(List<AbstractMap.SimpleEntry<String, String>> variables) {
+        for (AbstractMap.SimpleEntry<String, String> v : variables) {
+            if ("ENEXA_EXPERIMENT_IRI".equals(v.getKey())) {
+                return v.getValue();
+            }
+        }
+        return "";
+    }
+
+
+    /**
+     * Builds the host path using the shared directory path and app name.
+     */
+    private String buildHostPath(String hostSharedDirectory, String appName) {
+        LOGGER.info("build host path");
+        return makeTheDirectoryInThisPath(hostSharedDirectory, appName);
+    }
+
+    /**
+     * Creates a writable path for the container based on the experiment IRI.
+     */
+    private String buildWritableContainerPath(String expIRI, String hostBasePath) {
+        String writeableDirectory = expIRI.split("/")[expIRI.split("/").length - 1];
+        LOGGER.info("build writeable path at {}", writeableDirectory);
+        return makeTheDirectoryInThisPath(hostBasePath, writeableDirectory);
+    }
+
+    /**
+     * Adds environment variables related to shared directories to the list of env variables.
+     */
+    private void addSharedDirectoryEnvVars(List<V1EnvVar> env, String containerBasePath, String containerModuleInstancePath,
+                                           String containerWritablePath) {
+        env.add(new V1EnvVar().name("ENEXA_SHARED_DIRECTORY").value(containerBasePath));
+        env.add(new V1EnvVar().name("ENEXA_MODULE_INSTANCE_DIRECTORY").value(containerModuleInstancePath));
+        env.add(new V1EnvVar().name("ENEXA_WRITEABLE_DIRECTORY").value(containerWritablePath));
+    }
+
+    /**
+     * Creates a volume for the shared directory.
+     */
+    private V1Volume createVolume(String hostBasePath) {
+        V1PersistentVolumeClaimVolumeSource persistentVolumeClaim = new V1PersistentVolumeClaimVolumeSource();
+        persistentVolumeClaim.setClaimName("enexa-shared-dir-claim");
+
+        V1Volume volume = new V1Volume();
+        volume.setName("enexa-shared-dir");
+        volume.setPersistentVolumeClaim(persistentVolumeClaim);
+
+        return volume;
+    }
+
+    /**
+     * Creates the resource requirements for the container.
+     */
+    //TODO 8Gi should be configable ?
+    private V1ResourceRequirements createResourceRequirements() {
+        V1ResourceRequirements resourceRequirements = new V1ResourceRequirements();
+        Map<String, Quantity> requests = new HashMap<>();
+        requests.put("memory", new Quantity("8Gi"));
+        resourceRequirements.setRequests(requests);
+        return resourceRequirements;
+    }
+
+    /**
+     * Creates a container with the given image, command, environment variables, and resource requirements.
+     */
+    private V1Container createContainer(String image, String[] command, List<V1EnvVar> env, V1ResourceRequirements resourceRequirements) {
+        V1Container container = new V1Container();
+        String containerName = image.replace("/", "-").replace(".", "").replace(":", "").toLowerCase();
+        container.setName(containerName);
+        container.setImage(image);
+        container.setResources(resourceRequirements);
+
+        if (command != null) {
+            container.setCommand(Arrays.asList(command));
+        }
+
+        container.setEnv(env);
+        return container;
+    }
+
     //TODO : move following two method in a utility class shared between docker and kubernetes
     /**
      * Combines two path components to create a valid path.
@@ -283,6 +356,7 @@ public class ContainerManagerImpl implements ContainerManager {
      * @return                The combined path.
      */
     private String makeTheDirectoryInThisPath(String partOneOfPath, String partTwoOfPath) {
+        LOGGER.info("makeTheDirectoryInThisPath {}/{}",partOneOfPath,partTwoOfPath);
         if(partOneOfPath ==null && partTwoOfPath == null) return "";
         String path = combinePaths(partOneOfPath, partTwoOfPath);
         File appPathDirectory = new File(path);
@@ -404,7 +478,7 @@ try {
         if ("Running".equals(podPhase)) {
             // Create the service as a Nodeport
             // get new port
-            // make complete endpoint and return it
+            // make complete endpoint andk return it
             LOGGER.info("pod is running");
             Map<String, String> pod_labels = targetPod.getMetadata().getLabels();
             if(pod_labels==null){
