@@ -11,6 +11,7 @@ import com.github.dockerjava.core.DockerClientImpl;
 import eu.enexa.service.ContainerManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
@@ -38,6 +39,11 @@ public class ContainerManagerImpl implements ContainerManager {
      */
     private DockerClient dockerClient;
 
+    @Value("${docker.traefik.hostname}")
+    private String hostName ;
+
+    @Value("${docker.traefik.loadbalancer.port}")
+    private String traefikLoadBalancerPort;
 
     /**
      * Constructs a new ContainerManagerImpl and initializes the Docker client.
@@ -156,7 +162,8 @@ public class ContainerManagerImpl implements ContainerManager {
 
             Map<String, String> labels = new HashMap<>();
             labels.put("traefik.enable","true");
-            labels.put("traefik.http.routers."+containerName+".rule","Host(\"enexa-demo.cs.uni-paderborn.de\") && PathPrefix(\"/"+containerName+"\")");
+
+            labels.put("traefik.http.routers."+containerName+".rule","Host(\""+hostName+"\") && PathPrefix(\"/"+containerName+"\")");
             labels.put("traefik.http.routers."+containerName+".service",containerName);
             labels.put("traefik.http.routers."+containerName+".entrypoints","web");
 
@@ -167,8 +174,9 @@ public class ContainerManagerImpl implements ContainerManager {
 
 
 //            LOGGER.info("traefik.http.routers."+containerName+".entrypoints:web");
-            labels.put("traefik.http.services."+containerName+".loadbalancer.server.port","8501");
-            LOGGER.info("traefik.http.services."+containerName+".loadbalancer.server.port:8501");
+
+            labels.put("traefik.http.services."+containerName+".loadbalancer.server.port",traefikLoadBalancerPort);
+            LOGGER.info("traefik.http.services."+containerName+".loadbalancer.server.port:"+traefikLoadBalancerPort);
 
             CreateContainerResponse container = dockerClient.createContainerCmd(image)
                 .withName(containerName)

@@ -46,12 +46,6 @@ public class FileBasedModuleManager implements ModuleManager {
                 LOGGER.info(enexaModuleDirectory.getAbsolutePath() + " exist");
                 addFileOrDirectory(enexaModuleDirectory);
                 LOGGER.info("modules size is : "+ modules.size());
-                for (Map.Entry<String, ModuleModel> entry : modules.entrySet()) {
-                    String key = entry.getKey();
-                    ModuleModel module = entry.getValue();
-                    System.out.println("Key: " + key + ", Value: " + module.toString());
-                }
-
             }
         }
     }

@@ -99,18 +99,6 @@ public class ContainerManagerImpl implements ContainerManager {
         pod.setMetadata(new V1ObjectMeta().name(podName).namespace("default"));
         pod.setSpec(podSpec);
 
-        // TODO : maybe need change container name "b" to variable
-        /*
-         * V1Pod pod = new V1Pod().metadata(new
-         * V1ObjectMeta().name(podName).namespace("default")).spec(new V1PodSpec()
-         * .restartPolicy("Never") .containers(Arrays.asList(new
-         * V1Container().name("b").image(image).env(env).setVolumeMounts(Arrays.asList(
-         * volumeMount)))));
-         */
-
-//        V1Pod pod = new V1Pod().metadata(new V1ObjectMeta().name(podName).namespace("default")).spec(new V1PodSpec()
-//                .restartPolicy("Never").containers(Arrays.asList(new V1Container().name("b").image(image).env(env).addCommandItem("sleep").addCommandItem("20"))));
-
         GenericKubernetesApi<V1Pod, V1PodList> podClient = new GenericKubernetesApi<>(V1Pod.class, V1PodList.class, "",
                 "v1", "pods", client);
 
