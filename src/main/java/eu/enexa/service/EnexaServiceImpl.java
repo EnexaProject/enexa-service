@@ -62,7 +62,6 @@ public class EnexaServiceImpl implements EnexaService {
         // do not use experiment.getLocalName() it will remove the first character !
 
         sharedDirLocalPath = sharedDirLocalPath +File.separator+appName+ File.separator + experiment.getURI().split("/")[experiment.getURI().split("/").length -1];
-        // TODO create directory
           File theDir = new File(sharedDirLocalPath);
           if (!theDir.exists()){
               boolean isCreated = theDir.mkdirs();
@@ -105,6 +104,7 @@ public class EnexaServiceImpl implements EnexaService {
 
     @Override
     public Model getMetadataEndpoint(String experimentIri) {
+        // todo : check if experimentIri is not valid then return error , or the check should be done on calling this method
         String[] endpointInfo = metadataManager.getMetadataEndpointInfo(experimentIri);
         Model model = ModelFactory.createDefaultModel();
         Resource experimentResource = model.createResource(experimentIri);
@@ -204,7 +204,7 @@ public class EnexaServiceImpl implements EnexaService {
          * messageDigest.update(moduleIri.getBytes()); String stringHash = new
          * String(messageDigest.digest());
          */
-        return "enexa-" + Integer.toString(moduleIri.hashCode() * 31 + (int) (System.currentTimeMillis()));
+        return "enexa_" + Integer.toString(moduleIri.hashCode() * 31 + (int) (System.currentTimeMillis()));
     }
 
     @Override
@@ -242,22 +242,34 @@ public class EnexaServiceImpl implements EnexaService {
     }
 
     @Override
-    public Model stopContainer(String experimentIri, String containerIri) {
-        Model model = ModelFactory.createDefaultModel();
-        // finishes the experiment with the given IRI by stopping all its remaining
-        // containers.
-
-        // list of all containers
-        // TODO : read from meta data or use labels ( we use meta data for now) get
-        // module instance from it and also module instance lead to container name
-        // updates and stores the meta data of the experiment in the shared directory
-        return model;
+    public Model stopContainer(String experimentIri, String containerID) {
+        //Model model = ModelFactory.createDefaultModel();
+        String resultOfStoppingTheContainer = containerManager.stopContainer(containerID);
+        LOGGER.info(resultOfStoppingTheContainer);
+        Model result = ModelFactory.createDefaultModel();
+        // TODO : check this part do we need an IRI or ID ?
+        Resource instance = result.createResource(containerID);
+        result.add(instance, ENEXA.experiment, result.createResource(experimentIri));
+        return result;
     }
 
     @Override
-    public Model finishExperiment() {
-        // TODO Auto-generated method stub
-        return null;
+    public Model finishExperiment(String experimentIri) {
+        // finishes the experiment with the given IRI by stopping all its remaining
+        // containers.
+        // list of all containers
+        // TODO : read from meta data or use labels ( we use meta data for now) get
+        List<String> containerNames = metadataManager.getAllContainerNames(experimentIri);
+        Model result = ModelFactory.createDefaultModel();
+        for(String containerName : containerNames){
+            String resultOfStop = containerManager.stopContainer(containerName);
+            LOGGER.info(containerName+ " stopped result is : "+ resultOfStop);
+            Resource instance = result.createResource(containerName);
+            result.add(instance, ENEXA.containerName, result.createResource(experimentIri));
+        }
+        // module instance from it and also module instance lead to container name
+        // updates and stores the meta data of the experiment in the shared directory
+        return result;
     }
 
 }

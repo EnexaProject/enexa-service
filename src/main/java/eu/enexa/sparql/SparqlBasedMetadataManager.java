@@ -1,6 +1,8 @@
 package eu.enexa.sparql;
 
 import java.net.http.HttpClient;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryHttp;
@@ -132,6 +134,22 @@ public class SparqlBasedMetadataManager implements MetadataManager, AutoCloseabl
             LOGGER.error("Couldn't get the expected result file from the meta data endpoint.");
         }
         return null;
+    }
+
+    @Override
+    public List<String> getAllContainerNames(String experimentIri) {
+        String query = "SELECT  ?name FROM <"+defaultMetaDataGraphIRI+"> WHERE {\n" +
+            "  ?instanceIRI <http://w3id.org/dice-research/enexa/ontology#containerName> ?name .\n" +
+            "  ?instanceIRI <http://w3id.org/dice-research/enexa/ontology#experiment> <"+experimentIri+"> .\n" +
+            "}";
+        QueryExecution qe = queryExecFactory.createQueryExecution(query);
+        ResultSet rs = qe.execSelect();
+        List<String> containerNames = new ArrayList<>();
+        while (rs.hasNext()) {
+            QuerySolution qs = rs.next();
+            containerNames.add(qs.getLiteral("name").getString());
+        }
+        return containerNames;
     }
 
 }

@@ -57,4 +57,14 @@ public class ModuleModel {
     public void setModel(Model model) {
         this.model = model;
     }
+
+    @Override
+    public String toString() {
+        return "ModuleModel{" +
+            "moduleIri='" + moduleIri + '\'' +
+            ", moduleUrl='" + moduleUrl + '\'' +
+            ", image='" + image + '\'' +
+            ", model=" + model +
+            '}';
+    }
 }
