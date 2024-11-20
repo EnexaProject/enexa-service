@@ -2,6 +2,7 @@ package eu.enexa.service;
 
 import java.util.AbstractMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The interface of a manager for containers that can be started and stopped by
@@ -39,5 +40,5 @@ public interface ContainerManager {
      * @param port
      * @return url as callable endpoint from outside of the container
      */
-    String resolveContainerEndpoint(String containerId, Integer port);
+    Map<String,String> resolveContainerEndpoint(String containerId, Integer port);
 }

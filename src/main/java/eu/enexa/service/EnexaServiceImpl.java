@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.vocabulary.RDF;
@@ -188,8 +189,9 @@ public class EnexaServiceImpl implements EnexaService {
         // when port is not null it means container provide an endpoint
         if(module.getPort()!=null){
             LOGGER.info("the port exist for this module the map port: "+module.getPort().toString());
-            String containerProvidedEndpoint = containerManager.resolveContainerEndpoint(containerId, module.getPort());
-            createdContainerModel.add(instanceRes, ENEXA.moduleURL, containerProvidedEndpoint);
+            Map<String,String> containerProvidedEndpoint = containerManager.resolveContainerEndpoint(containerId, module.getPort());
+            createdContainerModel.add(instanceRes, ENEXA.externalEndpointURL, containerProvidedEndpoint.get("externalEndpointURL"));
+            createdContainerModel.add(instanceRes, ENEXA.internalEndpointURL, containerProvidedEndpoint.get("internalEndpointURL"));
         }
 
         // TODO add start time

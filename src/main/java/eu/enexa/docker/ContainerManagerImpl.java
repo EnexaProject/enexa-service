@@ -13,11 +13,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-import java.util.UUID;
+
+import java.util.*;
 import java.io.File;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.List;
 
 
 //  Manages Docker containers, providing functionality to start, stop, and get the status of containers.
@@ -272,8 +270,10 @@ public class ContainerManagerImpl implements ContainerManager {
     }
 
     @Override
-    public String resolveContainerEndpoint(String containerId, Integer port) {
-        return "";
+    public Map<String,String> resolveContainerEndpoint(String containerId, Integer port) {
+        //todo implement this for docker
+        // get container name and use as url
+        return new HashMap<>();
     }
 
     /**

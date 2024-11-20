@@ -3,6 +3,7 @@ package eu.enexa.kubernetes;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import io.kubernetes.client.custom.IntOrString;
 import io.kubernetes.client.custom.Quantity;
@@ -91,7 +92,7 @@ public class ContainerManagerImpl implements ContainerManager {
      * @return the NodePort assigned to the created service
      * @throws ApiException if there's an error interacting with the Kubernetes API
      */
-    public Integer getServiceAsNodePort(String podUid, Integer podPort ,Map<String,String> labels) throws ApiException {
+    public Map<String,String> getServiceAsNodePort(String podUid, Integer podPort ,Map<String,String> labels) throws ApiException {
         LOGGER.info("Creating service as NodePort for pod UID: {}", podUid);
         try {
             if (client == null) {
@@ -143,7 +144,12 @@ public class ContainerManagerImpl implements ContainerManager {
         V1Service createdService = api.readNamespacedService(name, "default", null);
         LOGGER.info("Service created with NodePort: {}", createdService.getSpec().getPorts().get(0).getNodePort());
 
-        return createdService.getSpec().getPorts().get(0).getNodePort();
+        Map<String,String> serviceSpecs = new HashMap<>();
+        serviceSpecs.put("port", Objects.requireNonNull(createdService.getSpec().getPorts().get(0).getNodePort()).toString());
+        serviceSpecs.put("externalName",createdService.getSpec().getExternalName());
+        serviceSpecs.put("clusterIP",createdService.getSpec().getClusterIP());
+
+        return serviceSpecs;
     }
 
     /**
@@ -444,29 +450,44 @@ public class ContainerManagerImpl implements ContainerManager {
 
 
 @Override
-public String resolveContainerEndpoint(String containerId, Integer port){
-        LOGGER.info("start resolving the IP from ID" +containerId);
+public Map<String, String> resolveContainerEndpoint(String containerId, Integer port){
+        LOGGER.info("start resolving the IP from ID: {}",containerId);
+    Map<String, String> endpointMap = new HashMap<>();
+
     GenericKubernetesApi<V1Pod, V1PodList> podClient = new GenericKubernetesApi<>(
         V1Pod.class, V1PodList.class, "", "v1", "pods", client);
+
+
 try {
     // List all pods (you can filter by namespace if needed, e.g., "default" namespace)
-    V1PodList podList = podClient.list("default").getObject();
-    LOGGER.info("the list of all pods size is " + podList.getItems().size());
-    V1Pod targetPod = null;
-    // Iterate over the pods to find the one with the matching UID
-    for (V1Pod pod : podList.getItems()) {
-        LOGGER.info("podName : " + pod.getMetadata().getName() + " podUID"+ pod.getMetadata().getUid()+" POD IP :"+pod.getStatus().getPodIP());
-        if (pod.getMetadata().getUid().equals(containerId)) {
-            targetPod = pod;
-            LOGGER.info("POD is loaded");
-            break;
-        }
-    }
-
-    if (targetPod == null) {
-        LOGGER.info("targetPod is null");
+    V1PodList podList = podClient.list(nameSpace).getObject();
+    if (podList == null || podList.getItems().isEmpty()) {
+        LOGGER.error("No pods found in the '{}' namespace.",nameSpace);
         return null;
     }
+    LOGGER.info("Number of pods retrieved: {}", podList.getItems().size());
+
+//    V1Pod targetPod = null;
+//    // Iterate over the pods to find the one with the matching UID
+//    for (V1Pod pod : podList.getItems()) {
+//        LOGGER.info("podName : " + pod.getMetadata().getName() + " podUID"+ pod.getMetadata().getUid()+" POD IP :"+pod.getStatus().getPodIP());
+//        if (pod.getMetadata().getUid().equals(containerId)) {
+//            targetPod = pod;
+//            LOGGER.info("POD is loaded");
+//            break;
+//        }
+//    }
+
+    V1Pod targetPod = podList.getItems().stream()
+        .filter(pod -> containerId.equals(pod.getMetadata().getUid()))
+        .findFirst()
+        .orElse(null);
+
+    if (targetPod == null) {
+        LOGGER.warn("No pod found with UID: {}", containerId);
+        return null;
+    }
+    LOGGER.info("Target pod found: {}", targetPod.getMetadata().getName());
 
 // Wait for the pod to start running (with a timeout of 60 seconds)
     long startTime = System.currentTimeMillis();
@@ -486,15 +507,32 @@ try {
             }else{
                 LOGGER.info("pod_labels size: " + pod_labels.size());
             }
-            String ip = targetPod.getStatus().getPodIP();
+            String podIp = targetPod.getStatus().getPodIP();
+            String HostIP = targetPod.getStatus().getHostIP();
             LOGGER.info("status is {}",targetPod.getStatus().toString());
-            Integer podPortToOutsideOfPod = getServiceAsNodePort(containerId,port,pod_labels);
-            if(podPortToOutsideOfPod==null){
+            Map<String,String> serviceSpecs = getServiceAsNodePort(containerId,port,pod_labels);
+
+            if(serviceSpecs==null){
                 LOGGER.error("could not get a port for this");
              return null;
             }else {
-                LOGGER.info("return : "+ip + ":" + podPortToOutsideOfPod );
-                return ip + ":" + podPortToOutsideOfPod;
+                String serviceSpecsMapAsString = serviceSpecs.entrySet().stream()
+                    .map(entry -> entry.getKey() + "=" + entry.getValue())
+                    .collect(Collectors.joining(", "));
+
+                LOGGER.info(serviceSpecsMapAsString);
+
+                endpointMap.put("internalEndpointURL",podIp + ":" + port);
+                endpointMap.put("hostIP",HostIP);
+                endpointMap.put("externalEndpointURL",serviceSpecs.get("clusterIP") + ":" + serviceSpecs.get("port"));
+
+                String endpointMapAsString = endpointMap.entrySet().stream()
+                    .map(entry -> entry.getKey() + "=" + entry.getValue())
+                    .collect(Collectors.joining(", "));
+
+                LOGGER.info(endpointMapAsString);
+
+                return endpointMap;
             }
         }
 
