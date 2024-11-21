@@ -1,5 +1,6 @@
 package eu.enexa.service;
 
+import java.io.File;
 import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
@@ -41,4 +42,38 @@ public interface ContainerManager {
      * @return url as callable endpoint from outside of the container
      */
     Map<String,String> resolveContainerEndpoint(String containerId, Integer port);
+
+    /**
+     * Combines two path components to create a valid path.
+     * the directory will create if not exist
+     *
+     * @param partOneOfPath   The first part of the path.
+     * @param partTwoOfPath   The second part of the path.
+     * @return                The combined path.
+     */
+    default String makeTheDirectoryInThisPath(String partOneOfPath, String partTwoOfPath) {
+        if(partOneOfPath ==null && partTwoOfPath == null) return "";
+        assert partOneOfPath != null;
+        String path = combinePaths(partOneOfPath, partTwoOfPath);
+        File appPathDirectory = new File(path);
+        if(!appPathDirectory.exists()){
+            appPathDirectory.mkdirs();
+        }
+        return path;
+    }
+
+    /**
+     * Combines two path components to create a valid path, taking into account trailing separators.
+     *
+     * @param partOne   The first part of the path.
+     * @param partTwo   The second part of the path.
+     * @return          The combined path.
+     */
+    default String combinePaths(String partOne, String partTwo) {
+        String path = partOne + File.separator + partTwo;
+        if (partOne.endsWith(File.separator)) {
+            path = partOne + partTwo;
+        }
+        return path;
+    }
 }

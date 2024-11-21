@@ -132,7 +132,7 @@ public class ContainerManagerImpl implements ContainerManager {
         LOGGER.info("api client initiated :"+name);
         //TODO if need check if the service exist !
         try {
-            api.createNamespacedService("default", service, null, null, null, null);
+            api.createNamespacedService(nameSpace, service, null, null, null, null);
         } catch (NullPointerException e) {
             System.err.println("Caught NullPointerException while creating service: " + e.getMessage());
             e.printStackTrace();
@@ -141,7 +141,7 @@ public class ContainerManagerImpl implements ContainerManager {
             e.printStackTrace();
         }
         // Retrieve the created service to fetch the NodePort assigned by Kubernetes
-        V1Service createdService = api.readNamespacedService(name, "default", null);
+        V1Service createdService = api.readNamespacedService(name, nameSpace, null);
         LOGGER.info("Service created with NodePort: {}", createdService.getSpec().getPorts().get(0).getNodePort());
 
         Map<String,String> serviceSpecs = new HashMap<>();
@@ -197,8 +197,6 @@ public class ContainerManagerImpl implements ContainerManager {
         String containerWritablePath = buildWritableContainerPath(expIRI, hostBasePath);
         String containerModuleInstancePath = combinePaths(containerWritablePath, UUID.randomUUID().toString());
 
-        //String hostWritablePath = makeTheDirectoryInThisPath(hostBasePath,writeableDirectory);
-        //String hostModuleInstancePath = makeTheDirectoryInThisPath(hostWritablePath,moduleInstanceIRI);
 
         // Add environment variables related to shared directories
         addSharedDirectoryEnvVars(env, containerBasePath, containerModuleInstancePath, containerWritablePath);
@@ -229,7 +227,7 @@ public class ContainerManagerImpl implements ContainerManager {
         podSpec.setContainers(Arrays.asList(container));
 
         V1Pod pod = new V1Pod();
-        // Create a Pod with the PodSpec
+        // Create a Pod
         pod.setMetadata(new V1ObjectMeta().name(podName).namespace(nameSpace).labels(new HashMap<String,String>(){{
                 put("app",container.getName());
             }}));
@@ -352,71 +350,11 @@ public class ContainerManagerImpl implements ContainerManager {
         return container;
     }
 
-    //TODO : move following two method in a utility class shared between docker and kubernetes
-    /**
-     * Combines two path components to create a valid path.
-     * the directory will create if not exist
-     *
-     * @param partOneOfPath   The first part of the path.
-     * @param partTwoOfPath   The second part of the path.
-     * @return                The combined path.
-     */
-    private String makeTheDirectoryInThisPath(String partOneOfPath, String partTwoOfPath) {
-        LOGGER.info("makeTheDirectoryInThisPath {}/{}",partOneOfPath,partTwoOfPath);
-        if(partOneOfPath ==null && partTwoOfPath == null) return "";
-        String path = combinePaths(partOneOfPath, partTwoOfPath);
-        File appPathDirectory = new File(path);
-        if(!appPathDirectory.exists()){
-            appPathDirectory.mkdirs();
-        }
-        return path;
-    }
-
-    /**
-     * Combines two path components to create a valid path, taking into account trailing separators.
-     *
-     * @param partOne   The first part of the path.
-     * @param partTwo   The second part of the path.
-     * @return          The combined path.
-     */
-    public static String combinePaths(String partOne, String partTwo) {
-        String path = partOne + File.separator + partTwo;
-        if (partOne.endsWith(File.separator)) {
-            path = partOne + partTwo;
-        }
-        return path;
-    }
-
     @Override
     public String stopContainer(String containerId) {
         // TODO Auto-generated method stub
         return null;
     }
-
-//    @Override
-//    public String getContainerStatus(String podName) {
-//        LOGGER.info("client is base path:"+client.getBasePath()+" timeout : "+client.getConnectTimeout());
-//        CoreV1Api api = new CoreV1Api(client);
-//        LOGGER.info(" CoreV1Api initiated ");
-//        try {
-//            V1PodList list = api.listNamespacedPod(nameSpace, "false", null, null, null, null, null, null, null, null,
-//                    null);
-//            LOGGER.info("the list of pods size is "+list.getItems().size());
-//            LOGGER.info("looking for "+podName);
-//            for (V1Pod pod : list.getItems()) {
-//                LOGGER.info("podName : "+pod.getMetadata().getName());
-//                if (pod.getMetadata().getName().equals(podName)) {
-//                    return pod.getStatus().getPhase();
-//                }
-//            }
-//        } catch (ApiException e) {
-//            LOGGER.error("Got an exception while trying to get the status of \"" + podName + "\". Returning null.", e);
-//            LOGGER.error(e.getMessage());
-//            e.printStackTrace();
-//            return null;
-//        }
-//        return null;
-//    }
 
     @Override
     public String getContainerStatus(String podName) {
@@ -466,17 +404,6 @@ try {
         return null;
     }
     LOGGER.info("Number of pods retrieved: {}", podList.getItems().size());
-
-//    V1Pod targetPod = null;
-//    // Iterate over the pods to find the one with the matching UID
-//    for (V1Pod pod : podList.getItems()) {
-//        LOGGER.info("podName : " + pod.getMetadata().getName() + " podUID"+ pod.getMetadata().getUid()+" POD IP :"+pod.getStatus().getPodIP());
-//        if (pod.getMetadata().getUid().equals(containerId)) {
-//            targetPod = pod;
-//            LOGGER.info("POD is loaded");
-//            break;
-//        }
-//    }
 
     V1Pod targetPod = podList.getItems().stream()
         .filter(pod -> containerId.equals(pod.getMetadata().getUid()))

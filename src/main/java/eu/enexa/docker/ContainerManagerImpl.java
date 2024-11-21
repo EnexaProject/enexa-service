@@ -70,40 +70,6 @@ public class ContainerManagerImpl implements ContainerManager {
         LOGGER.info("docker client is pinged");
     }
 
-/**
-      Combines two path components to create a valid path.
-      the directory will create if not exist
-
-      @param partOneOfPath   The first part of the path.
-      @param partTwoOfPath   The second part of the path.
-      @return                The combined path.
-   */
-
-    private String makeTheDirectoryInThisPath(String partOneOfPath, String partTwoOfPath) {
-        String path = combinePaths(partOneOfPath, partTwoOfPath);
-        File appPathDirectory = new File(path);
-        if(!appPathDirectory.exists()){
-            appPathDirectory.mkdirs();
-        }
-        return path;
-    }
-
-    /**
-     * Combines two path components to create a valid path, taking into account trailing separators.
-     *
-     * @param partOne   The first part of the path.
-     * @param partTwo   The second part of the path.
-     * @return          The combined path.
-   */
-
-    public static String combinePaths(String partOne, String partTwo) {
-        String path = partOne + File.separator + partTwo;
-        if (partOne.endsWith(File.separator)) {
-            path = partOne + partTwo;
-        }
-        return path;
-    }
-
     @Override
     public String startContainer(String image, String containerName, List<AbstractMap.SimpleEntry<String, String>> variables,String hostSharedDirectory, String appName) {
         if (variables == null ){
