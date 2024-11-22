@@ -15,7 +15,6 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.vocabulary.RDF;
-import org.dice_research.enexa.vocab.Algorithm;
 import org.dice_research.enexa.vocab.ENEXA;
 import org.dice_research.rdf.RdfHelper;
 import org.dice_research.rdf.spring_jena.Jena2SpringUtils;
@@ -30,7 +29,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 

@@ -89,6 +89,7 @@ public class ExampleApplication implements AutoCloseable {
         LOGGER.info("Meta data can be found at {} in graph {}", metaDataEndpoint, metaDataGraph);
     }
 
+    //todo why no usage ?
     public void addKGFile(String kgFile) throws Exception {
         String metaFilePath = kgFile;
         // Move file if it is not located in the shared directory
@@ -130,7 +131,7 @@ public class ExampleApplication implements AutoCloseable {
             throw new IllegalStateException("Couldn't find the file resource.");
         }
         LOGGER.info("File resource {} has been created.", fileResource.getURI());
-        String kgFileIri = fileResource.getURI();
+        //String kgFileIri = fileResource.getURI();
         //
     }
 

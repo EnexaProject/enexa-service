@@ -54,20 +54,20 @@ public class SimpleClient implements AutoCloseable {
         }
         Resource expResource = RdfHelper.getSubjectResource(model, RDF.type, ENEXA.Experiment);
         if (expResource == null) {
-            throw new Exception("Couldn't find experiment resource.");
+            throw new IllegalStateException("Couldn't find experiment resource.");
         }
         experimentIRI = expResource.getURI();
         LOGGER.info("Started an experiment: {}", experimentIRI);
         // Get meta data endpoint and graph
         Resource resource = RdfHelper.getObjectResource(model, expResource, ENEXA.metaDataEndpoint);
         if (resource == null) {
-            throw new Exception("Couldn't find the experiment's meta data endpoint.");
+            throw new IllegalStateException("Couldn't find the experiment's meta data endpoint.");
         }
         //private String instanceIRI;
         String metaDataEndpoint = resource.getURI();
         resource = RdfHelper.getObjectResource(model, expResource, ENEXA.metaDataGraph);
         if (resource == null) {
-            throw new Exception("Couldn't find the experiment's meta data graph.");
+            throw new IllegalStateException("Couldn't find the experiment's meta data graph.");
         }
         String metaDataGraph = resource.getURI();
         LOGGER.info("Meta data can be found at {} in graph {}", metaDataEndpoint, metaDataGraph);
@@ -222,7 +222,7 @@ public class SimpleClient implements AutoCloseable {
         Model response = requestRDF(enexaURL + "/add-resource", fileDescription);
 
         if (response == null) {
-            throw new Exception("Couldn't add a resource to the meta data.");
+            throw new IllegalStateException("Couldn't add a resource to the meta data.");
         }
 
         // Get the new IRI of the resource
@@ -355,7 +355,7 @@ public class SimpleClient implements AutoCloseable {
             String response = requestPost(enexaURL + "/container-status", body);
 
             if (response == null) {
-                throw new Exception("Couldn't get the status of a container.");
+                throw new IllegalStateException("Couldn't get the status of a container.");
             }
             // Get the new IRI of the newly created module instance
             if (response.contains("run")) {
