@@ -15,7 +15,9 @@ public interface MetadataManager {
      *
      * @return
      */
+
     public Map<String,String> getMetadataEndpointInfo();
+
 
     /**
      * Returns a random IRI that can be used within the metadata graph to name
@@ -23,14 +25,14 @@ public interface MetadataManager {
      *
      * @return a random IRI that is not yet present in the metadata graph.
      */
-    public String generateResourceIRI();
+    String generateResourceIRI();
 
     /**
      * Adds the given triples to the metadata graph.
      *
      * @param model the triples that should be added to the metadata graph
      */
-    public void addMetaData(Model model);
+    void addMetaData(Model model);
 
     /**
      * Retrieve the container or pod name of the module instance with the given IRI
@@ -42,7 +44,7 @@ public interface MetadataManager {
      *                      should be retrieved
      * @return the container or pod name of the module instance with the given IRI
      */
-    public String getContainerName(String experimentIri, String instanceIRI);
+    String getContainerName(String experimentIri, String instanceIRI);
 
     /**
      * Retrieve all the container or pod name of the given IRI
@@ -52,5 +54,5 @@ public interface MetadataManager {
      *                      involved
      * @return the container or pod name of the module instance with the given IRI
      */
-    public List<String> getAllContainersName(String experimentIri);
+    List<String> getAllContainerNames(String experimentIri);
 }

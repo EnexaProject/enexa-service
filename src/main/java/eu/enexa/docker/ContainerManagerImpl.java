@@ -11,10 +11,14 @@ import com.github.dockerjava.core.DockerClientImpl;
 import eu.enexa.service.ContainerManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Value;
+
 
 import java.util.*;
+
 
 
 //  Manages Docker containers, providing functionality to start, stop, and get the status of containers.
@@ -42,6 +46,11 @@ public class ContainerManagerImpl implements ContainerManager {
 //
      // Constructs a new ContainerManagerImpl and initializes the Docker client.
 
+    @Value("${docker.traefik.hostname}")
+    private String hostName ;
+
+    @Value("${docker.traefik.loadbalancer.port}")
+    private String traefikLoadBalancerPort;
 
     public ContainerManagerImpl(){
         LOGGER.info("start initiating the ContainerManagerImpl");
@@ -123,10 +132,29 @@ public class ContainerManagerImpl implements ContainerManager {
             // add extra requirement based on the image name
             dockerHostConfig = addExceptionalConditions(image, allBinds, dockerHostConfig);
 
+            Map<String, String> labels = new HashMap<>();
+            labels.put("traefik.enable","true");
+
+            labels.put("traefik.http.routers."+containerName+".rule","Host(\""+hostName+"\") && PathPrefix(\"/"+containerName+"\")");
+            labels.put("traefik.http.routers."+containerName+".service",containerName);
+            labels.put("traefik.http.routers."+containerName+".entrypoints","web");
+
+            labels.put("traefik.http.middlewares."+containerName+"-prefix.stripprefix.prefixes","/"+containerName);
+            labels.put("traefik.http.middlewares."+containerName+"-prefix.stripprefix.forceSlash","true");
+
+            labels.put("traefik.http.routers."+containerName+".middlewares",containerName+"-prefix");
+
+
+//            LOGGER.info("traefik.http.routers."+containerName+".entrypoints:web");
+
+            labels.put("traefik.http.services."+containerName+".loadbalancer.server.port",traefikLoadBalancerPort);
+            LOGGER.info("traefik.http.services."+containerName+".loadbalancer.server.port:"+traefikLoadBalancerPort);
+
             CreateContainerResponse container = dockerClient.createContainerCmd(image)
                 .withName(containerName)
                 .withEnv(mapToEnvironmentArray(variables))
                 .withHostConfig(dockerHostConfig)
+                .withLabels(labels)
                 .exec();
 
             dockerClient.startContainerCmd(container.getId()).exec();

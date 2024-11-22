@@ -77,5 +77,6 @@ public class ModuleModel {
 
     public String toString() {
         return moduleIri + " - " + moduleUrl + " - " + image + " - " + model.toString();
+
     }
 }

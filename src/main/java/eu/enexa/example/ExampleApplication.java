@@ -296,10 +296,6 @@ public class ExampleApplication implements AutoCloseable {
         LOGGER.info("module instance {} has been created.", instanceIRI);
     }
 
-    public void finishExperiment() {
-        // TODO Auto-generated method stub
-    }
-
     protected Model requestRDF(String url, Model data) {
         HttpPost request = new HttpPost(url);
         request.setHeader("Accept", "application/ld+json");

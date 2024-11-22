@@ -209,7 +209,9 @@ public class EnexaServiceImpl implements EnexaService {
          * messageDigest.update(moduleIri.getBytes()); String stringHash = new
          * String(messageDigest.digest());
          */
+
         return "enexa-" + (moduleIri.hashCode() * 31 + (int) (System.currentTimeMillis()));
+
     }
 
     @Override
@@ -252,8 +254,10 @@ public class EnexaServiceImpl implements EnexaService {
 
     @Override
     public Model stopContainer(String experimentIri, String containerID) {
+
         Model model = ModelFactory.createDefaultModel();
         String ResultOfStoppingTheContainer = containerManager.stopContainer(containerID);
+
         Model result = ModelFactory.createDefaultModel();
         // TODO : check this part do we need an IRI or ID ?
         Resource instance = result.createResource(containerID);
@@ -266,8 +270,10 @@ public class EnexaServiceImpl implements EnexaService {
         // finishes the experiment with the given IRI by stopping all its remaining
         // containers.
         // list of all containers
-        // TODO : read from meta data or use labels ( we use meta data for now)
-        List<String> containerNames = metadataManager.getAllContainersName(experimentIri);
+
+        // TODO : read from meta data or use labels ( we use meta data for now) get
+        List<String> containerNames = metadataManager.getAllContainerNames(experimentIri);
+
         Model result = ModelFactory.createDefaultModel();
         for(String containerName : containerNames){
             String resultOfStop = containerManager.stopContainer(containerName);
