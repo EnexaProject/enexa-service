@@ -31,7 +31,7 @@ import java.io.StringWriter;
 import java.net.http.HttpClient;
 public class SimpleClient implements AutoCloseable {
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleClient.class);
-    private CloseableHttpClient client;
+    private final CloseableHttpClient client;
     private static final String SHARED_DIR_PREFIX = "enexa-dir:/";
     private String experimentIRI;
     //private String instanceIRI;

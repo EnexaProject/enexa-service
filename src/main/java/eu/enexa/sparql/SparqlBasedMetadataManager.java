@@ -1,9 +1,7 @@
 package eu.enexa.sparql;
 
 import java.net.http.HttpClient;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
@@ -56,9 +54,6 @@ public class SparqlBasedMetadataManager implements MetadataManager, AutoCloseabl
      */
     private UpdateExecutionFactory updateExecFactory = null;
 
-//    public SparqlBasedMetadataManager(@Value("${ENEXA_META_DATA_ENDPOINT}") String sparqlEndpointUrl) {
-//        this(sparqlEndpointUrl, DEFAULT_META_DATA_GRAPH_IRI, DEFAULT_RESOURCE_NAMESPACE);
-//    }
 
     public SparqlBasedMetadataManager(@Value("${ENEXA_META_DATA_ENDPOINT}") String sparqlEndpointUrl,
             @Value("${ENEXA_META_DATA_GRAPH}") String defaultMetaDataGraphIRI,
@@ -67,9 +62,9 @@ public class SparqlBasedMetadataManager implements MetadataManager, AutoCloseabl
         this.defaultMetaDataGraphIRI = defaultMetaDataGraphIRI;
         this.resourceNamespace = resourceNamespace;
         LOGGER.info("initiate query execute");
-        LOGGER.info(" sparqlEndpointUrl is : "+sparqlEndpointUrl);
-        LOGGER.info(" defaultMetaDataGraphIRI is : "+defaultMetaDataGraphIRI);
-        LOGGER.info(" resourceNamespace is : "+resourceNamespace);
+        LOGGER.info(" sparqlEndpointUrl is: {}",sparqlEndpointUrl);
+        LOGGER.info(" defaultMetaDataGraphIRI is{}: ",defaultMetaDataGraphIRI);
+        LOGGER.info(" resourceNamespace is: {}",resourceNamespace);
         HttpClient client = HttpClient.newHttpClient();
         DatasetDescription desc = new DatasetDescription();
         desc.addNamedGraphURI(defaultMetaDataGraphIRI);
@@ -79,14 +74,23 @@ public class SparqlBasedMetadataManager implements MetadataManager, AutoCloseabl
     }
 
     @Override
-    public String[] getMetadataEndpointInfo(String experimentIri) {
-        return new String[] { sparqlEndpointUrl, defaultMetaDataGraphIRI };
+    public Map<String,String> getMetadataEndpointInfo() {
+        Map<String,String> info = new HashMap<>();
+        if(sparqlEndpointUrl == null) {
+            LOGGER.warn("sparqlEndpointUrl is null");
+        }
+        if(defaultMetaDataGraphIRI == null) {
+            LOGGER.warn("defaultMetaDataGraphIRI is null");
+        }
+
+        info.put("sparqlEndpointUrl",sparqlEndpointUrl);
+        info.put("defaultMetaDataGraphIRI",defaultMetaDataGraphIRI);
+        return info;
     }
 
     @Override
     public String generateResourceIRI() {
-        String resourceIri = resourceNamespace + UUID.randomUUID().toString();
-        return resourceIri;
+        return resourceNamespace + UUID.randomUUID();
     }
 
     @Override
@@ -99,12 +103,10 @@ public class SparqlBasedMetadataManager implements MetadataManager, AutoCloseabl
                     update = updateExecFactory.createUpdateProcessor(query);
                     update.execute();
                 }catch (Exception ex){
-                    ex.printStackTrace();
                     LOGGER.error("Error executing query: {}", query, ex);
                 }
             }
         }catch (Exception ex){
-            ex.printStackTrace();
             LOGGER.error("error happened",ex);
         }
     }
@@ -125,10 +127,10 @@ public class SparqlBasedMetadataManager implements MetadataManager, AutoCloseabl
 
     @Override
     public String getContainerName(String experimentIri, String instanceIRI) {
-        LOGGER.info("getting container name ");
+        //LOGGER.info("getting container name ");
         String query = "SELECT ?name FROM <"+defaultMetaDataGraphIRI+"> WHERE {" + "<" + instanceIRI
             + "> <http://w3id.org/dice-research/enexa/ontology#containerName> ?name }";
-        LOGGER.info(" - query is : "+query);
+        LOGGER.info(" - query is: {}", query);
         QueryExecution qe = queryExecFactory.createQueryExecution(query);
 
         ResultSet rs = qe.execSelect();

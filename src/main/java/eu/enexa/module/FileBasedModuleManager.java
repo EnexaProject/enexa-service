@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import org.apache.commons.compress.utils.FileNameUtils;
 import org.apache.jena.rdf.model.*;
@@ -38,15 +39,15 @@ public class FileBasedModuleManager implements ModuleManager {
         }else {
             File enexaModuleDirectory = new File(path);
             if (!enexaModuleDirectory.exists()) {
-                LOGGER.error(enexaModuleDirectory.getAbsolutePath() + " is not exist");
+                LOGGER.error("{} is not exist", enexaModuleDirectory.getAbsolutePath());
                 //throw new IOException(path + " is not exist");
             } else {
-                LOGGER.info(enexaModuleDirectory.getAbsolutePath() + " exist");
+                LOGGER.info("{} exist", enexaModuleDirectory.getAbsolutePath());
                 addFileOrDirectory(enexaModuleDirectory);
-                LOGGER.info("modules size is : "+ modules.size());
-                for (ModuleModel module : modules.values()) {
-                    LOGGER.info("   -"+module.toString());
-                }
+                LOGGER.info("modules size is : {}", modules.size());
+//                for (ModuleModel module : modules.values()) {
+//                    LOGGER.info("   -{}", module.toString());
+//                }
             }
         }
     }
@@ -70,7 +71,7 @@ public class FileBasedModuleManager implements ModuleManager {
         }
         // If it is a directory, iterate over its content.
         if (moduleFile.isDirectory()) {
-            for (File file : moduleFile.listFiles()) {
+            for (File file : Objects.requireNonNull(moduleFile.listFiles())) {
                 addFileOrDirectory(file);
             }
         } else {
@@ -113,8 +114,8 @@ public class FileBasedModuleManager implements ModuleManager {
                     }
                 }
 
-                // expose Port ?
-                // TODO add it to ENEXA no hardcode
+                // find if it exposes a Port
+                //TODO use version  0.0.3 of enexa java utils after merged with develop branch and remove hardcoded part "exposes_port"
                 Literal port = RdfHelper.getLiteral(model, enexaModule, ResourceFactory.createProperty("http://w3id.org/dice-research/enexa/ontology#", "exposes_port"));
 
 

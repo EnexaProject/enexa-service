@@ -1,6 +1,5 @@
 package eu.enexa.kubernetes;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -114,8 +113,8 @@ public class ContainerManagerImpl implements ContainerManager {
             LOGGER.info("Service name after trimming: {}", name);
         }
 
-        V1ServicePort serviceport = new V1ServicePortBuilder().withPort(Integer.valueOf(podPort)).withTargetPort(new IntOrString(0)).build();
-        LOGGER.info("service is :"+name);
+        V1ServicePort serviceport = new V1ServicePortBuilder().withPort(podPort).withTargetPort(new IntOrString(0)).build();
+        LOGGER.info("service is :{}", name);
         V1Service service = new V1ServiceBuilder()
             .withNewMetadata().withName(name).endMetadata()
             .withNewSpec()
@@ -129,16 +128,14 @@ public class ContainerManagerImpl implements ContainerManager {
 
         // Create Service in Kubernetes
         CoreV1Api api = new CoreV1Api(client);
-        LOGGER.info("api client initiated :"+name);
+        LOGGER.info("api client initiated :{}", name);
         //TODO if need check if the service exist !
         try {
             api.createNamespacedService(nameSpace, service, null, null, null, null);
         } catch (NullPointerException e) {
             System.err.println("Caught NullPointerException while creating service: " + e.getMessage());
-            e.printStackTrace();
         } catch (ApiException e) {
             System.err.println("API Exception: " + e.getResponseBody());
-            e.printStackTrace();
         }
         // Retrieve the created service to fetch the NodePort assigned by Kubernetes
         V1Service createdService = api.readNamespacedService(name, nameSpace, null);
@@ -187,7 +184,7 @@ public class ContainerManagerImpl implements ContainerManager {
         LOGGER.info("ENEXA_EXPERIMENT_IRI: {}", expIRI);
 
         // Validate IRI
-        if(expIRI.equals("")||expIRI.length()<10){
+        if(expIRI.length() < 10){
             LOGGER.warn("ENEXA_EXPERIMENT_IRI is null or less than 10 character");
         }
 
@@ -240,12 +237,10 @@ public class ContainerManagerImpl implements ContainerManager {
 
             V1Pod latestPod = podClient.create(pod).throwsApiException().getObject();
             String latestPodUid = latestPod.getMetadata().getUid();
-            LOGGER.info("latestPodUID : "+latestPodUid);
+            LOGGER.info("latestPodUID : {}", latestPodUid);
             return latestPodUid;
         } catch (ApiException e) {
-            e.printStackTrace();
-            LOGGER.error("Got an exception while trying to create an instance of \"" + image + "\". Returning null.",
-                    e);
+            LOGGER.error("Got an exception while trying to create an instance of \"{}\". Returning null.", image, e);
             return null;
         }
     }
@@ -323,7 +318,7 @@ public class ContainerManagerImpl implements ContainerManager {
     /**
      * Creates the resource requirements for the container.
      */
-    //TODO 8Gi should be configable ?
+    //TODO 8Gi should be configurable ?
     private V1ResourceRequirements createResourceRequirements() {
         V1ResourceRequirements resourceRequirements = new V1ResourceRequirements();
         Map<String, Quantity> requests = new HashMap<>();
@@ -358,7 +353,7 @@ public class ContainerManagerImpl implements ContainerManager {
 
     @Override
     public String getContainerStatus(String podName) {
-        LOGGER.info("client is base path:" + client.getBasePath() + " timeout : " + client.getConnectTimeout());
+        LOGGER.info("client is base path:{} timeout : {}", client.getBasePath(), client.getConnectTimeout());
         GenericKubernetesApi<V1Pod, V1PodList> podClient = new GenericKubernetesApi<>(
             V1Pod.class, V1PodList.class, "", "v1", "pods", client);
         LOGGER.info("GenericKubernetesApi for Pods initiated ");
@@ -367,10 +362,10 @@ public class ContainerManagerImpl implements ContainerManager {
             KubernetesApiResponse<V1PodList> response = podClient.list(nameSpace);
             if (response.isSuccess()) {
                 V1PodList podList = response.getObject();
-                LOGGER.info("the list of pods size is " + podList.getItems().size());
-                LOGGER.info("looking for " + podName);
+                LOGGER.info("the list of pods size is {}", podList.getItems().size());
+                LOGGER.info("looking for {}", podName);
                 for (V1Pod pod : podList.getItems()) {
-                    LOGGER.info("podName : " + pod.getMetadata().getName());
+                    LOGGER.info("podName : {}", pod.getMetadata().getName());
                     if (pod.getMetadata().getName().equals(podName)) {
                         return pod.getStatus().getPhase();
                     }
@@ -422,7 +417,7 @@ try {
         LOGGER.info("checking the status of the pod");
         // Check if the pod is in the 'Running' state
         String podPhase = targetPod.getStatus().getPhase();
-        LOGGER.info("podPhase : " + podPhase);
+        LOGGER.info("podPhase : {}", podPhase);
         if ("Running".equals(podPhase)) {
             // Create the service as a Nodeport
             // get new port
@@ -465,7 +460,7 @@ try {
 
 
         if (System.currentTimeMillis() - startTime > 180 * 1000) {
-            LOGGER.error("Pod with UID " + containerId + " did not start running within 180 seconds");
+            LOGGER.error("Pod with UID {} did not start running within 180 seconds", containerId);
             return null;
         }
 
@@ -479,7 +474,7 @@ try {
     }
 
 }catch (Exception ex){
-    LOGGER.error("Failed to resolve endpoint" + ex.getMessage());
+    LOGGER.error("Failed to resolve endpoint{}", ex.getMessage());
     return null;
 }
 }

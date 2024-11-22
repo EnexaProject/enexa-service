@@ -15,12 +15,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
-import java.io.File;
 
 
 //  Manages Docker containers, providing functionality to start, stop, and get the status of containers.
-
-
 
 @Profile("docker")
 @Component("dockerContainerManager")
@@ -39,7 +36,7 @@ public class ContainerManagerImpl implements ContainerManager {
      // Docker client used for interacting with the Docker daemon.
 
 
-    private DockerClient dockerClient;
+    private final DockerClient dockerClient;
 
 
 //
@@ -85,7 +82,7 @@ public class ContainerManagerImpl implements ContainerManager {
                     expIRI = v.getValue().toString();
                 }
             }
-            if(expIRI.equals("")||expIRI.length()<10){
+            if(expIRI.length()<10){
                 LOGGER.warn("ENEXA_EXPERIMENT_IRI is null or less than 10 character");
             }
 
@@ -114,8 +111,8 @@ public class ContainerManagerImpl implements ContainerManager {
             allBinds.add(new Bind(hostWritablePath, new Volume(containerWritablePath),AccessMode.rw));
             allBinds.add(new Bind(hostSharedDirectory, new Volume(containerSharedDirectory),AccessMode.ro));
 
-            LOGGER.info("this path from host :"+hostSharedDirectory+" mapped to this path in container"+containerBasePath);
-            LOGGER.info("this path from host :"+hostWritablePath+" mapped to this path in container "+containerWritablePath);
+            LOGGER.info("this path from host :{} mapped to this path in container{}", hostSharedDirectory, containerBasePath);
+            LOGGER.info("this path from host :{} mapped to this path in container {}", hostWritablePath, containerWritablePath);
             //LOGGER.info("this path from host :"+hostModuleInstancePath+" mapped to this path in container "+containerModuleInstancePath);
 
             HostConfig dockerHostConfig = HostConfig
@@ -123,7 +120,7 @@ public class ContainerManagerImpl implements ContainerManager {
                 .withNetworkMode(NETWORK_NAME)
                 .withBinds(allBinds);
 
-            // add extra requirment based on the image name
+            // add extra requirement based on the image name
             dockerHostConfig = addExceptionalConditions(image, allBinds, dockerHostConfig);
 
             CreateContainerResponse container = dockerClient.createContainerCmd(image)

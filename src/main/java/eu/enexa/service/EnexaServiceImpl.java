@@ -38,7 +38,6 @@ public class EnexaServiceImpl implements EnexaService {
 
     private static final String metaDataEndpoint = System.getenv("ENEXA_META_DATA_ENDPOINT");
 
-    // If service need used by different applications then this should set from outside ( with a setter)
     @Value("${enexa.appName}")
     private  String appName ;
     private static final String sharedDirectory = System.getenv("ENEXA_SHARED_DIRECTORY");
@@ -79,17 +78,17 @@ public class EnexaServiceImpl implements EnexaService {
          * graph IRI in which the metadata of the experiment can be found.
          */
 
-        String[] metaDataInfos = metadataManager.getMetadataEndpointInfo(experimentIRI);
-        if (metaDataInfos.length == 0) {
+        Map<String,String> metaDataInfos = metadataManager.getMetadataEndpointInfo();
+        if (metaDataInfos.isEmpty() || (metaDataInfos.get("sparqlEndpointUrl") == null && metaDataInfos.get("defaultMetaDataGraphIRI") == null)) {
             LOGGER.error("there is no data in metadata for this experiments: " + experimentIRI);
         } else {
-            Property sparqlEndpoint = ResourceFactory.createProperty(metaDataInfos[0]);
+            Property sparqlEndpoint = ResourceFactory.createProperty(metaDataInfos.get("sparqlEndpointUrl"));
             model.add(experiment, ENEXA.metaDataEndpoint, sparqlEndpoint);
 
-            if (metaDataInfos.length > 1) {
+            if (metaDataInfos.get("defaultMetaDataGraphIRI") != null) {
                 // graphIRI
                 // TODO : check if ENEXA.metaDataGraph is correct
-                Property graphIRI = ResourceFactory.createProperty(metaDataInfos[1]);
+                Property graphIRI = ResourceFactory.createProperty(metaDataInfos.get("defaultMetaDataGraphIRI"));
                 model.add(experiment, ENEXA.metaDataGraph, graphIRI);
             }
         }
@@ -102,12 +101,12 @@ public class EnexaServiceImpl implements EnexaService {
     @Override
     public Model getMetadataEndpoint(String experimentIri) {
         // todo : check if experimentIri is not valid then return error , or the check should be done on calling this method
-        String[] endpointInfo = metadataManager.getMetadataEndpointInfo(experimentIri);
+        Map<String,String> endpointInfo = metadataManager.getMetadataEndpointInfo();
         Model model = ModelFactory.createDefaultModel();
         Resource experimentResource = model.createResource(experimentIri);
         model.add(experimentResource, RDF.type, ENEXA.Experiment);
-        model.add(experimentResource, ENEXA.metaDataEndpoint, model.createResource(endpointInfo[0]));
-        model.add(experimentResource, ENEXA.metaDataGraph, model.createResource(endpointInfo[1]));
+        model.add(experimentResource, ENEXA.metaDataEndpoint, model.createResource(endpointInfo.get("sparqlEndpointUrl")));
+        model.add(experimentResource, ENEXA.metaDataGraph, model.createResource(endpointInfo.get("defaultMetaDataGraphIRI")));
         return model;
     }
 
@@ -158,14 +157,14 @@ public class EnexaServiceImpl implements EnexaService {
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_META_DATA_ENDPOINT", metaDataEndpoint));
 
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_META_DATA_GRAPH",
-                metadataManager.getMetadataEndpointInfo(scModel.getExperiment())[1]));
+                metadataManager.getMetadataEndpointInfo().get("defaultMetaDataGraphIRI")));
 
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_IRI", instanceIri));
 
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_MODULE_INSTANCE_IRI", scModel.getInstanceIri()));
 
         // TODO: update this
-        if (System.getenv("ENEXA_SERVICE_URL").equals("")) {
+        if (System.getenv("ENEXA_SERVICE_URL").isEmpty()) {
             LOGGER.error("ENEXA_SERVICE_URL environment is null");
         } else {
             LOGGER.info("ENEXA_SERVICE_URL is : " + System.getenv("ENEXA_SERVICE_URL"));
@@ -185,10 +184,9 @@ public class EnexaServiceImpl implements EnexaService {
         Resource instanceRes = createdContainerModel.getResource(instanceIri);
         createdContainerModel.add(instanceRes, ENEXA.containerId, containerId);
 
-        LOGGER.info("check if Port exist ");
         // when port is not null it means container provide an endpoint
         if(module.getPort()!=null){
-            LOGGER.info("the port exist for this module the map port: "+module.getPort().toString());
+            LOGGER.info("the port exist for this module the map port: {}", module.getPort().toString());
             Map<String,String> containerProvidedEndpoint = containerManager.resolveContainerEndpoint(containerId, module.getPort());
             createdContainerModel.add(instanceRes, ENEXA.externalEndpointURL, containerProvidedEndpoint.get("externalEndpointURL"));
             createdContainerModel.add(instanceRes, ENEXA.internalEndpointURL, containerProvidedEndpoint.get("internalEndpointURL"));
@@ -211,7 +209,7 @@ public class EnexaServiceImpl implements EnexaService {
          * messageDigest.update(moduleIri.getBytes()); String stringHash = new
          * String(messageDigest.digest());
          */
-        return "enexa-" + Integer.toString(moduleIri.hashCode() * 31 + (int) (System.currentTimeMillis()));
+        return "enexa-" + (moduleIri.hashCode() * 31 + (int) (System.currentTimeMillis()));
     }
 
     @Override
@@ -234,17 +232,17 @@ public class EnexaServiceImpl implements EnexaService {
     @Override
     public Model containerStatus(String experimentIri, String instanceIRI) {
         LOGGER.info(">> get container status");
-        LOGGER.info("experimentIri is : "+ experimentIri);
-        LOGGER.info("instanceIRI is : "+ instanceIRI);
+        LOGGER.info("experimentIri is : {}", experimentIri);
+        LOGGER.info("instanceIRI is : {}", instanceIRI);
         // Query container / pod name
         String podName = metadataManager.getContainerName(experimentIri, instanceIRI);
         if(podName == null){
             LOGGER.error(" could not find the pod name !!!");
         }
-        LOGGER.info("pod/container name is : "+ podName);
+        LOGGER.info("pod/container name is : {}", podName);
         // Get status
         String status = containerManager.getContainerStatus(podName);
-        LOGGER.info("container status is : "+ status);
+        LOGGER.info("container status is : {}", status);
         Model result = ModelFactory.createDefaultModel();
         Resource instance = result.createResource(instanceIRI);
         result.add(instance, ENEXA.experiment, result.createResource(experimentIri));
@@ -255,7 +253,7 @@ public class EnexaServiceImpl implements EnexaService {
     @Override
     public Model stopContainer(String experimentIri, String containerID) {
         Model model = ModelFactory.createDefaultModel();
-        String ResultOfDtoppingTheContainer = containerManager.stopContainer(containerID);
+        String ResultOfStoppingTheContainer = containerManager.stopContainer(containerID);
         Model result = ModelFactory.createDefaultModel();
         // TODO : check this part do we need an IRI or ID ?
         Resource instance = result.createResource(containerID);
@@ -265,16 +263,15 @@ public class EnexaServiceImpl implements EnexaService {
 
     @Override
     public Model finishExperiment(String experimentIri) {
-        // TODO Auto-generated method stub
         // finishes the experiment with the given IRI by stopping all its remaining
         // containers.
         // list of all containers
-        // TODO : read from meta data or use labels ( we use meta data for now) get
+        // TODO : read from meta data or use labels ( we use meta data for now)
         List<String> containerNames = metadataManager.getAllContainersName(experimentIri);
         Model result = ModelFactory.createDefaultModel();
         for(String containerName : containerNames){
             String resultOfStop = containerManager.stopContainer(containerName);
-            LOGGER.info(containerName+ " stopped result is : "+ resultOfStop);
+            LOGGER.info("{} stopped result is : {}", containerName, resultOfStop);
             Resource instance = result.createResource(containerName);
             result.add(instance, ENEXA.containerName, result.createResource(experimentIri));
         }
