@@ -255,8 +255,8 @@ public class EnexaServiceImpl implements EnexaService {
     @Override
     public Model stopContainer(String experimentIri, String containerID) {
 
-        Model model = ModelFactory.createDefaultModel();
-        String ResultOfStoppingTheContainer = containerManager.stopContainer(containerID);
+        //Model model = ModelFactory.createDefaultModel();
+        //String ResultOfStoppingTheContainer = containerManager.stopContainer(containerID);
 
         Model result = ModelFactory.createDefaultModel();
         // TODO : check this part do we need an IRI or ID ?

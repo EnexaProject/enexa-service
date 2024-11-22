@@ -12,7 +12,6 @@ import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.io.entity.StringEntity;
-import org.apache.jena.base.Sys;
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -34,16 +33,7 @@ public class SimpleClient implements AutoCloseable {
     private final CloseableHttpClient client;
     private static final String SHARED_DIR_PREFIX = "enexa-dir:/";
     private String experimentIRI;
-    //private String instanceIRI;
-    private String metaDataEndpoint;
-    private String metaDataGraph;
-    private QueryExecutionFactory queryExecFactory;
-    private String enexaURL = "http://192.168.49.2:30479"; // "http://localhost:8081";
-    private static final String STATUS_PENDING = "Pending";
-    private static final String STATUS_RUNNING = "Running";
-    private final String appName = "app3";
-
-    private final String appPath = "/home/farshad/test/enexa/shared";
+    private final String enexaURL = "http://192.168.49.2:30479"; // "http://localhost:8081";
 
     /**
      * A simple application demonstrating the development of a client that utilizes the ENEXA service.
@@ -73,12 +63,13 @@ public class SimpleClient implements AutoCloseable {
         if (resource == null) {
             throw new Exception("Couldn't find the experiment's meta data endpoint.");
         }
-        metaDataEndpoint = resource.getURI();
+        //private String instanceIRI;
+        String metaDataEndpoint = resource.getURI();
         resource = RdfHelper.getObjectResource(model, expResource, ENEXA.metaDataGraph);
         if (resource == null) {
             throw new Exception("Couldn't find the experiment's meta data graph.");
         }
-        metaDataGraph = resource.getURI();
+        String metaDataGraph = resource.getURI();
         LOGGER.info("Meta data can be found at {} in graph {}", metaDataEndpoint, metaDataGraph);
     }
 
@@ -202,7 +193,9 @@ public class SimpleClient implements AutoCloseable {
     public String addFile(String fileToAdd, String moduleName) throws Exception {
         // Move file if it is not located in the shared directory
         File json = new File(fileToAdd);
-        File dest = new File(appPath + File.separator+ appName+File.separator+experimentIRI.split("/")[experimentIRI.split("/").length -1] +File.separator +moduleName +File.separator+json.getName());
+        String appName = "app3";
+        String appPath = "/home/farshad/test/enexa/shared";
+        File dest = new File(appPath + File.separator+ appName +File.separator+experimentIRI.split("/")[experimentIRI.split("/").length -1] +File.separator +moduleName +File.separator+json.getName());
         try {
             FileUtils.copyFile(json, dest);
         } catch (IOException e) {
@@ -236,7 +229,7 @@ public class SimpleClient implements AutoCloseable {
         Resource fileResource = RdfHelper.getSubjectResource(response, RDF.type,
             response.createResource("http://www.w3.org/ns/prov#Entity"));
         if (fileResource == null) {
-            throw new Exception("Couldn't find the file resource.");
+            throw new IllegalStateException("Couldn't find the file resource.");
         }
         LOGGER.info("File resource {} has been created.", fileResource.getURI());
         return fileResource.getURI();
@@ -269,12 +262,12 @@ public class SimpleClient implements AutoCloseable {
         Model response = requestRDF(enexaURL + "/start-container", instanceModel);
 
         if (response == null) {
-            throw new Exception("Couldn't start a container.");
+            throw new IllegalStateException("Couldn't start a container.");
         }
         // Get the new IRI of the newly created module instance
         Resource instanceResource = RdfHelper.getSubjectResource(response, RDF.type, ENEXA.ModuleInstance);
         if (instanceResource == null) {
-            throw new Exception("Couldn't find module instance resource.");
+            throw new IllegalStateException("Couldn't find module instance resource.");
         }
         return instanceResource.getURI();
     }
@@ -298,7 +291,7 @@ public class SimpleClient implements AutoCloseable {
             String resultPath=app.findResultPath(metaDataEndPoint, extractionInstanceIRI);
             System.out.println("result is saved at : "+ resultPath);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException("An unexpected error occurred", e);
         }
     }
 
@@ -313,8 +306,7 @@ public class SimpleClient implements AutoCloseable {
 
 
         LOGGER.info("METADATA endpoint is :"+metaDataEndPoint);
-        DatasetDescription desc = new DatasetDescription();
-        queryExecFactory = new QueryExecutionFactoryHttp(metaDataEndPoint, new DatasetDescription(), HttpClient.newHttpClient());
+        QueryExecutionFactory queryExecFactory = new QueryExecutionFactoryHttp(metaDataEndPoint, new DatasetDescription(), HttpClient.newHttpClient());
         queryExecFactory = new QueryExecutionFactoryPaginated(queryExecFactory, 10);
 
 
@@ -359,7 +351,6 @@ public class SimpleClient implements AutoCloseable {
             "    \"experimentIRI\":\""+experimentIRI+"\"\n" +
             "  }";
         boolean isRunning = true;
-        String status = null;
         while (isRunning) {
             String response = requestPost(enexaURL + "/container-status", body);
 

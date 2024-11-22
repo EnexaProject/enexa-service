@@ -173,8 +173,8 @@ public class ContainerManagerImpl implements ContainerManager {
             return null;
         }
         // TODO : make this part not hardcoded if there is chance of changing the "urn:container:docker:image:"
-        image = image.replace("urn:container:docker:image:","");
-        LOGGER.info("Using image: {}", image);
+        String replacedImage = image.replace("urn:container:docker:image:","");
+        LOGGER.info("Using image: {}", replacedImage);
 
         // Create environment variables
         List<V1EnvVar> env = createEnvVariables(variables);
@@ -199,13 +199,13 @@ public class ContainerManagerImpl implements ContainerManager {
         addSharedDirectoryEnvVars(env, containerBasePath, containerModuleInstancePath, containerWritablePath);
 
         // Set up the persistent volume claim for shared directory
-        V1Volume volume = createVolume(hostBasePath);
+        V1Volume volume = createVolume();
 
         // Set up resource requirements
         V1ResourceRequirements resourceRequirements = createResourceRequirements();
 
         // Create container
-        V1Container container = createContainer(image, command, env, resourceRequirements);
+        V1Container container = createContainer(replacedImage, command, env, resourceRequirements);
 
 
         V1VolumeMount volumeMount = new V1VolumeMount();
@@ -241,7 +241,7 @@ public class ContainerManagerImpl implements ContainerManager {
             LOGGER.info("latestPodUID : {}", latestPodUid);
             return latestPodUid;
         } catch (ApiException e) {
-            LOGGER.error("Got an exception while trying to create an instance of \"{}\". Returning null.", image, e);
+            LOGGER.error("Got an exception while trying to create an instance of \"{}\". Returning null.", replacedImage, e);
             return null;
         }
     }
@@ -305,7 +305,7 @@ public class ContainerManagerImpl implements ContainerManager {
     /**
      * Creates a volume for the shared directory.
      */
-    private V1Volume createVolume(String hostBasePath) {
+    private V1Volume createVolume() {
         V1PersistentVolumeClaimVolumeSource persistentVolumeClaim = new V1PersistentVolumeClaimVolumeSource();
         persistentVolumeClaim.setClaimName("enexa-shared-dir-claim");
 
