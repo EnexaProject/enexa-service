@@ -144,7 +144,7 @@ public class SparqlBasedMetadataManager implements MetadataManager, AutoCloseabl
     }
 
     @Override
-    public List<String> getAllContainersName(String experimentIri) {
+    public List<String> getAllContainerNames(String experimentIri) {
         String query = "SELECT  ?name FROM <"+defaultMetaDataGraphIRI+"> WHERE {\n" +
             "  ?instanceIRI <http://w3id.org/dice-research/enexa/ontology#containerName> ?name .\n" +
             "  ?instanceIRI <http://w3id.org/dice-research/enexa/ontology#experiment> <"+experimentIri+"> .\n" +
