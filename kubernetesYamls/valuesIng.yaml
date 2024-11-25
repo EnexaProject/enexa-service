@@ -1,0 +1,10 @@
+controller:
+  ingressClassResource:
+    default: true
+  service:
+    type: ClusterIP
+  kind: DaemonSet
+  hostNetwork: true
+
+defaultBackend:
+  enabled: true

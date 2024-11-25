@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: enexa-module-pv
+spec:
+  capacity:
+    storage: 50Mi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: nfs-storage  # Updated to match the storage class for NFS
+  nfs:
+    server: 131.234.29.22
+    path: /data/nfs/module 

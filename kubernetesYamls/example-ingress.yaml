@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluser-issuer: example-issuer # Needs to match issuer name above
+  name: example-ingress
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: enexa-test-exec2.cs.upb.de # This is the domain you configured
+    http:
+      paths:
+      - pathType: Prefix
+        path: /
+        backend:
+          service:
+            name: enexa-demo # This is the service that will be exposed
+            port:
+              number: 8501 # This should match the port on the service
+  tls:
+  - hosts:
+    - enexa-test-exec2.cs.upb.de # This needs to match the domain above
+    secretName: example-ingress-cert # This secret will be created automatically

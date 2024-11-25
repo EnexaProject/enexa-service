@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.26.0 (40646f47)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: enexa-service
+  name: enexa-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: enexa-service
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.26.0 (40646f47)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: enexa-service
+    spec:
+      containers:
+        - name: enexa-service
+          imagePullPolicy: IfNotPresent
+          image: hub.cs.upb.de/enexa/images/enexa-service-dev:0.0.42
+          env:
+            - name: ENEXA_MODULE_DIRECTORY
+              value: /mnt/enexa-module-dir
+            - name: ENEXA_SERVICE_URL
+              value: http://enexa-service:8081/
+            - name: ENEXA_SHARED_DIRECTORY
+              value: /enexa
+#            - name: ENEXA_SHARED_VOLUME
+#              value: enexa-shared-dir-claim
+            - name: ENEXA_META_DATA_ENDPOINT
+              value: http://fuseki-devwd-service:3030/enexa/
+            - name: ENEXA_META_DATA_GRAPH
+              value: http://example.org/meta-data
+            - name: ENEXA_RESOURCE_NAMESPACE
+              value: http://example.org/resource/
+          ports:
+            - containerPort: 8080
+          resources: {}
+          volumeMounts:
+            - mountPath: /enexa
+              name: enexa-shared-dir
+            - mountPath: /mnt/enexa-module-dir
+              name: enexa-module-dir
+      restartPolicy: Always
+      volumes:
+        - name: enexa-shared-dir
+          persistentVolumeClaim:
+            claimName: enexa-shared-dir-claim
+        - name: enexa-module-dir
+          persistentVolumeClaim:
+              claimName: enexa-module-dir-claim
