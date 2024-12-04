@@ -89,7 +89,6 @@ public class ExampleApplication implements AutoCloseable {
         LOGGER.info("Meta data can be found at {} in graph {}", metaDataEndpoint, metaDataGraph);
     }
 
-    //todo why no usage ?
     public void addKGFile(String kgFile) throws Exception {
         String metaFilePath = kgFile;
         // Move file if it is not located in the shared directory
@@ -256,7 +255,6 @@ public class ExampleApplication implements AutoCloseable {
         // The module instance itself will be a blank node
         Resource instance = instanceModel.createResource();
         instanceModel.add(instance, RDF.type, ENEXA.ModuleInstance);
-        //TODO is it correct ?
         String preFix = "http://w3id.org/dice-research/enexa/module/dice-embeddings/";
         instanceModel.add(instance, Algorithm.instanceOf, instanceModel.createResource(preFix +"v1.0"));
         instanceModel.add(instance, ENEXA.experiment, instanceModel.createResource(experimentIRI));

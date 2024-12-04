@@ -77,7 +77,7 @@ public class ContainerManagerImpl implements ContainerManager {
     }
 
     @Override
-    public String startContainer(String image, String containerName, List<AbstractMap.SimpleEntry<String, String>> variables,String hostSharedDirectory, String appName) {
+    public String startContainer(String image, String containerName, List<AbstractMap.SimpleEntry<String, String>> variables,String hostSharedDirectory, String appName,Map<String, String>containerSettings) {
         if (variables == null ){
             variables = new ArrayList<>();
         }

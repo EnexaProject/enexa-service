@@ -34,7 +34,8 @@ public class ContainerManagerImpl implements ContainerManager {
     private String nameSpace;
     @Value("${container.manager.timeoutMilliSeconds:60000}")
     private int TIMEOUT_MILLISECONDS;
-
+    @Value("${container.manager.defaultMemorySize:8}")
+    private String memoryInGiB;
 
     protected ContainerManagerImpl() {
         try {
@@ -78,8 +79,8 @@ public class ContainerManagerImpl implements ContainerManager {
 
     @Override
     public String startContainer(String image, String podName,
-            List<AbstractMap.SimpleEntry<String, String>> variables, String hostSharedDirectory, String appName) {
-        return startContainerKub(image, podName, variables, hostSharedDirectory, null, appName);
+            List<AbstractMap.SimpleEntry<String, String>> variables, String hostSharedDirectory, String appName, Map<String, String> containerSettings) {
+        return startContainerKub(image, podName, variables, hostSharedDirectory, null, appName,containerSettings);
     }
 
     /**
@@ -160,7 +161,7 @@ public class ContainerManagerImpl implements ContainerManager {
      * @param appName The application name for directory structure.
      * @return The UID of the created pod, or null if creation failed.
      */
-    public String startContainerKub(String image, String podName, List<AbstractMap.SimpleEntry<String, String>> variables,String hostSharedDirectory ,String[] command, String appName) {
+    public String startContainerKub(String image, String podName, List<AbstractMap.SimpleEntry<String, String>> variables,String hostSharedDirectory ,String[] command, String appName, Map<String, String> containerSettings) {
         LOGGER.info("Starting container: Image = {}, Pod Name = {}, Variables Size = {}, Host Shared Directory = {}, App Name = {}",
             image, podName, variables.size(), hostSharedDirectory, appName);
 
@@ -202,7 +203,12 @@ public class ContainerManagerImpl implements ContainerManager {
         V1Volume volume = createVolume();
 
         // Set up resource requirements
-        V1ResourceRequirements resourceRequirements = createResourceRequirements();
+        // here if the memory exist replace and container start with that for example 2Gi
+        Optional<String> memoryTheContainerNeeds = Optional.empty();
+        if(containerSettings.containsKey("memSize")){
+            memoryTheContainerNeeds = Optional.of(containerSettings.get("memSize"));
+        }
+        V1ResourceRequirements resourceRequirements = createResourceRequirements(memoryTheContainerNeeds);
 
         // Create container
         V1Container container = createContainer(replacedImage, command, env, resourceRequirements);
@@ -319,11 +325,11 @@ public class ContainerManagerImpl implements ContainerManager {
     /**
      * Creates the resource requirements for the container.
      */
-    //TODO 8Gi should be configurable ?
-    private V1ResourceRequirements createResourceRequirements() {
+    private V1ResourceRequirements createResourceRequirements(Optional<String> memoryValue) {
         V1ResourceRequirements resourceRequirements = new V1ResourceRequirements();
         Map<String, Quantity> requests = new HashMap<>();
-        requests.put("memory", new Quantity("8Gi"));
+        requests.put("memory", new Quantity(memoryInGiB + "Gi"));
+
         resourceRequirements.setRequests(requests);
         return resourceRequirements;
     }
@@ -488,7 +494,7 @@ try {
 
     public static void main(String[] args) throws Exception {
         ContainerManagerImpl manager = ContainerManagerImpl.create();
-        String containerId = manager.startContainerKub("busybox", "test" + UUID.randomUUID().toString(), null, null,new String[] { "sleep", "10000" },null);
+        String containerId = manager.startContainerKub("busybox", "test" + UUID.randomUUID().toString(), null, null,new String[] { "sleep", "10000" },null,new HashMap<>());
         System.out.println(containerId);
 
         String status = null;

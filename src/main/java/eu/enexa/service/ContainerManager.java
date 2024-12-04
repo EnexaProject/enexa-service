@@ -15,7 +15,7 @@ import java.util.Map;
 public interface ContainerManager {
 
     // containerName is the podName for kubernetes
-    String startContainer(String image, String containerName, List<AbstractMap.SimpleEntry<String, String>> variables, String hostSharedDirectory, String appName);
+    String startContainer(String image, String containerName, List<AbstractMap.SimpleEntry<String, String>> variables, String hostSharedDirectory, String appName, Map<String,String> containerSettings);
 
     /**
      * Stop the container with the given ID.

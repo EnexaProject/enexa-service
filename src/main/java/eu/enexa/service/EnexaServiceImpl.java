@@ -1,15 +1,15 @@
 package eu.enexa.service;
 
 import java.io.File;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.vocabulary.RDF;
 import org.dice_research.enexa.utils.EnexaPathUtils;
 import org.dice_research.enexa.vocab.ENEXA;
+import org.dice_research.enexa.vocab.HOBBIT;
 import org.dice_research.rdf.ModelHelper;
 import org.dice_research.rdf.RdfHelper;
 import org.slf4j.Logger;
@@ -66,7 +66,6 @@ public class EnexaServiceImpl implements EnexaService {
               }
           }
         // 3. Start default containers
-        // TODO : implement this (update: no idea what is this :D)
 
         // 4. Update experiment meta data with data from steps 2 and 3
         model.add(experiment, RDF.type, ENEXA.Experiment);
@@ -172,17 +171,15 @@ public class EnexaServiceImpl implements EnexaService {
 
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SERVICE_URL", System.getenv("ENEXA_SERVICE_URL")));
         String containerName = generatePodName(module.getModuleIri());
-        String containerId = containerManager.startContainer(module.getImage(), containerName, variables, sharedDirectory, appName);
+        Map<String,String> containerSettings = new HashMap<>();
+        String containerId = containerManager.startContainer(module.getImage(), containerName, variables, sharedDirectory, appName, containerSettings);
 
 
 
-        /*
-         * 4. Add start time (or error code in case it couldn’t be started) to the TODO
-         * create RDF model with new metadata metadataManager.addMetaData(null);
-         */
         Model createdContainerModel = scModel.getModel();
         Resource instanceRes = createdContainerModel.getResource(instanceIri);
         createdContainerModel.add(instanceRes, ENEXA.containerId, containerId);
+
 
         // when port is not null it means container provide an endpoint
         if(module.getPort()!=null){
@@ -192,7 +189,14 @@ public class EnexaServiceImpl implements EnexaService {
             createdContainerModel.add(instanceRes, ENEXA.internalEndpointURL, containerProvidedEndpoint.get("internalEndpointURL"));
         }
 
-        // TODO add start time
+        /*
+         * 4. Add start time (or error code in case it couldn’t be started) to the
+         * create RDF model with new metadata metadataManager.addMetaData(null);
+         */
+        LocalDateTime currentDateTime = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+        String dateTimeString = currentDateTime.format(formatter);
+        createdContainerModel.add(instanceRes, HOBBIT.startTime, dateTimeString);
 
         metadataManager.addMetaData(createdContainerModel);
 
