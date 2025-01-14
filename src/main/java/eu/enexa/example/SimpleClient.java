@@ -33,7 +33,20 @@ public class SimpleClient implements AutoCloseable {
     private final CloseableHttpClient client;
     private static final String SHARED_DIR_PREFIX = "enexa-dir:/";
     private String experimentIRI;
+
     private final String enexaURL = "http://192.168.49.2:30479"; // "http://localhost:8081";
+
+    //private String instanceIRI;
+    private String metaDataEndpoint;
+    private String metaDataGraph;
+    private QueryExecutionFactory queryExecFactory;
+   // private String enexaURL = "http://10.1.130.1:8081"; // "http://localhost:8081";
+    private static final String STATUS_PENDING = "Pending";
+    private static final String STATUS_RUNNING = "Running";
+    private final String appName = "app3";
+
+    private final String appPath = "/mnt/kubedata";
+
 
     /**
      * A simple application demonstrating the development of a client that utilizes the ENEXA service.
