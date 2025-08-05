@@ -172,6 +172,13 @@ public class EnexaServiceImpl implements EnexaService {
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_SERVICE_URL", System.getenv("ENEXA_SERVICE_URL")));
         String containerName = generatePodName(module.getModuleIri());
         Map<String,String> containerSettings = new HashMap<>();
+        // todo we need something to extract resources if they set now they are hardcoded
+        if(module.getModuleIri().contains("extraction")){
+            // it need gpu
+            LOGGER.info(module.getModuleIri()+"needs gpu");
+            containerSettings.put("gpuCount","1");
+        }
+
         String containerId = containerManager.startContainer(module.getImage(), containerName, variables, sharedDirectory, appName, containerSettings);
 
 

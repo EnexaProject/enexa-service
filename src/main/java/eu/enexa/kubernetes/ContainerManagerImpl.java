@@ -34,8 +34,8 @@ public class ContainerManagerImpl implements ContainerManager {
     private String nameSpace;
     @Value("${container.manager.timeoutMilliSeconds:60000}")
     private int TIMEOUT_MILLISECONDS;
-    @Value("${container.manager.defaultMemorySize:8}")
-    private String memoryInGiB;
+    //@Value("${container.manager.defaultMemorySize:8}")
+    //private String memoryInGiB;
 
     protected ContainerManagerImpl() {
         try {
@@ -179,7 +179,7 @@ public class ContainerManagerImpl implements ContainerManager {
 
         // Create environment variables
         List<V1EnvVar> env = createEnvVariables(variables);
-
+        addSpecificTokens(env, image);
         // Process experiment IRI variable
         String expIRI=extractExperimentIRI(variables);
         LOGGER.info("ENEXA_EXPERIMENT_IRI: {}", expIRI);
@@ -209,7 +209,28 @@ public class ContainerManagerImpl implements ContainerManager {
         if(containerSettings.containsKey("memSize")){
             memoryTheContainerNeeds = Optional.of(containerSettings.get("memSize"));
         }
-        V1ResourceRequirements resourceRequirements = createResourceRequirements(memoryTheContainerNeeds);
+        Optional<String> gpuTheContainerNeeds = Optional.empty();
+        if (containerSettings.containsKey("gpuCount")) { // Assuming "gpuCount" as the key for GPU
+            LOGGER.info("it needs GPU :"+Optional.of(containerSettings.get("gpuCount")));
+            gpuTheContainerNeeds = Optional.of(containerSettings.get("gpuCount"));
+        }
+
+        Optional<String> diskTheContainerNeeds = Optional.empty();
+        if (containerSettings.containsKey("diskSize")) { // Assuming "diskSize" as the key for disk
+            diskTheContainerNeeds = Optional.of(containerSettings.get("diskSize"));
+        }
+
+        Optional<String> cpuTheContainerNeeds = Optional.empty();
+        if (containerSettings.containsKey("cpuCount")) { // Assuming "cpuCount" as the key for CPU
+            cpuTheContainerNeeds = Optional.of(containerSettings.get("cpuCount"));
+        }
+
+        V1ResourceRequirements resourceRequirements = createResourceRequirements(
+            memoryTheContainerNeeds,
+            gpuTheContainerNeeds,
+            diskTheContainerNeeds,
+            cpuTheContainerNeeds
+        );
 
         // Create container
         V1Container container = createContainer(replacedImage, command, env, resourceRequirements);
@@ -250,6 +271,26 @@ public class ContainerManagerImpl implements ContainerManager {
         } catch (ApiException e) {
             LOGGER.error("Got an exception while trying to create an instance of \"{}\". Returning null.", replacedImage, e);
             return null;
+        }
+    }
+
+    private void addSpecificTokens(List<V1EnvVar> env, String image) {
+        if(image.contains("extract")){
+            LOGGER.info("for extraction module we need huging face api hub token");
+            V1EnvVar tokenEnvVar = new V1EnvVar();
+            tokenEnvVar.setName("HUGGINGFACEHUB_API_TOKEN");
+
+            // Create a SecretKeySelector to reference the Kubernetes Secret
+            V1SecretKeySelector secretKeySelector = new V1SecretKeySelector();
+            secretKeySelector.setName("hf-token-secret");
+            secretKeySelector.setKey("HUGGINGFACEHUB_API_TOKEN");
+            secretKeySelector.setOptional(false); // Set to true if the secret is optional and the pod should still start if it's missing
+
+            // Set the valueFrom field of the environment variable to use the SecretKeySelector
+            tokenEnvVar.setValueFrom(new io.kubernetes.client.openapi.models.V1EnvVarSource().secretKeyRef(secretKeySelector));
+
+            env.add(tokenEnvVar);
+            LOGGER.info("token set from secret");
         }
     }
 
@@ -326,12 +367,37 @@ public class ContainerManagerImpl implements ContainerManager {
     /**
      * Creates the resource requirements for the container.
      */
-    private V1ResourceRequirements createResourceRequirements(Optional<String> memoryValue) {
+    private V1ResourceRequirements createResourceRequirements(Optional<String> memoryValue,Optional<String> gpuValue, Optional<String> diskValue, Optional<String> cpuValue) {
         V1ResourceRequirements resourceRequirements = new V1ResourceRequirements();
         Map<String, Quantity> requests = new HashMap<>();
-        requests.put("memory", new Quantity(memoryInGiB + "Gi"));
+        Map<String, Quantity> limits = new HashMap<>();
+        // Set memory requests and limits
+        memoryValue.ifPresent(mem -> {
+            requests.put("memory", new Quantity(mem + "Gi"));
+            limits.put("memory", new Quantity(mem + "Gi")); // Often limits are set to requests or slightly higher
+        });
+
+        // Set GPU requests and limits
+        gpuValue.ifPresent(gpu -> {
+            requests.put("nvidia.com/gpu", new Quantity(gpu));
+            limits.put("nvidia.com/gpu", new Quantity(gpu));
+        });
+
+        // Set disk requests and limits (assuming "ephemeral-storage" for local disk)
+        diskValue.ifPresent(disk -> {
+            requests.put("ephemeral-storage", new Quantity(disk + "Gi"));
+            limits.put("ephemeral-storage", new Quantity(disk + "Gi"));
+        });
+
+        // Set CPU requests and limits
+        cpuValue.ifPresent(cpu -> {
+            requests.put("cpu", new Quantity(cpu)); // CPU can be "100m" for 0.1 CPU, "1" for 1 CPU
+            limits.put("cpu", new Quantity(cpu));
+        });
 
         resourceRequirements.setRequests(requests);
+        resourceRequirements.setLimits(limits); // Don't forget to set limits
+
         return resourceRequirements;
     }
 
