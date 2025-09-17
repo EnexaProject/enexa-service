@@ -16,15 +16,7 @@ public class StartContainerModelTest {
 
     @Test
     public void parseAndReplaceTest() {
-        String requestString =  "@prefix enexa:  <http://w3id.org/dice-research/enexa/ontology#> ."
-                + "@prefix xsd:    <http://www.w3.org/2000/10/XMLSchema#> ."
-                + " [] <http://www.w3id.org/dice-research/ontologies/algorithm/2023/06/instanceOf> <http://dice-research.org/DICE-framework/v1.0> ;"
-                + " enexa:experiment <http://example.org/experiment1> ; "
-                + " <http://dice-research.org/DICE-framework/parameters/algorithm> <http://dice-research.org/DICE-framework/algorithms/ConEx> ;"
-                + " <http://dice-research.org/DICE-framework/parameters/dimensions> \"25\"^^xsd:nonNegativeInteger ;"
-                + " <http://dice-research.org/DICE-framework/parameters/knowledgeGraph> <http://example.org/experiment1/data/kg/dump.ttl> .";
-        Model model = ModelFactory.createDefaultModel();
-        model.read(new StringReader(requestString), "", "TURTLE");
+        Model model = getTestModel(null);
 
         // Parse the model
         StartContainerModel scModel = StartContainerModel.parse(model);
@@ -40,16 +32,7 @@ public class StartContainerModelTest {
         // Set the instance IRI
         scModel.setInstanceIri("http://example.org/RandomIRI");
 
-        String expectedString =  "@prefix enexa:  <http://w3id.org/dice-research/enexa/ontology#> ."
-                + "@prefix xsd:    <http://www.w3.org/2000/10/XMLSchema#> ."
-                + " <http://example.org/RandomIRI> <http://www.w3id.org/dice-research/ontologies/algorithm/2023/06/instanceOf> <http://dice-research.org/DICE-framework/v1.0> ;"
-                + " enexa:experiment <http://example.org/experiment1> ; "
-                + " <http://dice-research.org/DICE-framework/parameters/algorithm> <http://dice-research.org/DICE-framework/algorithms/ConEx> ;"
-                + " <http://dice-research.org/DICE-framework/parameters/dimensions> \"25\"^^xsd:nonNegativeInteger ;"
-                + " <http://dice-research.org/DICE-framework/parameters/knowledgeGraph> <http://example.org/experiment1/data/kg/dump.ttl> .";
-        Model expectedModel = ModelFactory.createDefaultModel();
-
-        expectedModel.read(new StringReader(expectedString), "", "TURTLE");
+        Model expectedModel = getTestModel("http://example.org/RandomIRI");
 
         ModelComparisonHelper.assertModelsEqual(expectedModel, model);
     }
@@ -57,16 +40,7 @@ public class StartContainerModelTest {
     // in this test , call the replaceIRI several times and it should work
     @Test
     public void setInstanceIriWorks() {
-        String requestString = "@prefix enexa:  <http://w3id.org/dice-research/enexa/ontology#> ."
-                + "@prefix xsd:    <http://www.w3.org/2000/10/XMLSchema#> ."
-                + " [] <http://www.w3id.org/dice-research/ontologies/algorithm/2023/06/instanceOf> <http://dice-research.org/DICE-framework/v1.0> ;"
-                + " enexa:experiment <http://example.org/experiment1> ; "
-                + " <http://dice-research.org/DICE-framework/parameters/algorithm> <http://dice-research.org/DICE-framework/algorithms/ConEx> ;"
-                + " <http://dice-research.org/DICE-framework/parameters/dimensions> \"25\"^^xsd:nonNegativeInteger ;"
-                + " <http://dice-research.org/DICE-framework/parameters/knowledgeGraph> <http://example.org/experiment1/data/kg/dump.ttl> .";
-
-        Model model = ModelFactory.createDefaultModel();
-        model.read(new StringReader(requestString), "", "TURTLE");
+        Model model = getTestModel(null);
 
         // Parse the model
         StartContainerModel scModel = StartContainerModel.parse(model);
@@ -88,19 +62,28 @@ public class StartContainerModelTest {
                 ResourceFactory.createResource("http://dice-research.org/DICE-framework/v1.0"));
         Assert.assertEquals(actuallInstance.getURI(), "http://example.org/aaa");
 
-        String expectedString = "@prefix enexa:  <http://w3id.org/dice-research/enexa/ontology#> ."
+        // We expect the instance to have the aaa IRI. Create a model based on that
+        // assumption to check that
+        Model expectedModel = getTestModel("http://example.org/aaa");
+
+        ModelComparisonHelper.assertModelsEqual(expectedModel, model);
+    }
+
+    protected static String getTestRdfString(String instanceIRI) {
+        return "@prefix enexa:  <http://w3id.org/dice-research/enexa/ontology#> ."
                 + "@prefix xsd:    <http://www.w3.org/2000/10/XMLSchema#> ."
-                + " <http://example.org/aaa> <http://www.w3id.org/dice-research/ontologies/algorithm/2023/06/instanceOf> <http://dice-research.org/DICE-framework/v1.0> ;"
+                + ((instanceIRI == null) ? " [] " : " <" + instanceIRI + "> ")
+                + " <http://www.w3id.org/dice-research/ontologies/algorithm/2023/06/instanceOf> <http://dice-research.org/DICE-framework/v1.0> ;"
                 + " enexa:experiment <http://example.org/experiment1> ; "
                 + " <http://dice-research.org/DICE-framework/parameters/algorithm> <http://dice-research.org/DICE-framework/algorithms/ConEx> ;"
                 + " <http://dice-research.org/DICE-framework/parameters/dimensions> \"25\"^^xsd:nonNegativeInteger ;"
                 + " <http://dice-research.org/DICE-framework/parameters/knowledgeGraph> <http://example.org/experiment1/data/kg/dump.ttl> .";
+    }
 
-        Model expectedModel = ModelFactory.createDefaultModel();
-
-        expectedModel.read(new StringReader(expectedString), "", "TURTLE");
-
-        ModelComparisonHelper.assertModelsEqual(expectedModel, model);
+    protected static Model getTestModel(String instanceIRI) {
+        Model model = ModelFactory.createDefaultModel();
+        model.read(new StringReader(getTestRdfString(instanceIRI)), "", "TURTLE");
+        return model;
     }
 
     public static void main(String[] args) {
