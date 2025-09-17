@@ -16,11 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
-import java.util.AbstractMap;
-import java.util.List;
-import java.util.UUID;
-import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 
@@ -39,7 +35,7 @@ public class ContainerManagerImplTest {
         List<AbstractMap.SimpleEntry<String,String>> variables = new ArrayList<>();
         variables.add(new AbstractMap.SimpleEntry<>("FIRST_VARIABLE","FIRST_VARIABLE_VALUE"));
         variables.add(new AbstractMap.SimpleEntry<>("SECOND_VARIABLE","SECOND_VARIABLE_VALUE"));
-        String containerId = cm.startContainer(imageName, name, variables,System.getProperty("user.dir"),null);
+        String containerId = cm.startContainer(imageName, name, variables,System.getProperty("user.dir"),null, new HashMap<>());
         Assert.assertTrue(containerId.length() > 5);
         //TODO : need removed after test
     }
@@ -66,7 +62,7 @@ public class ContainerManagerImplTest {
         String name = "test"+ UUID.randomUUID().toString();
         List<AbstractMap.SimpleEntry<String, String>> variables = new LinkedList<>();
         variables.add(new AbstractMap.SimpleEntry<>("ENEXA_EXPERIMENT_IRI", "testEXPRIMENTID12341234"));
-        String containerId = cm.startContainer(imageName, name, variables,System.getProperty("user.dir"),null);
+        String containerId = cm.startContainer(imageName, name, variables,System.getProperty("user.dir"),null,new HashMap<>());
         // wait to container exit
         TimeUnit.SECONDS.sleep(5);
         String status = cm.getContainerStatus(containerId);

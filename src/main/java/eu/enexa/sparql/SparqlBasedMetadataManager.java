@@ -1,18 +1,14 @@
 package eu.enexa.sparql;
 
 import java.net.http.HttpClient;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import org.aksw.jena_sparql_api.core.UpdateExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.http.QueryExecutionFactoryHttp;
 import org.aksw.jena_sparql_api.pagination.core.QueryExecutionFactoryPaginated;
 import org.aksw.jenax.arq.connection.core.QueryExecutionFactory;
 import org.aksw.jenax.arq.connection.core.UpdateExecutionFactory;
-import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.QuerySolution;
-import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.core.DatasetDescription;
 import org.apache.jena.update.UpdateProcessor;
@@ -58,9 +54,6 @@ public class SparqlBasedMetadataManager implements MetadataManager, AutoCloseabl
      */
     private UpdateExecutionFactory updateExecFactory = null;
 
-//    public SparqlBasedMetadataManager(@Value("${ENEXA_META_DATA_ENDPOINT}") String sparqlEndpointUrl) {
-//        this(sparqlEndpointUrl, DEFAULT_META_DATA_GRAPH_IRI, DEFAULT_RESOURCE_NAMESPACE);
-//    }
 
     public SparqlBasedMetadataManager(@Value("${ENEXA_META_DATA_ENDPOINT}") String sparqlEndpointUrl,
             @Value("${ENEXA_META_DATA_GRAPH}") String defaultMetaDataGraphIRI,
@@ -68,7 +61,10 @@ public class SparqlBasedMetadataManager implements MetadataManager, AutoCloseabl
         this.sparqlEndpointUrl = sparqlEndpointUrl;
         this.defaultMetaDataGraphIRI = defaultMetaDataGraphIRI;
         this.resourceNamespace = resourceNamespace;
-
+        LOGGER.info("initiate query execute");
+        LOGGER.info(" sparqlEndpointUrl is: {}",sparqlEndpointUrl);
+        LOGGER.info(" defaultMetaDataGraphIRI is{}: ",defaultMetaDataGraphIRI);
+        LOGGER.info(" resourceNamespace is: {}",resourceNamespace);
         HttpClient client = HttpClient.newHttpClient();
         DatasetDescription desc = new DatasetDescription();
         desc.addNamedGraphURI(defaultMetaDataGraphIRI);
@@ -78,14 +74,23 @@ public class SparqlBasedMetadataManager implements MetadataManager, AutoCloseabl
     }
 
     @Override
-    public String[] getMetadataEndpointInfo(String experimentIri) {
-        return new String[] { sparqlEndpointUrl, defaultMetaDataGraphIRI };
+    public Map<String,String> getMetadataEndpointInfo() {
+        Map<String,String> info = new HashMap<>();
+        if(sparqlEndpointUrl == null) {
+            LOGGER.warn("sparqlEndpointUrl is null");
+        }
+        if(defaultMetaDataGraphIRI == null) {
+            LOGGER.warn("defaultMetaDataGraphIRI is null");
+        }
+
+        info.put("sparqlEndpointUrl",sparqlEndpointUrl);
+        info.put("defaultMetaDataGraphIRI",defaultMetaDataGraphIRI);
+        return info;
     }
 
     @Override
     public String generateResourceIRI() {
-        String resourceIri = resourceNamespace + UUID.randomUUID().toString();
-        return resourceIri;
+        return resourceNamespace + UUID.randomUUID();
     }
 
     @Override
@@ -94,17 +99,15 @@ public class SparqlBasedMetadataManager implements MetadataManager, AutoCloseabl
             String[] queries = SparqlQueryUtils.getUpdateQueriesFromDiff(null, model, defaultMetaDataGraphIRI);
             UpdateProcessor update;
             for (String query : queries) {
-                //TODO if work should not be hardcoded
-                //query = query.replace("WITH <mydataset>","");
-                LOGGER.info("query is :"+query);
-                //query = query.replace("INSERT","INSERT DATA").replace("WHERE","").replace("{}","");
-                //LOGGER.info("after replacing the query where clause :"+query);
-                update = updateExecFactory.createUpdateProcessor(query);
-                update.execute();
-                //todo what happened if update can not find a triple to update !
+                try {
+                    update = updateExecFactory.createUpdateProcessor(query);
+                    update.execute();
+                }catch (Exception ex){
+                    LOGGER.error("Error executing query: {}", query, ex);
+                }
             }
         }catch (Exception ex){
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("error happened",ex);
         }
     }
 
@@ -124,8 +127,12 @@ public class SparqlBasedMetadataManager implements MetadataManager, AutoCloseabl
 
     @Override
     public String getContainerName(String experimentIri, String instanceIRI) {
-        QueryExecution qe = queryExecFactory.createQueryExecution("SELECT ?name FROM <"+defaultMetaDataGraphIRI+"> WHERE {" + "<" + instanceIRI
-                + "> <http://w3id.org/dice-research/enexa/ontology#containerName> ?name }");
+        //LOGGER.info("getting container name ");
+        String query = "SELECT ?name FROM <"+defaultMetaDataGraphIRI+"> WHERE {" + "<" + instanceIRI
+            + "> <http://w3id.org/dice-research/enexa/ontology#containerName> ?name }";
+        LOGGER.info(" - query is: {}", query);
+        QueryExecution qe = queryExecFactory.createQueryExecution(query);
+
         ResultSet rs = qe.execSelect();
         if (rs.hasNext()) {
             QuerySolution qs = rs.next();

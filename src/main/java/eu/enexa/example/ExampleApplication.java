@@ -35,23 +35,17 @@ public class ExampleApplication implements AutoCloseable {
     private static final String STATUS_PENDING = "Pending";
     private static final String STATUS_RUNNING = "Running";
 
-    private CloseableHttpClient client;
-    private String enexaURL;
-    private String sharedDirPath;
-    private String appPath;
+    private final CloseableHttpClient client;
+    private final String enexaURL;
+    private final String appPath;
     private String experimentIRI;
     private String instanceIRI;
     private String metaDataEndpoint;
     private String metaDataGraph;
-    private String kgFileIri;
     private String jsonFileLocation;
 
     private String urlsIri;
     private String jsonIri;
-    private String resultFileIri;
-    private String resultFileLocation;
-
-    private final String preFix = "http://w3id.org/dice-research/enexa/module/dice-embeddings/";
 
     private final String appName = "app1";
 
@@ -59,9 +53,7 @@ public class ExampleApplication implements AutoCloseable {
         super();
         this.enexaURL = enexaURL;
         if (sharedDirPath.endsWith(File.separator)) {
-            this.sharedDirPath = sharedDirPath.substring(0, sharedDirPath.length() - 1);
         } else {
-            this.sharedDirPath = sharedDirPath;
         }
         if (appPath.endsWith(File.separator)) {
             this.appPath = appPath.substring(0, appPath.length() - 1);
@@ -79,19 +71,19 @@ public class ExampleApplication implements AutoCloseable {
         }
         Resource expResource = RdfHelper.getSubjectResource(model, RDF.type, ENEXA.Experiment);
         if (expResource == null) {
-            throw new Exception("Couldn't find experiment resource.");
+            throw new IllegalStateException("Couldn't find experiment resource.");
         }
         experimentIRI = expResource.getURI();
         LOGGER.info("Started an experiment: {}", experimentIRI);
         // Get meta data endpoint and graph
         Resource resource = RdfHelper.getObjectResource(model, expResource, ENEXA.metaDataEndpoint);
         if (resource == null) {
-            throw new Exception("Couldn't find the experiment's meta data endpoint.");
+            throw new IllegalStateException("Couldn't find the experiment's meta data endpoint.");
         }
         metaDataEndpoint = resource.getURI();
         resource = RdfHelper.getObjectResource(model, expResource, ENEXA.metaDataGraph);
         if (resource == null) {
-            throw new Exception("Couldn't find the experiment's meta data graph.");
+            throw new IllegalStateException("Couldn't find the experiment's meta data graph.");
         }
         metaDataGraph = resource.getURI();
         LOGGER.info("Meta data can be found at {} in graph {}", metaDataEndpoint, metaDataGraph);
@@ -128,17 +120,17 @@ public class ExampleApplication implements AutoCloseable {
         Model response = requestRDF(enexaURL + "/add-resource", fileDescription);
 
         if (response == null) {
-            throw new Exception("Couldn't add a resource to the meta data.");
+            throw new IllegalStateException("Couldn't add a resource to the meta data.");
         }
 
         // Get the new IRI of the resource
         Resource fileResource = RdfHelper.getSubjectResource(response, RDF.type,
                 response.createResource("http://www.w3.org/ns/prov#Entity"));
         if (fileResource == null) {
-            throw new Exception("Couldn't find the file resource.");
+            throw new IllegalStateException("Couldn't find the file resource.");
         }
         LOGGER.info("File resource {} has been created.", fileResource.getURI());
-        kgFileIri = fileResource.getURI();
+        //String kgFileIri = fileResource.getURI();
         //
     }
 
@@ -172,14 +164,14 @@ public class ExampleApplication implements AutoCloseable {
         Model response = requestRDF(enexaURL + "/add-resource", fileDescription);
 
         if (response == null) {
-            throw new Exception("Couldn't add a resource to the meta data.");
+            throw new IllegalStateException("Couldn't add a resource to the meta data.");
         }
 
         // Get the new IRI of the resource
         Resource fileResource = RdfHelper.getSubjectResource(response, RDF.type,
             response.createResource("http://www.w3.org/ns/prov#Entity"));
         if (fileResource == null) {
-            throw new Exception("Couldn't find the file resource.");
+            throw new IllegalStateException("Couldn't find the file resource.");
         }
         LOGGER.info("File resource {} has been created.", fileResource.getURI());
         urlsIri = fileResource.getURI();
@@ -215,14 +207,14 @@ public class ExampleApplication implements AutoCloseable {
         Model response = requestRDF(enexaURL + "/add-resource", fileDescription);
 
         if (response == null) {
-            throw new Exception("Couldn't add a resource to the meta data.");
+            throw new IllegalStateException("Couldn't add a resource to the meta data.");
         }
 
         // Get the new IRI of the resource
         Resource fileResource = RdfHelper.getSubjectResource(response, RDF.type,
             response.createResource("http://www.w3.org/ns/prov#Entity"));
         if (fileResource == null) {
-            throw new Exception("Couldn't find the file resource.");
+            throw new IllegalStateException("Couldn't find the file resource.");
         }
         LOGGER.info("File resource {} has been created.", fileResource.getURI());
         jsonIri = fileResource.getURI();
@@ -247,12 +239,12 @@ public class ExampleApplication implements AutoCloseable {
         Model response = requestRDF(enexaURL + "/start-container", instanceModel);
 
         if (response == null) {
-            throw new Exception("Couldn't start a container.");
+            throw new IllegalStateException("Couldn't start a container.");
         }
         // Get the new IRI of the newly created module instance
         Resource instanceResource = RdfHelper.getSubjectResource(response, RDF.type, ENEXA.ModuleInstance);
         if (instanceResource == null) {
-            throw new Exception("Couldn't find module instance resource.");
+            throw new IllegalStateException("Couldn't find module instance resource.");
         }
         instanceIRI = instanceResource.getURI();
         LOGGER.info("module instance {} has been created.", instanceIRI);
@@ -263,34 +255,34 @@ public class ExampleApplication implements AutoCloseable {
         // The module instance itself will be a blank node
         Resource instance = instanceModel.createResource();
         instanceModel.add(instance, RDF.type, ENEXA.ModuleInstance);
-        //TODO is it correct ?
-        instanceModel.add(instance, Algorithm.instanceOf, instanceModel.createResource(preFix+"v1.0"));
+        String preFix = "http://w3id.org/dice-research/enexa/module/dice-embeddings/";
+        instanceModel.add(instance, Algorithm.instanceOf, instanceModel.createResource(preFix +"v1.0"));
         instanceModel.add(instance, ENEXA.experiment, instanceModel.createResource(experimentIRI));
         // Add parameters
         /*instanceModel.add(instance, instanceModel.createProperty(preFix+"parameters/model"),
                 instanceModel.createResource(kgFileIri));*/
-        instanceModel.add(instance, instanceModel.createProperty(preFix+"parameter/model"),
+        instanceModel.add(instance, instanceModel.createProperty(preFix +"parameter/model"),
             instanceModel.createTypedLiteral("ConEx"));
         //http://module-instance-1> <parameters/path_dataset_folder> <http://aresource> .
-        instanceModel.add(instance,instanceModel.createProperty(preFix+"parameter/path_dataset_folder"),instanceModel.createResource(jsonFileLocation.replace("enexa-dir:","http:")));
+        instanceModel.add(instance,instanceModel.createProperty(preFix +"parameter/path_dataset_folder"),instanceModel.createResource(jsonFileLocation.replace("enexa-dir:","http:")));
 //<http://aresource> enexa:location "enexa-dir://something" .
         instanceModel.add(instanceModel.createResource(jsonFileLocation.replace("enexa-dir:","http:")),ENEXA.location,instanceModel.createLiteral(jsonFileLocation));
 
-        instanceModel.add(instance, instanceModel.createProperty(preFix+"parameter/num_epochs"),
+        instanceModel.add(instance, instanceModel.createProperty(preFix +"parameter/num_epochs"),
                 instanceModel.createTypedLiteral(5));
-        instanceModel.add(instance, instanceModel.createProperty(preFix+"parameter/embedding_dim"),
+        instanceModel.add(instance, instanceModel.createProperty(preFix +"parameter/embedding_dim"),
                 instanceModel.createTypedLiteral(2));
 
         // Send the model
         Model response = requestRDF(enexaURL + "/start-container", instanceModel);
 
         if (response == null) {
-            throw new Exception("Couldn't start a container.");
+            throw new IllegalStateException("Couldn't start a container.");
         }
         // Get the new IRI of the newly created module instance
         Resource instanceResource = RdfHelper.getSubjectResource(response, RDF.type, ENEXA.ModuleInstance);
         if (instanceResource == null) {
-            throw new Exception("Couldn't find module instance resource.");
+            throw new IllegalStateException("Couldn't find module instance resource.");
         }
         instanceIRI = instanceResource.getURI();
         LOGGER.info("module instance {} has been created.", instanceIRI);
@@ -337,12 +329,12 @@ public class ExampleApplication implements AutoCloseable {
             Model response = requestRDF(enexaURL + "/container-status", requestModel);
 
             if (response == null) {
-                throw new Exception("Couldn't get the status of a container.");
+                throw new IllegalStateException("Couldn't get the status of a container.");
             }
             // Get the new IRI of the newly created module instance
             status = RdfHelper.getStringValue(requestModel, instance, ENEXA.containerStatus);
             if (status == null) {
-                throw new Exception("Couldn't find the status of the module instance resource.");
+                throw new IllegalStateException("Couldn't find the status of the module instance resource.");
             }
             if (status.equals(STATUS_PENDING) || status.equals(STATUS_RUNNING)) {
                 Thread.sleep(1000);
@@ -360,8 +352,8 @@ public class ExampleApplication implements AutoCloseable {
             ResultSet rs = qe.execSelect();
             if (rs.hasNext()) {
                 QuerySolution qs = rs.next();
-                resultFileIri = qs.getResource("fileIri").getURI();
-                resultFileLocation = qs.getLiteral("fileLocation").getString();
+                String resultFileIri = qs.getResource("fileIri").getURI();
+                String resultFileLocation = qs.getLiteral("fileLocation").getString();
                 LOGGER.info("Result file {} located at {}.", resultFileIri, resultFileLocation);
             } else {
                 LOGGER.error("Couldn't get the expected result file from the meta data endpoint.");

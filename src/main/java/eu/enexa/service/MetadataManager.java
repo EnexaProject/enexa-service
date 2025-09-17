@@ -3,18 +3,21 @@ package eu.enexa.service;
 import org.apache.jena.rdf.model.Model;
 
 import java.util.List;
+import java.util.Map;
 
 public interface MetadataManager {
 
     /**
-     * Returns IRIs that are necessary to access an experiment's metadata. The first
-     * String is the URL of the SPARQL endpoint while the second is the graph IRI in
+     * Returns IRIs that are necessary to access an experiment's metadata.It returns a Map
+     * with these keys , "sparqlEndpointUrl" and "defaultMetaDataGraphIRI" , The "sparqlEndpointUrl"
+     * is the URL of the SPARQL endpoint while the "defaultMetaDataGraphIRI"  is the graph IRI in
      * which the metadata of the experiment can be found.
      *
-     * @param experimentIri
      * @return
      */
-    String[] getMetadataEndpointInfo(String experimentIri);
+
+    public Map<String,String> getMetadataEndpointInfo();
+
 
     /**
      * Returns a random IRI that can be used within the metadata graph to name

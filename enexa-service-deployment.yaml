@@ -27,10 +27,10 @@ spec:
       containers:
         - name: enexa-service
           imagePullPolicy: IfNotPresent
-          image: enexa-service:0.0.1
+          image: hub.cs.upb.de/enexa/images/enexa-service-dev:0.0.11
           env:
             - name: ENEXA_MODULE_DIRECTORY
-              value: /modules
+              value: enexa-module-dir-claim
             - name: ENEXA_SERVICE_URL
               value: http://enexa-service:8080
             - name: ENEXA_SHARED_DIRECTORY
@@ -38,7 +38,7 @@ spec:
             - name: ENEXA_SHARED_VOLUME
               value: enexa-shared-dir-claim
             - name: ENEXA_META_DATA_ENDPOINT
-              value: http://localhost:3030/enexa/
+              value: http://fuseki-devwd-service:3030/mydataset/
             - name: ENEXA_META_DATA_GRAPH
               value: http://example.org/meta-data
             - name: ENEXA_RESOURCE_NAMESPACE
@@ -50,16 +50,15 @@ spec:
             - mountPath: /enexa
               name: enexa-shared-dir-claim
             - mountPath: /modules
-              name: enexa-module-dir
+              name: enexa-module-dir-claim
       restartPolicy: Always
       volumes:
         - name: enexa-shared-dir-claim
           persistentVolumeClaim:
             claimName: enexa-shared-dir-claim
-        - name: enexa-module-dir
-          hostPath:
-            # directory location on host
-            path: /home/micha/data/enexa/modules
-            # this field is optional
-            type: DirectoryOrCreate
+        - name: enexa-module-dir-claim
+          persistentVolumeClaim:
+              claimName: enexa-module-dir-claim
+      nodeSelector:
+          kubernetes.io/hostname: minikube
 status: {}

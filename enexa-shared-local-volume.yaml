@@ -4,14 +4,14 @@ metadata:
   name: enexa-shared-pv
 spec:
   capacity:
-    storage: 10Gi
+    storage: 25000Mi
   volumeMode: Filesystem
   accessModes:
-  - ReadWriteOnce
+  - ReadWriteMany
   persistentVolumeReclaimPolicy: Delete
   storageClassName: local-storage
   local:
-    path: /home/mroeder/data/enexa/shared
+    path: /home/farshad/test/enexa/shared
   nodeAffinity:
     required:
       nodeSelectorTerms:

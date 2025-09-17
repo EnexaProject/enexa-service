@@ -12,10 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /*@RunWith(SpringRunner.class)
 @SpringBootTest(classes = BootApplication.class)*/
@@ -27,7 +24,7 @@ public class ContainerManagerImplTest {
         Configuration.setDefaultApiClient(client);
         ContainerManagerImpl cm = new ContainerManagerImpl(client);
         String name = "test"+ UUID.randomUUID().toString();
-        String posName = cm.startContainer(imageName,name,null,null,null);
+        String posName = cm.startContainer(imageName,name,null,null,null,new HashMap<>());
         Assert.assertEquals(posName, name);
         //TODO : need this pod removed after test
     }
@@ -42,7 +39,7 @@ public class ContainerManagerImplTest {
         List<AbstractMap.SimpleEntry<String,String>> variables = new ArrayList<>();
         variables.add(new AbstractMap.SimpleEntry<>("FIRST_VARIABLE","FIRST_VARIABLE_VALUE"));
         variables.add(new AbstractMap.SimpleEntry<>("SECOND_VARIABLE","SECOND_VARIABLE_VALUE"));
-        String posName = cm.startContainer(imageName, name, variables, null,null);
+        String posName = cm.startContainer(imageName, name, variables, null,null,new HashMap<>());
         Assert.assertEquals(posName, name);
         //TODO : need this pod removed after test
     }
