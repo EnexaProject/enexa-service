@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+    name: fuseki-devwd-service
+spec:
+    selector:
+        app: fuseki-devwd  # Match pods in the Deployment
+    ports:
+        - protocol: TCP
+          port: 3030  # Port exposed by the Service
+          targetPort: 3030  # Port on the pod to forward traffic to
+    type: ClusterIP  # Default type, can be changed to NodePort or LoadBalancer if needed
+

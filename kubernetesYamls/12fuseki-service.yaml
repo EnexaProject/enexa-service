@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment #TODO should it be service !
+metadata:
+    name: fuseki-devwd # Match your container name
+spec:
+    replicas: 1 # Number of pods to run
+    selector:
+        matchLabels:
+            app: fuseki-devwd # Label for pods
+    template:
+        metadata:
+            labels:
+                app: fuseki-devwd
+        spec:
+            containers:
+                - name: fuseki-devwd
+                  image: stain/jena-fuseki # Your container image
+                  ports:
+                      - containerPort: 3030
+                        name: http # Optional name for the port
+                  env:
+                      - name: ADMIN_PASSWORD
+                        value: "pw123" # Environment variable
+                      - name: FUSEKI_DATASET_1
+                        value: "enexa"
+                      - name: FUSEKI_DATASET_2
+                        value: "mydataset"   
+                  volumeMounts:
+                      - name: fuseki-data # Volume name
+                        mountPath: /fuseki # Path to mount volume in container
+            volumes:
+                - name: fuseki-data
+                  persistentVolumeClaim:
+                    claimName: fuseki-pvc
+

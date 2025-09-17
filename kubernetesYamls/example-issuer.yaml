@@ -1,0 +1,15 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: example-issuer
+spec:
+  acme:
+    email: farshad.afshari@uni-paderborn.de
+    server: https://acme-v02.api.letsencrypt.org/directory
+    disableAccountKeyGeneration: false
+    privateKeySecretRef:
+      name: example-issuer-account-key # This secret will be created automatically
+    solvers:
+      - http01:
+          ingress:
+            ingressClassName: nginx

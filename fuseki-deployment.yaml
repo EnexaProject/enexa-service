@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.26.0 (40646f47)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: fuseki
+  name: fuseki
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: fuseki
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.26.0 (40646f47)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: fuseki
+    spec:
+      containers:
+        - image: stain/jena-fuseki:4.8.0
+          name: fuseki
+          env:
+            - name: ADMIN_PASSWORD
+              value: pw123
+            - name: FUSEKI_DATASET_1
+              value: enexa
+          ports:
+            - containerPort: 3030
+          resources: {}
+      restartPolicy: Always
+status: {}

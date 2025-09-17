@@ -1,0 +1,18 @@
+version: '3'
+services:
+  fuseki-devwdtest:
+    image: stain/jena-fuseki
+    container_name: fuseki-devwdtest
+    networks:
+      - enexaNet
+    ports:
+      - "3030:3030"
+    environment:
+      ADMIN_PASSWORD: pw123
+    volumes:
+      - /home/farshad/test/enexa/fusekiData:/fuseki
+      - /home/farshad/test/enexa/metadata:/staging
+
+networks:
+  enexaNet:
+    external: true

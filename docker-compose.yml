@@ -1,0 +1,35 @@
+version: "3.0"
+services:
+  fuseki-devwd:
+    image: stain/jena-fuseki
+    container_name: fuseki-devwd
+    networks:
+      - enexaNet
+    ports:
+      - "3030:3030"
+    environment:
+      ADMIN_PASSWORD: pw123
+    volumes:
+      - ./fusekiData:/fuseki
+  enexaservice:
+    image: hub.cs.upb.de/enexa/images/enexa-service-demo:1.0.0
+    container_name: enexaservice
+    networks:
+      - enexaNet
+    volumes:
+      - ./shared:/home/shared
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./metadata:/home/metadata
+
+    environment:
+      - ENEXA_META_DATA_ENDPOINT=http://fuseki-devwd:3030/mydataset
+      - ENEXA_META_DATA_GRAPH=http://example.org/meta-data
+      - ENEXA_MODULE_DIRECTORY=/home/metadata
+      - ENEXA_RESOURCE_NAMESPACE=http://example.org/enexa/
+      - ENEXA_SERVICE_URL=http://enexaservice:8080/
+      - ENEXA_SHARED_DIRECTORY=/data/enexa/shared
+      - DOCKER_NET_NAME=enexaNet
+
+networks:
+  enexaNet:
+    driver: bridge

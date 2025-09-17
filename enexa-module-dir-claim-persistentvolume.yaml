@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+    creationTimestamp: null
+    labels:
+        io.kompose.service: enexa-module-dir-claim
+    name: enexa-module-dir-claim
+spec:
+    accessModes:
+        - ReadWriteMany
+    resources:
+        requests:
+            storage: 500Mi
