@@ -39,10 +39,10 @@ public class FileBasedModuleManager implements ModuleManager {
         }else {
             File enexaModuleDirectory = new File(path);
             if (!enexaModuleDirectory.exists()) {
-                LOGGER.error("{} is not exist", enexaModuleDirectory.getAbsolutePath());
+                LOGGER.error("{} does not exist", enexaModuleDirectory.getAbsolutePath());
                 //throw new IOException(path + " is not exist");
             } else {
-                LOGGER.info("{} exist", enexaModuleDirectory.getAbsolutePath());
+                LOGGER.info("{} exists", enexaModuleDirectory.getAbsolutePath());
                 addFileOrDirectory(enexaModuleDirectory);
                 LOGGER.info("modules size is : {}", modules.size());
 //                for (ModuleModel module : modules.values()) {
