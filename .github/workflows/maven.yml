@@ -31,7 +31,7 @@ jobs:
       run: mvn clean compile -DskipTests=true -Dmaven.javadoc.skip=true -B -V
     - name: Run tests
       run: mvn jacoco:prepare-agent test -Dmaven.javadoc.skip=true -B jacoco:report verify
-#    - name: Upload test results to Codacy
-#      run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r target/site/jacoco/jacoco.xml
-#      env: 
-#        CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+    - name: Upload test results to Codacy
+      run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r target/site/jacoco/jacoco.xml
+      env: 
+        CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
