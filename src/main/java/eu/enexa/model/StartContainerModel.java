@@ -1,6 +1,5 @@
 package eu.enexa.model;
 
-
 import javax.annotation.Nullable;
 
 import org.apache.jena.rdf.model.Model;
@@ -147,18 +146,10 @@ public class StartContainerModel {
      * @param instanceIri the instanceIri to set
      */
     public void setInstanceIri(String instanceIri) {
-        StmtIterator iterator = model.listStatements(null, Algorithm.instanceOf, (RDFNode) null);
-        if (!iterator.hasNext()) {
-            throw new IllegalArgumentException("Couldn't find a module instance in the provided RDF model.");
-        }
-        Statement s = iterator.next();
-        // If there is more than one hobbit:instanceOf triple
-        if (iterator.hasNext()) {
-            LOGGER.warn("Found multiple module instanceOf definitions. They will be ignored. Model dump: "
-                + model.toString());
-        }
+        // Get the instance and module resources
+        Resource data[] = getInstanceOfData(model);
         // Get the instance representation
-        Resource oldInstanceIRI = s.getSubject();
+        Resource oldInstanceIRI = data[0];
 
         // new resource
         Resource updatedInstanceIri = ResourceFactory.createResource(instanceIri);
@@ -169,6 +160,36 @@ public class StartContainerModel {
     }
 
     public static StartContainerModel parse(Model model) throws IllegalArgumentException {
+        // Get the instance and module resources
+        Resource data[] = getInstanceOfData(model);
+
+        // Get the module IRI
+        String moduleIri = data[1].getURI();
+
+        // Get the experiment IRI
+        Resource experimentResource = RdfHelper.getObjectResource(model, data[0], ENEXA.experiment);
+        if ((experimentResource == null) || !experimentResource.isURIResource()) {
+            throw new IllegalArgumentException("Got a Request without an experiment IRI.");
+        }
+
+        // Get the module URL if it is available
+        Resource moduleUrlResource = RdfHelper.getObjectResource(model, data[0], ENEXA.moduleURL);
+
+        return new StartContainerModel(experimentResource.getURI(), moduleIri,
+                moduleUrlResource == null ? null : moduleUrlResource.getURI(), data[0], model);
+    }
+
+    /**
+     * Retrieves the subject (instance) and object (module) of the first triple in
+     * the given model that has the {@link Algorithm#instanceOf} property as
+     * predicate.
+     * 
+     * @param model the RDF model from which the data should be retrieved.
+     * @return A {@link Resource} array comprising the subject and the object of the
+     *         triple
+     * @throws IllegalArgumentException if the triple cannot be found or parsed.
+     */
+    protected static Resource[] getInstanceOfData(Model model) throws IllegalArgumentException {
         // Search for triple that uses hobbit:instanceOf
         StmtIterator iterator = model.listStatements(null, Algorithm.instanceOf, (RDFNode) null);
         if (!iterator.hasNext()) {
@@ -186,18 +207,7 @@ public class StartContainerModel {
             throw new IllegalArgumentException("Got a module without an IRI.");
         }
         // Get the module IRI
-        String moduleIri = s.getObject().asResource().getURI();
-
-        // Get the experiment IRI
-        Resource experimentResource = RdfHelper.getObjectResource(model, instance, ENEXA.experiment);
-        if ((experimentResource == null) || !experimentResource.isURIResource()) {
-            throw new IllegalArgumentException("Got a Request without an experiment IRI.");
-        }
-
-        // Get the module URL if it is available
-        Resource moduleUrlResource = RdfHelper.getObjectResource(model, instance, ENEXA.moduleURL);
-
-        return new StartContainerModel(experimentResource.getURI(), moduleIri,
-                moduleUrlResource == null ? null : moduleUrlResource.getURI(), instance, model);
+        Resource module = s.getObject().asResource();
+        return new Resource[] { instance, module };
     }
 }
