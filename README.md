@@ -1,8 +1,10 @@
+[![Java CI with Maven](https://github.com/EnexaProject/enexa-service/actions/workflows/maven.yml/badge.svg)](https://github.com/EnexaProject/enexa-service/actions/workflows/maven.yml)
+
 # enexa-service
 
 Implementation of the ENEXA service
-
-
+The project documentation can be found [here](https://enexa.eu/documentation). 
+For the repository-specific documentation, visit [this link](https://enexa.eu/documentation/service_des.html).
 
 ## Build the Dockerfile 
 
@@ -12,8 +14,6 @@ docker build -t enexa-service:latest .
 ```
 
 ## Run the Docker image 
-
-
 
 
 ## For local testing
@@ -50,5 +50,3 @@ java -jar target/enexa-service-0.0.1-SNAPSHOT.jar
 ```shell
 sudo docker run --name fuseki-dev -p 3030:3030 -e FUSEKI_DATASET_1=mydataset -e FUSEKI_DATASET_2=otherdataset -e ADMIN_PASSWORD=pw123 -v /home/farshad/test/enexa/metadata:/fuseki stain/jena-fuseki
 ```
-
-
