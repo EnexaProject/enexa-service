@@ -45,7 +45,7 @@ public class SimpleClient implements AutoCloseable {
 //    private static final String STATUS_RUNNING = "Running";
 //    private final String appName = "app3";
 
-    private final String appPath = "/mnt/kubedata";
+    //private final String appPath = "/mnt/kubedata";
 
 
     /**
