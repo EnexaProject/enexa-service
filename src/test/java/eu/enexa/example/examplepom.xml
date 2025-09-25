@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ This POM file is for a client or example application that consumes
+ the ENEXA service.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+    Inheriting from the Spring Boot parent POM provides a curated set of
+    dependencies and plugins, making it easier to manage versions.
+    -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.1.0</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>eu.enexa</groupId>
+    <artifactId>enexa-example-client</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>ENEXA Example Client</name>
+
+    <properties>
+        <java.version>17</java.version>
+        <jena.version>4.8.0</jena.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <!--
+    Custom repositories needed to resolve the dependencies from the
+    DICE and AKWS organizations.
+    -->
+    <repositories>
+        <repository>
+            <id>maven.aksw.internal</id>
+            <name>University Leipzig, AKSW Maven2 Repository</name>
+            <url>https://maven.aksw.org/repository/internal</url>
+        </repository>
+        <repository>
+            <id>maven.aksw.snapshots</id>
+            <name>University Leipzig, AKSW Maven2 Repository</name>
+            <url>https://maven.aksw.org/repository/snapshots</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <!-- The core ENEXA service dependency itself. This is what provides
+             the classes you are importing like Algorithm and ENEXA vocabularies. -->
+        <dependency>
+            <groupId>eu.enexa</groupId>
+            <artifactId>enexa-service</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+
+        <!-- Apache Commons IO for file-related utilities like FileUtils -->
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.11.0</version>
+        </dependency>
+
+        <!-- Apache HttpComponents Client for making HTTP requests -->
+        <dependency>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
+        </dependency>
+
+        <!-- Apache Jena for RDF model and SPARQL query execution -->
+        <dependency>
+            <groupId>org.apache.jena</groupId>
+            <artifactId>jena-base</artifactId>
+            <version>${jena.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jena</groupId>
+            <artifactId>jena-arq</artifactId>
+            <version>${jena.version}</version>
+        </dependency>
+
+        <!-- A specific SPARQL API library from AKWS -->
+        <dependency>
+            <groupId>org.aksw.jenax</groupId>
+            <artifactId>jenax-rx-dataaccess</artifactId>
+            <version>4.8.0-2</version>
+        </dependency>
+
+        <!-- Custom RDF helper library from DICE Research -->
+        <dependency>
+            <groupId>org.dice-research</groupId>
+            <artifactId>rdf-tools.rdf</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+
+        <!-- SLF4J API and Simple binding for logging -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+        </dependency>
+
+    </dependencies>
+</project>
