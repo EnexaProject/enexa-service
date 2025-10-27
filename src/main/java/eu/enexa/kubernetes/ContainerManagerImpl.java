@@ -256,6 +256,7 @@ public class ContainerManagerImpl implements ContainerManager {
         // Create a Pod
         pod.setMetadata(new V1ObjectMeta().name(podName).namespace(nameSpace).labels(new HashMap<String,String>(){{
                 put("app",container.getName());
+                put("pod-uid-selector", podName);
             }}));
             pod.setSpec(podSpec);
         try {
